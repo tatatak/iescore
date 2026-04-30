@@ -494,7 +494,12 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   useEffect(() => {
     if (!popData?.muniCode) return;
     setTxLoading(true);
-    fetch(`/api/transactions?muniCode=${popData.muniCode}&muniName=${encodeURIComponent(popData.muniName || '')}`)
+    const params = new URLSearchParams({
+      muniCode: popData.muniCode,
+      muniName: popData.muniName || '',
+      ...(location?.lng && { lng: location.lng, lat: location.lat }),
+    });
+    fetch(`/api/transactions?${params}`)
       .then(r => r.json())
       .then(d => setTxData(d))
       .catch(() => setTxData(null))
