@@ -44,7 +44,7 @@ export default function SearchBar({ onSelect }) {
         value={query}
         onChange={handleChange}
         onBlur={() => setTimeout(() => setIsOpen(false), 150)}
-        placeholder="住所・駅名で検索..."
+        placeholder="住所・駅名で検索（地番不可）"
         className="w-full px-4 py-1.5 text-sm border border-gray-300 rounded-full focus:outline-none focus:border-blue-500"
       />
       {isOpen && results.length > 0 && (

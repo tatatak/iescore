@@ -9,6 +9,11 @@ const Map = dynamic(() => import('./components/Map'), { ssr: false });
 
 export default function Home() {
   const [flyTo, setFlyTo] = useState(null);
+  const [activeLayers, setActiveLayers] = useState({});
+
+  const toggleLayer = (id) => {
+    setActiveLayers(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
     <div className="flex flex-col h-screen">
@@ -17,8 +22,8 @@ export default function Home() {
         <SearchBar onSelect={setFlyTo} />
       </header>
       <main className="flex flex-1 overflow-hidden">
-        <Map flyTo={flyTo} />
-        <ScorePanel location={flyTo} />
+        <Map flyTo={flyTo} activeLayers={activeLayers} onToggleLayer={toggleLayer} />
+        <ScorePanel location={flyTo} activeLayers={activeLayers} onToggleLayer={toggleLayer} />
       </main>
     </div>
   );
