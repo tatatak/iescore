@@ -55,7 +55,7 @@ const CHECKLIST = [
     category: '建物・構造',
     icon: '🏗️',
     items: [
-      { id: 'quake', label: '新耐震基準（1981年6月以降）', note: '旧耐震は融資・売却時に不利になりやすい' },
+      { id: 'quake', label: '新耐震基準（1981年6月以降）', note: '重要事項説明書の建築確認日で確認。旧耐震は融資・売却時に不利' },
       { id: 'condition', label: '外壁・共用部の管理状態を確認', note: '管理組合の議事録・修繕履歴も確認' },
       { id: 'repair_fund', label: '修繕積立金が適正か（マンション）', note: '月1万円以下は値上げリスク大' },
     ],
