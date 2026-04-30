@@ -34,6 +34,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
   const map = useRef(null);
   const flyToRef = useRef(null);
   const activeLayersRef = useRef(activeLayers);
+  const prevActiveLayersRef = useRef({});
   const poiMarkersRef = useRef([]);
   const [loadingPOI, setLoadingPOI] = useState(null);
 
@@ -103,19 +104,26 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
       });
     });
 
-    if (activeLayers.isochrone) {
-      if (flyToRef.current) fetchIsochrone(flyToRef.current.lng, flyToRef.current.lat);
-    } else {
-      setIsochroneVisibility('none');
+    const prev = prevActiveLayersRef.current;
+
+    if (activeLayers.isochrone !== prev.isochrone) {
+      if (activeLayers.isochrone) {
+        if (flyToRef.current) fetchIsochrone(flyToRef.current.lng, flyToRef.current.lat);
+      } else {
+        setIsochroneVisibility('none');
+      }
     }
 
     ['supermarket', 'station', 'medical', 'school', 'busstop'].forEach(type => {
+      if (activeLayers[type] === prev[type]) return; // 変化なし → スキップ
       if (activeLayers[type]) {
         if (flyToRef.current) fetchPOI(type, flyToRef.current.lng, flyToRef.current.lat);
       } else {
         clearPOIMarkers(type);
       }
     });
+
+    prevActiveLayersRef.current = activeLayers;
   }, [activeLayers]);
 
   const fetchIsochrone = async (lng, lat) => {
