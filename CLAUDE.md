@@ -32,9 +32,13 @@
 
 ### STEP 2: 技術セットアップ
 
-- [ ] Next.js プロジェクト作成
-- [ ] Vercel にデプロイ（GitHubと自動連携）
-- [ ] 地図ライブラリ（Google Maps または Mapbox）を組み込む
+- [x] Next.js プロジェクト作成（Tailwind CSS込み）
+- [x] Vercel にデプロイ・GitHub自動連携済み（iescore.vercel.app）
+- [x] 環境変数登録済み（Vercel + .env.local）
+  - NEXT_PUBLIC_MAPBOX_TOKEN ✅
+  - ESTAT_APP_ID ✅
+  - REINFOLIB_API_KEY ❌ 未取得
+- [ ] 地図ライブラリ（Mapbox GL JS）を組み込む
 - [ ] Next.js API Routes でAPIキーをバックエンドに隠す
 
 ### STEP 3: データ接続
