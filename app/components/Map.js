@@ -174,7 +174,9 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
     const query = `[out:json][timeout:15];(node[${cfg.osmTag}](around:1500,${lat},${lng});way[${cfg.osmTag}](around:1500,${lat},${lng}););out center;`;
     try {
       const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      const text = await res.text();
+      if (!text.startsWith('{')) return; // XML エラーレスポンスを無視
+      const data = JSON.parse(text);
       data.elements?.forEach(el => {
         const elLat = el.lat ?? el.center?.lat;
         const elLng = el.lon ?? el.center?.lon;
