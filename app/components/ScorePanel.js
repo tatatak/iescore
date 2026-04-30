@@ -483,16 +483,23 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .finally(() => setPopLoading(false));
   }, [location]);
 
+  // location が変わったらトランザクションをリセットしてローディング表示
   useEffect(() => {
     if (!location) return;
-    setTxLoading(true);
     setTxData(null);
-    fetch(`/api/transactions?lng=${location.lng}&lat=${location.lat}`)
+    setTxLoading(true);
+  }, [location]);
+
+  // population の muniCode が取れたらそれを使って transactions を取得（Overpass 二重呼び出し防止）
+  useEffect(() => {
+    if (!popData?.muniCode) return;
+    setTxLoading(true);
+    fetch(`/api/transactions?muniCode=${popData.muniCode}&muniName=${encodeURIComponent(popData.muniName || '')}`)
       .then(r => r.json())
       .then(d => setTxData(d))
-      .catch(() => {})
+      .catch(() => setTxData(null))
       .finally(() => setTxLoading(false));
-  }, [location]);
+  }, [popData?.muniCode]);
 
   const toggleCheck = (id) => setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
 

@@ -75,13 +75,25 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const lng = searchParams.get('lng');
   const lat = searchParams.get('lat');
+  // population API がすでに解決した muniCode を直接受け取れる（Overpass の二重呼び出しを防ぐ）
+  const passedCode = searchParams.get('muniCode');
+  const passedName = searchParams.get('muniName') || '';
 
-  if (!lng || !lat) {
-    return NextResponse.json({ error: 'lng and lat required' }, { status: 400 });
+  if (!passedCode && !lng) {
+    return NextResponse.json({ error: 'muniCode or lng/lat required' }, { status: 400 });
   }
 
   try {
-    const { code: muniCode, name: muniName } = await getMuniCode(lng, lat);
+    let muniCode = passedCode;
+    let muniName = passedName;
+
+    if (!muniCode) {
+      if (!lat) return NextResponse.json({ error: 'lat required' }, { status: 400 });
+      const result = await getMuniCode(lng, lat);
+      muniCode = result.code;
+      muniName = result.name;
+    }
+
     if (!muniCode) {
       return NextResponse.json({ error: 'area not found' }, { status: 404 });
     }
