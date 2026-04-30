@@ -6,7 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-export default function Map() {
+export default function Map({ flyTo }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
 
@@ -16,8 +16,8 @@ export default function Map() {
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [139.6917, 35.6895], // 東京
-      zoom: 12,
+      center: [139.6917, 35.6895],
+      zoom: 13,
       language: 'ja',
     });
 
@@ -27,6 +27,16 @@ export default function Map() {
       'top-right'
     );
   }, []);
+
+  // flyTo が変わるたびに地図を移動
+  useEffect(() => {
+    if (!flyTo || !map.current) return;
+    map.current.flyTo({
+      center: [flyTo.lng, flyTo.lat],
+      zoom: 14,
+      essential: true,
+    });
+  }, [flyTo]);
 
   return <div ref={mapContainer} className="w-full h-full" />;
 }
