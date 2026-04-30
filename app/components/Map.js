@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -35,6 +35,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
   const flyToRef = useRef(null);
   const activeLayersRef = useRef(activeLayers);
   const poiMarkersRef = useRef([]);
+  const [loadingPOI, setLoadingPOI] = useState(null);
 
   useEffect(() => { activeLayersRef.current = activeLayers; }, [activeLayers]);
 
@@ -191,10 +192,11 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
     const r = cfg.radius;
     const tagQuery = cfg.tags.map(t => `node[${t}](around:${r},${lat},${lng});way[${t}](around:${r},${lat},${lng});`).join('');
     const query = `[out:json][timeout:15];(${tagQuery});out center;`;
+    setLoadingPOI(cfg.label);
     try {
       const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
       const text = await res.text();
-      if (!text.startsWith('{')) return; // XML エラーレスポンスを無視
+      if (!text.startsWith('{')) return;
       const data = JSON.parse(text);
       data.elements?.forEach(el => {
         const elLat = el.lat ?? el.center?.lat;
@@ -220,7 +222,9 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
         poiMarkersRef.current.push(marker);
       });
     } catch (e) {
-      console.error('POI fetch error:', e);
+      // silent
+    } finally {
+      setLoadingPOI(null);
     }
   };
 
@@ -255,6 +259,14 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
           </button>
         ))}
       </div>
+
+      {/* ローディングトースト */}
+      {loadingPOI && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
+          <span className="animate-spin">⏳</span>
+          {loadingPOI}を検索中…
+        </div>
+      )}
 
       {/* 徒歩圏凡例 */}
       {activeLayers.isochrone && (
