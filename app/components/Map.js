@@ -34,6 +34,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
   const map = useRef(null);
   const flyToRef = useRef(null);
   const activeLayersRef = useRef(activeLayers);
+  const poiMarkersRef = useRef([]);
 
   useEffect(() => { activeLayersRef.current = activeLayers; }, [activeLayers]);
 
@@ -83,9 +84,8 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
     if (!flyTo || !map.current) return;
     flyToRef.current = flyTo;
     map.current.flyTo({ center: [flyTo.lng, flyTo.lat], zoom: 14, essential: true });
-    if (activeLayersRef.current.isochrone) {
-      fetchIsochrone(flyTo.lng, flyTo.lat);
-    }
+    if (activeLayersRef.current.isochrone) fetchIsochrone(flyTo.lng, flyTo.lat);
+    if (activeLayersRef.current.supermarket) fetchPOI('supermarket', flyTo.lng, flyTo.lat);
   }, [flyTo]);
 
   // レイヤー表示切替
@@ -104,6 +104,12 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
       if (flyToRef.current) fetchIsochrone(flyToRef.current.lng, flyToRef.current.lat);
     } else {
       setIsochroneVisibility('none');
+    }
+
+    if (activeLayers.supermarket) {
+      if (flyToRef.current) fetchPOI('supermarket', flyToRef.current.lng, flyToRef.current.lat);
+    } else {
+      clearPOIMarkers('supermarket');
     }
   }, [activeLayers]);
 
@@ -142,6 +148,58 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
       }
     } catch (e) {
       console.error('Isochrone fetch error:', e);
+    }
+  };
+
+  const POI_CONFIG = {
+    supermarket: {
+      osmTag: 'shop=supermarket',
+      emoji: '🛒',
+      color: '#16a34a',
+      pulseColor: '#22c55e',
+      label: 'スーパー',
+    },
+  };
+
+  const clearPOIMarkers = (type) => {
+    poiMarkersRef.current
+      .filter(m => m._poiType === type)
+      .forEach(m => m.remove());
+    poiMarkersRef.current = poiMarkersRef.current.filter(m => m._poiType !== type);
+  };
+
+  const fetchPOI = async (type, lng, lat) => {
+    clearPOIMarkers(type);
+    const cfg = POI_CONFIG[type];
+    const query = `[out:json][timeout:15];(node[${cfg.osmTag}](around:1500,${lat},${lng});way[${cfg.osmTag}](around:1500,${lat},${lng}););out center;`;
+    try {
+      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      data.elements?.forEach(el => {
+        const elLat = el.lat ?? el.center?.lat;
+        const elLng = el.lon ?? el.center?.lon;
+        if (!elLat || !elLng) return;
+
+        const markerEl = document.createElement('div');
+        markerEl.className = 'iescore-poi-marker';
+        markerEl.innerHTML = `
+          <div class="iescore-poi-pulse" style="background:${cfg.pulseColor}"></div>
+          <div class="iescore-poi-icon" style="background:${cfg.color}">${cfg.emoji}</div>
+        `;
+
+        const popup = new mapboxgl.Popup({ offset: 18, closeButton: false })
+          .setHTML(`<p style="font-size:12px;margin:0;font-weight:600">${el.tags?.name || cfg.label}</p>`);
+
+        const marker = new mapboxgl.Marker({ element: markerEl })
+          .setLngLat([elLng, elLat])
+          .setPopup(popup)
+          .addTo(map.current);
+
+        marker._poiType = type;
+        poiMarkersRef.current.push(marker);
+      });
+    } catch (e) {
+      console.error('POI fetch error:', e);
     }
   };
 
