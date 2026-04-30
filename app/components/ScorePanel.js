@@ -30,6 +30,104 @@ function ScoreCard({ icon, label, score, value, note }) {
   );
 }
 
+function PopulationChart({ data, muniName, loading }) {
+  if (loading) {
+    return <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>;
+  }
+  if (!data || data.length === 0) {
+    return <p className="text-xs text-gray-400 text-center py-3">データなし</p>;
+  }
+
+  const W = 220, H = 72;
+  const PAD = { top: 8, bottom: 18, left: 10, right: 10 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  const popValues = data.map(d => d.population);
+  const maxP = Math.max(...popValues);
+  const minP = Math.min(...popValues);
+  const range = maxP - minP || maxP;
+
+  const pts = data.map((d, i) => ({
+    x: PAD.left + (data.length === 1 ? chartW / 2 : (i / (data.length - 1)) * chartW),
+    y: PAD.top + chartH - ((d.population - minP) / range) * chartH,
+    year: d.year,
+    pop: d.population,
+  }));
+
+  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+
+  const trend = data.length >= 2
+    ? ((data[data.length - 1].population - data[0].population) / data[0].population * 100).toFixed(1)
+    : null;
+  const isUp = trend !== null && parseFloat(trend) >= 0;
+  const lineColor = isUp ? '#3b82f6' : '#ef4444';
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-gray-500">{muniName}の人口推移</p>
+        {trend !== null && (
+          <p className={`text-xs font-bold ${isUp ? 'text-blue-500' : 'text-red-500'}`}>
+            {isUp ? '▲' : '▼'} {Math.abs(trend)}%
+            <span className="text-gray-400 font-normal"> ({data[0].year}→{data[data.length - 1].year})</span>
+          </p>
+        )}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: '72px' }}>
+        <line
+          x1={PAD.left} y1={PAD.top + chartH / 2}
+          x2={W - PAD.right} y2={PAD.top + chartH / 2}
+          stroke="#f3f4f6" strokeWidth="1"
+        />
+        {data.length > 1 && (
+          <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
+            strokeLinejoin="round" strokeLinecap="round" />
+        )}
+        {pts.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="3.5" fill={lineColor} />
+            <text x={p.x} y={H - 2} textAnchor="middle" fontSize="9" fill="#9ca3af">{p.year}</text>
+          </g>
+        ))}
+      </svg>
+      <p className="text-xs text-gray-400 text-right mt-0.5">
+        {data[data.length - 1].year}年: {data[data.length - 1].population.toLocaleString()}人
+      </p>
+    </div>
+  );
+}
+
+function PopulationScoreCard({ popData, loading }) {
+  const calcPopScore = () => {
+    if (!popData?.data || popData.data.length < 2) return 3;
+    const pct = (popData.data[popData.data.length - 1].population - popData.data[0].population)
+      / popData.data[0].population * 100;
+    if (pct > 10) return 5;
+    if (pct > 3) return 4;
+    if (pct > -3) return 3;
+    if (pct > -10) return 2;
+    return 1;
+  };
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">👥</span>
+          <span className="text-sm font-semibold text-gray-700">人口動向</span>
+        </div>
+        <Stars score={calcPopScore()} />
+      </div>
+      <PopulationChart
+        data={popData?.data}
+        muniName={popData?.muniName}
+        loading={loading}
+      />
+    </div>
+  );
+}
+
 const CHECKLIST = [
   {
     category: '自然災害リスク',
@@ -262,11 +360,24 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [saved, setSaved] = useState([]);
   const [compareProps, setCompareProps] = useState(null);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [popData, setPopData] = useState(null);
+  const [popLoading, setPopLoading] = useState(false);
 
   useEffect(() => {
     const data = localStorage.getItem('iescore_saved');
     if (data) setSaved(JSON.parse(data));
   }, []);
+
+  useEffect(() => {
+    if (!location) return;
+    setPopLoading(true);
+    setPopData(null);
+    fetch(`/api/population?lng=${location.lng}&lat=${location.lat}`)
+      .then(r => r.json())
+      .then(d => setPopData(d))
+      .catch(() => {})
+      .finally(() => setPopLoading(false));
+  }, [location]);
 
   const toggleCheck = (id) => setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -310,7 +421,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
 
   if (!location) {
     return (
-      <div className="w-72 shrink-0 bg-gray-50 border-l border-gray-200 flex flex-col items-center justify-center p-6 text-center">
+      <div className="flex-1 bg-gray-50 border-l border-gray-200 flex flex-col items-center justify-center p-6 text-center">
         <span className="text-4xl mb-3">🏠</span>
         <p className="text-sm font-semibold text-gray-600">エリアを検索してください</p>
         <p className="text-xs text-gray-400 mt-2">
@@ -330,7 +441,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
 
   const scores = [
     { icon: '💰', label: '価格水準', score: 3, value: '成約価格データ準備中', note: '国交省APIキー取得後に表示' },
-    { icon: '👥', label: '人口動向', score: 4, value: '人口推移データ準備中', note: 'e-Stat API接続後に表示' },
     { icon: '🌊', label: 'ハザードリスク', score: 4, value: '浸水・土砂リスクデータ準備中', note: '国土地理院タイル接続後に表示' },
     { icon: '🚉', label: '利便性', score: 3, value: '乗降客数データ準備中', note: '国土数値情報接続後に表示' },
   ];
@@ -348,7 +458,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
           onCancel={() => setSaveModalOpen(false)}
         />
       )}
-      <div className="w-72 shrink-0 bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden">
+      <div className="flex-1 bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden">
         {/* ヘッダー */}
         <div className="bg-white border-b border-gray-200 p-4 shrink-0">
           <p className="text-xs text-gray-400 mb-1">エリアスコア</p>
@@ -393,8 +503,9 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
           {activeTab === 'score' && (
             <div className="flex flex-col gap-3 p-4">
               {scores.map((s) => <ScoreCard key={s.label} {...s} />)}
+              <PopulationScoreCard popData={popData} loading={popLoading} />
               <p className="text-xs text-gray-400 text-center pb-4">
-                ※ データは順次接続予定。現在は構造確認用の表示です。
+                ※ 人口は国勢調査（e-Stat）。価格・利便性は順次接続予定。
               </p>
             </div>
           )}

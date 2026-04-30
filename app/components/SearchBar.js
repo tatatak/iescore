@@ -38,7 +38,7 @@ export default function SearchBar({ onSelect }) {
   };
 
   return (
-    <div className="relative w-72">
+    <div className="relative flex-1 min-w-0 max-w-xs md:max-w-sm">
       <input
         type="text"
         value={query}
