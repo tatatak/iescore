@@ -30,6 +30,119 @@ function ScoreCard({ icon, label, score, value, note }) {
   );
 }
 
+// 価格スコア（手頃さ）: 安いほど高スコア
+function calcPriceScore(txData) {
+  const u = txData?.condos?.avgUnitPrice;
+  if (!u) return 3;
+  if (u < 30) return 5;
+  if (u < 60) return 4;
+  if (u < 100) return 3;
+  if (u < 200) return 2;
+  return 1;
+}
+
+// 人口スコア
+function calcPopScore(popData) {
+  if (!popData?.data || popData.data.length < 2) return 3;
+  const pct = (popData.data[popData.data.length - 1].population - popData.data[0].population) / popData.data[0].population * 100;
+  if (pct > 10) return 5;
+  if (pct > 3) return 4;
+  if (pct > -3) return 3;
+  if (pct > -10) return 2;
+  return 1;
+}
+
+// "2024年第4四半期" → "'24Q4"
+function formatPeriod(p) {
+  const m = p?.match(/(\d{4})年第(\d)四半期/);
+  return m ? `'${m[1].slice(2)}Q${m[2]}` : p || '';
+}
+
+function TransactionCard({ txData, loading }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xl">💰</span>
+          <span className="text-sm font-semibold text-gray-700">成約価格</span>
+        </div>
+        <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
+      </div>
+    );
+  }
+
+  const score = calcPriceScore(txData);
+  const hasCondo = txData?.condos?.count > 0;
+  const hasHouse = txData?.houses?.count > 0;
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">💰</span>
+          <span className="text-sm font-semibold text-gray-700">成約価格</span>
+        </div>
+        <Stars score={score} />
+      </div>
+
+      {!hasCondo && !hasHouse ? (
+        <p className="text-xs text-gray-400 text-center py-1">データなし</p>
+      ) : (
+        <>
+          <div className="flex gap-2 mb-3">
+            {hasCondo && (
+              <div className="flex-1 bg-blue-50 rounded-lg p-2.5">
+                <p className="text-xs text-gray-500 mb-0.5">マンション㎡単価</p>
+                <p className="text-base font-bold text-blue-700">{txData.condos.avgUnitPrice}万円</p>
+                <p className="text-xs text-gray-400">{txData.condos.count}件の成約</p>
+              </div>
+            )}
+            {hasHouse && (
+              <div className="flex-1 bg-gray-50 rounded-lg p-2.5">
+                <p className="text-xs text-gray-500 mb-0.5">戸建て平均</p>
+                <p className="text-base font-bold text-gray-700">{txData.houses.avgPrice?.toLocaleString()}万</p>
+                <p className="text-xs text-gray-400">{txData.houses.count}件の成約</p>
+              </div>
+            )}
+          </div>
+
+          {txData?.records?.length > 0 && (
+            <>
+              <button
+                onClick={() => setExpanded(v => !v)}
+                className="flex items-center gap-1 text-xs text-blue-500 font-medium mb-2"
+              >
+                最近の成約事例 {expanded ? '▲' : '▼'}
+              </button>
+              {expanded && (
+                <div className="flex flex-col gap-1.5">
+                  {txData.records.map((r, i) => (
+                    <div key={i} className="border border-gray-100 rounded-lg p-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 font-medium">{r.district}</span>
+                        <span className="text-gray-400">{formatPeriod(r.period)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="font-bold text-gray-800">{r.price.toLocaleString()}万円</span>
+                        <span className="text-gray-400">{r.area}㎡</span>
+                        <span className="text-blue-600 font-semibold">{r.unitPrice}万/㎡</span>
+                      </div>
+                      <p className="text-gray-400 mt-0.5">{r.buildingYear}年築 {r.floorPlan}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+      <p className="text-xs text-gray-400 mt-2">★多=割安。国交省REINFOLIB 成約価格情報</p>
+    </div>
+  );
+}
+
 function PopulationChart({ data, muniName, loading }) {
   if (loading) {
     return <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>;
@@ -99,17 +212,6 @@ function PopulationChart({ data, muniName, loading }) {
 }
 
 function PopulationScoreCard({ popData, loading }) {
-  const calcPopScore = () => {
-    if (!popData?.data || popData.data.length < 2) return 3;
-    const pct = (popData.data[popData.data.length - 1].population - popData.data[0].population)
-      / popData.data[0].population * 100;
-    if (pct > 10) return 5;
-    if (pct > 3) return 4;
-    if (pct > -3) return 3;
-    if (pct > -10) return 2;
-    return 1;
-  };
-
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-3">
@@ -117,7 +219,7 @@ function PopulationScoreCard({ popData, loading }) {
           <span className="text-xl">👥</span>
           <span className="text-sm font-semibold text-gray-700">人口動向</span>
         </div>
-        <Stars score={calcPopScore()} />
+        <Stars score={calcPopScore(popData)} />
       </div>
       <PopulationChart
         data={popData?.data}
@@ -362,6 +464,8 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [popData, setPopData] = useState(null);
   const [popLoading, setPopLoading] = useState(false);
+  const [txData, setTxData] = useState(null);
+  const [txLoading, setTxLoading] = useState(false);
 
   useEffect(() => {
     const data = localStorage.getItem('iescore_saved');
@@ -377,6 +481,17 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .then(d => setPopData(d))
       .catch(() => {})
       .finally(() => setPopLoading(false));
+  }, [location]);
+
+  useEffect(() => {
+    if (!location) return;
+    setTxLoading(true);
+    setTxData(null);
+    fetch(`/api/transactions?lng=${location.lng}&lat=${location.lat}`)
+      .then(r => r.json())
+      .then(d => setTxData(d))
+      .catch(() => {})
+      .finally(() => setTxLoading(false));
   }, [location]);
 
   const toggleCheck = (id) => setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
@@ -440,11 +555,12 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   }
 
   const scores = [
-    { icon: '💰', label: '価格水準', score: 3, value: '成約価格データ準備中', note: '国交省APIキー取得後に表示' },
     { icon: '🌊', label: 'ハザードリスク', score: 4, value: '浸水・土砂リスクデータ準備中', note: '国土地理院タイル接続後に表示' },
     { icon: '🚉', label: '利便性', score: 3, value: '乗降客数データ準備中', note: '国土数値情報接続後に表示' },
   ];
-  const total = Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length);
+  const total = Math.round(
+    [calcPriceScore(txData), 4, 3, calcPopScore(popData)].reduce((s, v) => s + v, 0) / 4
+  );
 
   return (
     <>
@@ -502,10 +618,11 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'score' && (
             <div className="flex flex-col gap-3 p-4">
+              <TransactionCard txData={txData} loading={txLoading} />
               {scores.map((s) => <ScoreCard key={s.label} {...s} />)}
               <PopulationScoreCard popData={popData} loading={popLoading} />
               <p className="text-xs text-gray-400 text-center pb-4">
-                ※ 人口は国勢調査（e-Stat）。価格・利便性は順次接続予定。
+                ※ 価格は国交省REINFOLIB。人口は国勢調査（e-Stat）。
               </p>
             </div>
           )}
