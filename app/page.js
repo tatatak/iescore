@@ -23,7 +23,7 @@ export default function Home() {
       </header>
       <main className="flex flex-1 overflow-hidden">
         <Map flyTo={flyTo} activeLayers={activeLayers} onToggleLayer={toggleLayer} />
-        <ScorePanel location={flyTo} activeLayers={activeLayers} onToggleLayer={toggleLayer} />
+        <ScorePanel location={flyTo} activeLayers={activeLayers} onToggleLayer={toggleLayer} onFlyTo={setFlyTo} />
       </main>
     </div>
   );
