@@ -220,11 +220,45 @@ function CompareModal({ properties, onClose }) {
   );
 }
 
+function SaveModal({ defaultName, onSave, onCancel }) {
+  const [name, setName] = useState(defaultName);
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <h2 className="font-bold text-gray-900 mb-1">物件名を入力</h2>
+        <p className="text-xs text-gray-400 mb-4">わかりやすい名前をつけておくと比較しやすくなります</p>
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && name.trim() && onSave(name.trim())}
+          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-blue-500 mb-4"
+          placeholder="例：渋谷の候補物件・第1希望"
+          autoFocus
+        />
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50">
+            キャンセル
+          </button>
+          <button
+            onClick={() => name.trim() && onSave(name.trim())}
+            className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40"
+            disabled={!name.trim()}
+          >
+            保存する
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ScorePanel({ location, activeLayers, onToggleLayer, onFlyTo }) {
   const [activeTab, setActiveTab] = useState('score');
   const [checkedItems, setCheckedItems] = useState({});
   const [saved, setSaved] = useState([]);
   const [compareProps, setCompareProps] = useState(null);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
 
   useEffect(() => {
     const data = localStorage.getItem('iescore_saved');
@@ -237,9 +271,14 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
 
   const handleSave = () => {
     if (!location) return;
+    setSaveModalOpen(true);
+  };
+
+  const handleSaveConfirm = (name) => {
+    setSaveModalOpen(false);
     const newProp = {
       id: `prop_${Date.now()}`,
-      name: location.name,
+      name,
       lat: location.lat,
       lng: location.lng,
       checkedItems,
@@ -248,7 +287,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       stars,
       savedAt: new Date().toISOString(),
     };
-    const updated = [newProp, ...saved.filter(p => p.name !== location.name)];
+    const updated = [newProp, ...saved.filter(p => p.id !== newProp.id)];
     setSaved(updated);
     localStorage.setItem('iescore_saved', JSON.stringify(updated));
     setActiveTab('saved');
@@ -298,6 +337,13 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     <>
       {compareProps && (
         <CompareModal properties={compareProps} onClose={() => setCompareProps(null)} />
+      )}
+      {saveModalOpen && (
+        <SaveModal
+          defaultName={location.name}
+          onSave={handleSaveConfirm}
+          onCancel={() => setSaveModalOpen(false)}
+        />
       )}
       <div className="w-72 shrink-0 bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden">
         {/* ヘッダー */}
