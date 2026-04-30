@@ -43,10 +43,12 @@ const CHECKLIST = [
     category: '立地・利便性',
     icon: '🚉',
     items: [
-      { id: 'isochrone', label: '徒歩5・10・15分圏を地図に表示', mapLayer: 'isochrone', note: 'クリックで徒歩圏エリアを地図に表示（緑・黄・橙）' },
-      { id: 'station', label: '最寄り駅まで徒歩15分以内', note: '実際に歩いて所要時間を確認' },
-      { id: 'supermarket', label: '徒歩圏にスーパーがある', mapLayer: 'supermarket', note: 'クリックで地図に周辺スーパーを表示' },
-      { id: 'medical', label: '医療機関・学校が近くにある', note: '子育て世帯は学区・保育園の空きも確認' },
+      { id: 'isochrone', label: '徒歩5・10・15分圏を地図に表示', mapLayer: 'isochrone', note: 'クリックで徒歩圏エリアを表示（緑・黄・橙）' },
+      { id: 'station', label: '最寄り駅まで徒歩15分以内', mapLayer: 'station', note: 'クリックで周辺の駅を地図に表示' },
+      { id: 'busstop', label: 'バス停が近くにある', mapLayer: 'busstop', note: 'クリックで周辺のバス停を地図に表示' },
+      { id: 'supermarket', label: '徒歩圏にスーパーがある', mapLayer: 'supermarket', note: 'クリックで周辺のスーパーを地図に表示' },
+      { id: 'medical', label: '医療機関が近くにある', mapLayer: 'medical', note: 'クリックで周辺の病院・クリニックを地図に表示' },
+      { id: 'school', label: '学校・保育園が近くにある', mapLayer: 'school', note: 'クリックで周辺の学校・保育園を地図に表示' },
     ],
   },
   {

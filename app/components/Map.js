@@ -85,7 +85,9 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
     flyToRef.current = flyTo;
     map.current.flyTo({ center: [flyTo.lng, flyTo.lat], zoom: 14, essential: true });
     if (activeLayersRef.current.isochrone) fetchIsochrone(flyTo.lng, flyTo.lat);
-    if (activeLayersRef.current.supermarket) fetchPOI('supermarket', flyTo.lng, flyTo.lat);
+    ['supermarket', 'station', 'medical', 'school', 'busstop'].forEach(type => {
+      if (activeLayersRef.current[type]) fetchPOI(type, flyTo.lng, flyTo.lat);
+    });
   }, [flyTo]);
 
   // レイヤー表示切替
@@ -106,11 +108,13 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
       setIsochroneVisibility('none');
     }
 
-    if (activeLayers.supermarket) {
-      if (flyToRef.current) fetchPOI('supermarket', flyToRef.current.lng, flyToRef.current.lat);
-    } else {
-      clearPOIMarkers('supermarket');
-    }
+    ['supermarket', 'station', 'medical', 'school', 'busstop'].forEach(type => {
+      if (activeLayers[type]) {
+        if (flyToRef.current) fetchPOI(type, flyToRef.current.lng, flyToRef.current.lat);
+      } else {
+        clearPOIMarkers(type);
+      }
+    });
   }, [activeLayers]);
 
   const fetchIsochrone = async (lng, lat) => {
@@ -153,11 +157,24 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
 
   const POI_CONFIG = {
     supermarket: {
-      osmTag: 'shop=supermarket',
-      emoji: '🛒',
-      color: '#16a34a',
-      pulseColor: '#22c55e',
-      label: 'スーパー',
+      tags: ['shop=supermarket'],
+      emoji: '🛒', color: '#16a34a', pulseColor: '#22c55e', label: 'スーパー', radius: 1500,
+    },
+    station: {
+      tags: ['railway=station', 'railway=tram_stop'],
+      emoji: '🚉', color: '#1d4ed8', pulseColor: '#60a5fa', label: '駅', radius: 2000,
+    },
+    medical: {
+      tags: ['amenity=hospital', 'amenity=clinic', 'amenity=doctors'],
+      emoji: '🏥', color: '#dc2626', pulseColor: '#f87171', label: '医療機関', radius: 1500,
+    },
+    school: {
+      tags: ['amenity=school', 'amenity=kindergarten'],
+      emoji: '🏫', color: '#7c3aed', pulseColor: '#a78bfa', label: '学校・保育園', radius: 1500,
+    },
+    busstop: {
+      tags: ['highway=bus_stop'],
+      emoji: '🚌', color: '#0284c7', pulseColor: '#38bdf8', label: 'バス停', radius: 600,
     },
   };
 
@@ -171,7 +188,9 @@ export default function Map({ flyTo, activeLayers, onToggleLayer }) {
   const fetchPOI = async (type, lng, lat) => {
     clearPOIMarkers(type);
     const cfg = POI_CONFIG[type];
-    const query = `[out:json][timeout:15];(node[${cfg.osmTag}](around:1500,${lat},${lng});way[${cfg.osmTag}](around:1500,${lat},${lng}););out center;`;
+    const r = cfg.radius;
+    const tagQuery = cfg.tags.map(t => `node[${t}](around:${r},${lat},${lng});way[${t}](around:${r},${lat},${lng});`).join('');
+    const query = `[out:json][timeout:15];(${tagQuery});out center;`;
     try {
       const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
       const text = await res.text();
