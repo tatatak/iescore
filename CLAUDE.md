@@ -27,8 +27,8 @@
 - [x] Mapbox アカウント作成・トークン取得済み
   - トークンは .env に保存すること（チャット・コードへの直書き禁止）
   - ドメイン制限を設定: https://iescore.com と http://localhost:3000
-- [ ] GitHubにリポジトリ作成（`iescore`）
-- [ ] Vercelアカウント作成（無料）・GitHubと連携
+- [x] GitHubにリポジトリ作成済み → https://github.com/tatatak/iescore
+- [x] Vercelアカウント作成・GitHubと連携済み（tatatak/iescore）
 
 ### STEP 2: 技術セットアップ
 
