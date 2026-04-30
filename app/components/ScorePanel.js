@@ -43,6 +43,7 @@ const CHECKLIST = [
     category: '立地・利便性',
     icon: '🚉',
     items: [
+      { id: 'isochrone', label: '徒歩5・10・15分圏を地図に表示', mapLayer: 'isochrone', note: 'クリックで徒歩圏エリアを地図に表示（緑・黄・橙）' },
       { id: 'station', label: '最寄り駅まで徒歩15分以内', note: '実際に歩いて所要時間を確認' },
       { id: 'supermarket', label: '徒歩圏にスーパーがある', note: '徒歩10分以内が目安' },
       { id: 'medical', label: '医療機関・学校が近くにある', note: '子育て世帯は学区・保育園の空きも確認' },
