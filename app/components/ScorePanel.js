@@ -1484,7 +1484,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               {googleUrl && (
                 <a href={googleUrl} target="_blank" rel="noopener noreferrer"
                   className="text-center text-xs px-2 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg font-medium hover:bg-blue-100 transition-colors whitespace-nowrap">
-                  🔍 Googleで確認
+                  🔍 Web検索で確認
                 </a>
               )}
             </div>
@@ -3705,7 +3705,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         .replace(/[0-9０-９一二三四五六七八九十百千]+丁目.*/, '')
                     : '';
                   const kw = stripped ? `${buildingName} ${stripped}` : buildingName;
-                  return `https://www.google.com/search?q=${encodeURIComponent(kw + ' site:homes.co.jp/archive')}`;
+                  return `https://www.bing.com/search?q=${encodeURIComponent(kw + ' site:homes.co.jp/archive')}`;
                 })() : null}
                 onScoreChange={handleLoanScoreChange}
               />
