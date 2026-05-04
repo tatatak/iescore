@@ -265,7 +265,7 @@ export default function Home() {
         </div>
 
         {/* スコアパネル: PCは右サイド固定幅、スマホはscore表示時に全画面 */}
-        <div className={['flex-col w-full md:w-96 md:shrink-0', mobileView === 'map' ? 'hidden md:flex' : 'flex'].join(' ')}>
+        <div className={['flex-col w-full md:w-[576px] md:shrink-0', mobileView === 'map' ? 'hidden md:flex' : 'flex'].join(' ')}>
           <div className="flex flex-col flex-1 overflow-hidden">
           <ScorePanel
             location={flyTo}
