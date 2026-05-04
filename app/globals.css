@@ -19,10 +19,17 @@
   }
 }
 
+html {
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  max-width: 100vw;
+  overflow-x: clip;
 }
 
 /* POIマーカー アニメーション */
@@ -56,3 +63,6 @@ body {
   0%, 100% { transform: scale(1);   opacity: 0.4; }
   50%       { transform: scale(1.8); opacity: 0.05; }
 }
+
+/* ===== 印刷（PDF出力）スタイル ===== */
+/* 印刷は新ウィンドウ方式のため、このファイルの print スタイルは使用しない */
