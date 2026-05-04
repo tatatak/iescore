@@ -3614,18 +3614,29 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
             ③ 「イエカルテ」を入力しよう
           </p>
           {onOpenDrawer ? (
-            <>
-              <button
-                onClick={onOpenDrawer}
-                className="font-bold text-gray-900 text-base leading-snug text-left hover:text-indigo-700 transition-colors flex items-center gap-1"
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <button
+                  onClick={onOpenDrawer}
+                  className="font-bold text-gray-900 text-base leading-snug text-left hover:text-indigo-700 transition-colors flex items-center gap-1 w-full"
+                >
+                  <span className="truncate">{location.name}</span>
+                  <span className="text-xs text-indigo-400 font-normal shrink-0">🏢</span>
+                </button>
+                {buildingAddress && (
+                  <p className="text-xs text-gray-500 mt-0.5 leading-snug">{buildingAddress}</p>
+                )}
+              </div>
+              <a
+                href={`https://www.google.com/maps/search/${encodeURIComponent(location.name + (buildingAddress ? ' ' + buildingAddress : ''))}/@${location.lat},${location.lng},17z`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+                title="Googleマップで開く（ストリートビュー）"
               >
-                {location.name}
-                <span className="text-xs text-indigo-400 font-normal">🏢</span>
-              </button>
-              {buildingAddress && (
-                <p className="text-xs text-gray-500 mt-0.5 leading-snug">{buildingAddress}</p>
-              )}
-            </>
+                🗺 地図
+              </a>
+            </div>
           ) : (
             <p className="font-bold text-gray-900 text-base leading-snug">{location.name}</p>
           )}

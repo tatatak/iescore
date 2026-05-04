@@ -239,12 +239,6 @@ export default function Home() {
               </div>
               <div className="flex gap-2 items-center">
                 {[
-                  { href: (() => {
-                    const s = selectedPin.address
-                      ? selectedPin.address.replace(/^.+?[都道府県]/, '').replace(/[0-9０-９一二三四五六七八九十百千]+丁目.*/, '')
-                      : '';
-                    return `https://www.google.com/maps/search/${encodeURIComponent(selectedPin.name + (s ? ' ' + s : ''))}`;
-                  })(), label: 'Googleマップ', emoji: '🗺', cls: 'bg-gray-100 text-gray-700 hover:bg-gray-200' },
                   { href: `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(selectedPin.name)}`, label: 'HOMES', emoji: '🏠', cls: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
                   { href: (() => {
                     const s = selectedPin.address
