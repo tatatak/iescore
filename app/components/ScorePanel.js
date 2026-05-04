@@ -2791,7 +2791,29 @@ function getConvHint(mapLayer, convData) {
   }
 }
 
+function getChecklistUrl(linkType, name, buildingAddress) {
+  const stripped = buildingAddress
+    ? buildingAddress.replace(/^.+?[都道府県]/, '').replace(/[0-9０-９一二三四五六七八九十百千]+丁目.*/, '')
+    : '';
+  const kw = name || '';
+  const kwAddr = stripped ? `${kw} ${stripped}` : kw;
+  if (linkType === 'homes')  return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
+  if (linkType === 'suumo')  return `https://suumo.jp/library/search/ichiran.html?qr=${encodeURIComponent(kwAddr)}`;
+  if (linkType === 'athome') return `https://www.athome.co.jp/bldg-library/bldname_search/${encodeURIComponent(kw)}/`;
+  return null;
+}
+
 const CHECKLIST = [
+  {
+    category: '物件情報を確認する',
+    icon: '🔍',
+    tag: 'マンション向け',
+    items: [
+      { id: 'check_homes',  label: 'HOMESで築年・管理費・修繕積立金を確認した',   note: '築年・管理費・修繕積立金・売出価格の相場確認に', linkType: 'homes',  linkLabel: 'HOMES', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
+      { id: 'check_suumo',  label: 'SUUMOで売出価格・掲載履歴を確認した',         note: '値下げ履歴・掲載期間・類似物件の価格比較に',  linkType: 'suumo',  linkLabel: 'SUUMO', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
+      { id: 'check_athome', label: 'アットホームで物件情報を確認した',             note: '他ポータルとの価格差・掲載情報の比較に',      linkType: 'athome', linkLabel: 'athome', linkCls: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' },
+    ],
+  },
   {
     category: 'マンション管理',
     icon: '🏗️',
@@ -3951,7 +3973,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                       const isChecked = item.mapLayer ? !!activeLayers[item.mapLayer] : !!checkedItems[item.id];
                       const convHint = isChecked && item.mapLayer ? getConvHint(item.mapLayer, convData) : null;
 
-                      // adult_biz: 用途地域リスクに連動してスタイル・ノートを切り替え
                       const zoningRisk = zoningData?.risk;
                       const isDimmed  = item.id === 'adult_biz' && zoningRisk === 'low';
                       const isWarning = item.id === 'adult_biz' && (zoningRisk === 'high' || zoningRisk === 'mid');
@@ -3965,35 +3986,49 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                           : item.note
                         : item.note;
 
-                      const btnCls = isChecked
-                        ? 'bg-blue-50 border-blue-200'
-                        : isDimmed
-                        ? 'bg-gray-50 border-gray-100 opacity-60'
-                        : isWarning
-                        ? 'bg-orange-50 border-orange-200 hover:border-orange-300'
-                        : 'bg-white border-gray-100 hover:border-gray-200';
-                      const labelCls = isChecked
-                        ? 'text-blue-800'
-                        : isDimmed  ? 'text-gray-500'
-                        : isWarning ? 'text-orange-800'
-                        : 'text-gray-800';
+                      const baseCls = isChecked ? 'bg-blue-50 border-blue-200' : isDimmed ? 'bg-gray-50 border-gray-100 opacity-60' : isWarning ? 'bg-orange-50 border-orange-200 hover:border-orange-300' : 'bg-white border-gray-100 hover:border-gray-200';
+                      const labelCls = isChecked ? 'text-blue-800' : isDimmed ? 'text-gray-500' : isWarning ? 'text-orange-800' : 'text-gray-800';
+                      const checkboxCls = `mt-0.5 shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-colors ${isChecked ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300'}`;
+
+                      // linkType アイテム: 外部リンクボタン付きカード
+                      if (item.linkType) {
+                        const linkUrl = getChecklistUrl(item.linkType, location?.name, buildingAddress);
+                        return (
+                          <div key={item.id} className={`rounded-xl p-3 border shadow-sm ${baseCls}`}>
+                            <div className="flex items-start gap-2">
+                              <button onClick={() => toggleCheck(item.id)} className={checkboxCls}>
+                                {isChecked && '✓'}
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium leading-snug ${labelCls}`}>{item.label}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-tight">{item.note}</p>
+                              </div>
+                              {linkUrl && (
+                                <a
+                                  href={linkUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => { if (!isChecked) toggleCheck(item.id); }}
+                                  className={`shrink-0 text-xs px-2 py-1.5 rounded-lg font-semibold border whitespace-nowrap transition-colors ${item.linkCls}`}
+                                >
+                                  {item.linkLabel} →
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
 
                       return (
                         <button
                           key={item.id}
                           onClick={() => item.mapLayer ? onToggleLayer(item.mapLayer) : toggleCheck(item.id)}
-                          className={`text-left w-full rounded-xl p-3 border shadow-sm transition-all ${btnCls}`}
+                          className={`text-left w-full rounded-xl p-3 border shadow-sm transition-all ${baseCls}`}
                         >
                           <div className="flex items-start gap-2">
-                            <div className={`mt-0.5 shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-colors ${
-                              isChecked ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300'
-                            }`}>
-                              {isChecked && '✓'}
-                            </div>
+                            <div className={checkboxCls}>{isChecked && '✓'}</div>
                             <div>
-                              <p className={`text-sm font-medium leading-snug ${labelCls}`}>
-                                {item.label}
-                              </p>
+                              <p className={`text-sm font-medium leading-snug ${labelCls}`}>{item.label}</p>
                               <p className="text-xs text-gray-500 mt-0.5 leading-tight">{dynamicNote}</p>
                               {convHint && (
                                 <p className={`text-xs mt-1.5 font-semibold ${convHint.good ? 'text-blue-700' : 'text-red-500'}`}>
