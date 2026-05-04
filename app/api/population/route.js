@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import muniCodes from '../../data/muniCodes.json';
 
 const ESTAT_APP_ID = process.env.ESTAT_APP_ID;
 
@@ -28,19 +29,19 @@ async function getCityFromHeartRails(lng, lat) {
   const loc = data?.response?.location?.[0];
   if (!loc) return { city: null, pref: null };
 
-  // 政令指定都市は "川崎市川崎区" のように市＋区が結合されるため市名だけ抽出
-  const raw = loc.city || null;
-  const shiIdx = raw ? raw.indexOf('市') : -1;
-  const city =
-    shiIdx !== -1 && raw.endsWith('区') && shiIdx < raw.length - 1
-      ? raw.slice(0, shiIdx + 1)
-      : raw;
+  // 政令指定都市は "川崎市麻生区" のように市＋区が結合される。区レベルのコードが必要なためそのまま使う
+  const city = loc.city || null;
 
   return { city, pref: loc.prefecture || null };
 }
 
-// Overpass で市区町村名から ref タグ（JIS 6桁）を取得（area index不使用・名前検索）
+// 市区町村名から JIS 5桁コードを取得（静的JSON優先 → Overpass フォールバック）
 async function getJisCodeByName(city, jisPrefix) {
+  if (jisPrefix && muniCodes[`${jisPrefix}|${city}`]) {
+    return muniCodes[`${jisPrefix}|${city}`];
+  }
+
+  // 静的テーブルにない町・村はOverpassで引く
   const query = `[out:json][timeout:15];rel["name"="${city}"]["boundary"="administrative"]["ref"]["admin_level"~"^[6-8]$"];out tags;`;
   const res = await fetch(
     `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
@@ -55,13 +56,11 @@ async function getJisCodeByName(city, jisPrefix) {
   const data = JSON.parse(text);
   const elements = data.elements || [];
 
-  // jisPrefix で都道府県を絞り込む（"中央区" など同名が全国に複数ある場合）
   const target = jisPrefix
     ? elements.find(el => String(el.tags?.ref || '').startsWith(jisPrefix))
     : elements[0];
 
   const ref = String(target?.tags?.ref || '');
-  // OSM ref は 6桁（検査数字付き）の場合があるため e-Stat 用に5桁に切り詰める
   return ref.length >= 5 ? ref.slice(0, 5) : null;
 }
 

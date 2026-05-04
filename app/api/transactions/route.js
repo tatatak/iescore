@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import muniCodes from '../../data/muniCodes.json';
 
 const REINFOLIB_API_KEY = process.env.REINFOLIB_API_KEY;
 
@@ -109,6 +110,11 @@ async function getCityFromHeartRails(lng, lat) {
 }
 
 async function getJisCodeByName(city, jisPrefix) {
+  if (jisPrefix && muniCodes[`${jisPrefix}|${city}`]) {
+    return muniCodes[`${jisPrefix}|${city}`];
+  }
+
+  // 静的テーブルにない町・村はOverpassで引く
   const query = `[out:json][timeout:15];rel["name"="${city}"]["boundary"="administrative"]["ref"]["admin_level"~"^[6-8]$"];out tags;`;
   const res = await fetch(
     `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
@@ -191,12 +197,13 @@ export async function GET(request) {
       }
     }
 
-    // 直近データを取得（2025 → 2024 → 2023 の順で試す）
-    let allData = [];
-    for (const year of [2025, 2024, 2023]) {
-      const data = await fetchReinfolib(prefCode, effectiveCode, year);
-      if (data.length > 0) { allData = data; break; }
-    }
+    // 直近3年分を並列取得して結合（年ごとの件数バラつきを吸収）
+    const [data2025, data2024, data2023] = await Promise.all([
+      fetchReinfolib(prefCode, effectiveCode, 2025),
+      fetchReinfolib(prefCode, effectiveCode, 2024),
+      fetchReinfolib(prefCode, effectiveCode, 2023),
+    ]);
+const allData = [...data2025, ...data2024, ...data2023];
 
     if (allData.length === 0) {
       return NextResponse.json({ muniCode, muniName, condos: { count: 0, avgUnitPrice: null }, houses: { count: 0, avgPrice: null }, records: [] });
@@ -207,18 +214,79 @@ export async function GET(request) {
     const avgUnitPrice = condos.length > 0
       ? Math.round(condos.reduce((s, d) => s + parseInt(d.TradePrice) / parseFloat(d.Area), 0) / condos.length / 10000)
       : null;
-
-    // 宅地（土地+建物）統計
-    const houses = allData.filter(d => d.Type === '宅地(土地と建物)' && d.TradePrice);
-    const avgHousePrice = houses.length > 0
-      ? Math.round(houses.reduce((s, d) => s + parseInt(d.TradePrice), 0) / houses.length / 10000)
+    const avgPrice = condos.length > 0
+      ? Math.round(condos.reduce((s, d) => s + parseInt(d.TradePrice), 0) / condos.length / 10000)
       : null;
+    const avgArea = condos.length > 0
+      ? Math.round(condos.reduce((s, d) => s + parseFloat(d.Area), 0) / condos.length)
+      : null;
+
+    // 年代別単価（耐震基準に基づく区分）
+    const eraRanges = [
+      { key: 'pre1982',  label: '旧耐震 ～1982',  min: 0,    max: 1982 },
+      { key: 'era1983',  label: '新耐震 1983～99', min: 1983, max: 1999 },
+      { key: 'era2000',  label: '2000年代',        min: 2000, max: 2010 },
+      { key: 'era2011',  label: '2011年以降',      min: 2011, max: 9999 },
+    ];
+    const eraStats = {};
+    for (const era of eraRanges) {
+      const subset = condos.filter(d => {
+        const yr = parseInt(d.BuildingYear);
+        return !isNaN(yr) && yr >= era.min && yr <= era.max;
+      });
+      eraStats[era.key] = subset.length > 0
+        ? {
+            label: era.label,
+            count: subset.length,
+            avgUnitPrice: Math.round(subset.reduce((s, d) => s + parseInt(d.TradePrice) / parseFloat(d.Area), 0) / subset.length / 10000),
+            avgPrice: Math.round(subset.reduce((s, d) => s + parseInt(d.TradePrice), 0) / subset.length / 10000),
+            avgArea: Math.round(subset.reduce((s, d) => s + parseFloat(d.Area), 0) / subset.length),
+          }
+        : { label: era.label, count: 0, avgUnitPrice: null, avgPrice: null, avgArea: null };
+    }
+
+    // 宅地（土地+建物）統計 - 直近10年以内築に絞り込み（件数不足時は全期間にフォールバック）
+    const houses = allData.filter(d => d.Type === '宅地(土地と建物)' && d.TradePrice);
+    const currentYear = new Date().getFullYear();
+    const recentHouses = houses.filter(d => {
+      const yr = parseInt(d.BuildingYear);
+      return !isNaN(yr) && yr >= currentYear - 20;
+    });
+    const housesForStats = recentHouses.length >= 3 ? recentHouses : houses;
+    const houseFiltered = recentHouses.length >= 3;
+    const avgHousePrice = housesForStats.length > 0
+      ? Math.round(housesForStats.reduce((s, d) => s + parseInt(d.TradePrice), 0) / housesForStats.length / 10000)
+      : null;
+    const housesWithArea = housesForStats.filter(d => parseFloat(d.Area) > 0);
+    const avgHousePerSqm = housesWithArea.length > 0
+      ? Math.round(housesWithArea.reduce((s, d) => s + parseInt(d.TradePrice) / parseFloat(d.Area), 0) / housesWithArea.length / 10000 * 10) / 10
+      : null;
+
+    const mapHouseRecord = d => ({
+      type: 'house',
+      district: d.DistrictName,
+      price: Math.round(parseInt(d.TradePrice) / 10000),
+      landArea: parseFloat(d.Area) || null,
+      totalFloorArea: parseFloat(d.TotalFloorArea) || null,
+      buildingYear: d.BuildingYear?.replace('年', '') || '',
+      floorPlan: d.FloorPlan || '',
+      period: d.Period || '',
+      structure: d.Structure || '',
+      nearestStation: d.NearestStation || '',
+      timeToStation: d.TimeToNearestStation || '',
+      cityPlanning: d.CityPlanning || '',
+      coverageRatio: d.CoverageRatio || '',
+      floorAreaRatio: d.FloorAreaRatio || '',
+      renovation: d.Renovation || '',
+      remarks: d.Remarks || '',
+    });
 
     // 最新10件の中古マンション
     const records = [...condos]
       .sort((a, b) => periodToNum(b.Period) - periodToNum(a.Period))
       .slice(0, 10)
       .map(d => ({
+        type: 'condo',
         district: d.DistrictName,
         price: Math.round(parseInt(d.TradePrice) / 10000),
         area: parseFloat(d.Area),
@@ -226,13 +294,27 @@ export async function GET(request) {
         buildingYear: d.BuildingYear?.replace('年', '') || '',
         floorPlan: d.FloorPlan || '',
         period: d.Period || '',
+        structure: d.Structure || '',
+        nearestStation: d.NearestStation || '',
+        timeToStation: d.TimeToNearestStation || '',
+        cityPlanning: d.CityPlanning || '',
+        coverageRatio: d.CoverageRatio || '',
+        floorAreaRatio: d.FloorAreaRatio || '',
+        renovation: d.Renovation || '',
+        remarks: d.Remarks || '',
       }));
+
+    // 最新10件の戸建て（直近10年以内築 or 全期間フォールバック）
+    const houseRecords = [...housesForStats]
+      .sort((a, b) => periodToNum(b.Period) - periodToNum(a.Period))
+      .slice(0, 10)
+      .map(mapHouseRecord);
 
     return NextResponse.json({
       muniCode,
       muniName,
-      condos: { count: condos.length, avgUnitPrice },
-      houses: { count: houses.length, avgPrice: avgHousePrice },
+      condos: { count: condos.length, avgUnitPrice, avgPrice, avgArea, eraStats },
+      houses: { count: housesForStats.length, avgPrice: avgHousePrice, avgPerSqm: avgHousePerSqm, records: houseRecords, filtered: houseFiltered },
       records,
     });
   } catch (e) {

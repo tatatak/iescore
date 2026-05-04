@@ -2800,8 +2800,12 @@ function getChecklistUrl(linkType, name, buildingAddress) {
   if (linkType === 'homes')     return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
   if (linkType === 'suumo')     return `https://suumo.jp/library/search/ichiran.html?qr=${encodeURIComponent(kwAddr)}`;
   if (linkType === 'athome')    return `https://www.athome.co.jp/bldg-library/bldname_search/${encodeURIComponent(kw)}/`;
-  if (linkType === 'mogecheck') return 'https://mogecheck.jp/';
-  if (linkType === 'sakura')    return 'https://www.sakurajimusyo.com/inspect/';
+  if (linkType === 'mogecheck')   return 'https://mogecheck.jp/';
+  if (linkType === 'sakura')      return 'https://www.sakurajimusyo.com/inspect/';
+  if (linkType === 'kazukuri')    return 'https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YRHE';
+  if (linkType === 'kufuieta')    return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5YJRM';
+  if (linkType === 'nurikae')     return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5YJRM';
+  if (linkType === 'reform_pro')  return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+1SBLE+46CI+5YRHE';
   return null;
 }
 
@@ -2842,6 +2846,23 @@ const CHECKLIST = [
       { id: 'boundary',    label: '土地の境界が確定している',            note: '未確定なら売主負担での確定を交渉' },
       { id: 'private_road',label: '私道負担・通行権を確認した',          note: '私道に面する場合は持分・掘削権に注意' },
       { id: 'floor_area',  label: '建ぺい率・容積率を確認した',          note: '将来の増改築の可能性に影響する' },
+    ],
+  },
+  {
+    category: '建築会社・HMを選ぶ',
+    icon: '🏗',
+    tag: '戸建て向け',
+    items: [
+      { id: 'kazukuri', label: '家づくり相談所でハウスメーカー・工務店を相談した', note: '全国1,000社以上から無料でコーディネート。注文住宅・建売・土地探しに', linkType: 'kazukuri', linkLabel: '家づくり相談所', linkCls: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
+      { id: 'kufuieta', label: 'くふうイエタテカウンターで家づくりを無料相談した', note: '注文住宅・リフォーム・リノベを一括相談。専任アドバイザーが無料サポート', linkType: 'kufuieta', linkLabel: 'くふうイエタテ', linkCls: 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100' },
+    ],
+  },
+  {
+    category: 'リフォームを検討する',
+    icon: '🔨',
+    items: [
+      { id: 'nurikae',    label: 'ヌリカエで外壁塗装・屋根塗装の相場を確認した',   note: '優良業者を無料紹介。外壁・屋根の塗装相場をまとめて比較できる', linkType: 'nurikae',    linkLabel: 'ヌリカエ',       linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
+      { id: 'reform_pro', label: 'リフォーム比較プロで見積もりを比較した',         note: '全国の優良リフォーム会社に無料一括見積もり。老舗の比較サイト',    linkType: 'reform_pro', linkLabel: 'リフォーム比較プロ', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
     ],
   },
   {
