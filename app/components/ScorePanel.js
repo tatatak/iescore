@@ -2858,11 +2858,18 @@ const CHECKLIST = [
     ],
   },
   {
+    category: '外壁・屋根塗装を比較する',
+    icon: '🏚️',
+    tag: '戸建て向け',
+    items: [
+      { id: 'nurikae', label: 'ヌリカエで外壁塗装・屋根塗装の相場を確認した', note: '優良業者を無料紹介。外壁・屋根の塗装相場をまとめて比較できる', linkType: 'nurikae', linkLabel: 'ヌリカエ', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
+    ],
+  },
+  {
     category: 'リフォームを検討する',
     icon: '🔨',
     items: [
-      { id: 'nurikae',    label: 'ヌリカエで外壁塗装・屋根塗装の相場を確認した',   note: '優良業者を無料紹介。外壁・屋根の塗装相場をまとめて比較できる', linkType: 'nurikae',    linkLabel: 'ヌリカエ',       linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
-      { id: 'reform_pro', label: 'リフォーム比較プロで見積もりを比較した',         note: '全国の優良リフォーム会社に無料一括見積もり。老舗の比較サイト',    linkType: 'reform_pro', linkLabel: 'リフォーム比較プロ', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
+      { id: 'reform_pro', label: 'リフォーム比較プロで見積もりを比較した', note: '全国の優良リフォーム会社に無料一括見積もり。老舗の比較サイト', linkType: 'reform_pro', linkLabel: 'リフォーム比較プロ', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
     ],
   },
   {
