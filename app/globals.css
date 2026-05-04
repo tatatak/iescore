@@ -64,5 +64,12 @@ body {
   50%       { transform: scale(1.8); opacity: 0.05; }
 }
 
+/* iOS Safari 自動ズーム防止: font-size < 16px の input にフォーカスするとズームする */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* ===== 印刷（PDF出力）スタイル ===== */
 /* 印刷は新ウィンドウ方式のため、このファイルの print スタイルは使用しない */
