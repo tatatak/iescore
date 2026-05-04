@@ -2801,6 +2801,7 @@ function getChecklistUrl(linkType, name, buildingAddress) {
   if (linkType === 'suumo')     return `https://suumo.jp/library/search/ichiran.html?qr=${encodeURIComponent(kwAddr)}`;
   if (linkType === 'athome')    return `https://www.athome.co.jp/bldg-library/bldname_search/${encodeURIComponent(kw)}/`;
   if (linkType === 'mogecheck') return 'https://mogecheck.jp/';
+  if (linkType === 'sakura')    return 'https://www.sakurajimusyo.com/inspect/';
   return null;
 }
 
@@ -2837,7 +2838,7 @@ const CHECKLIST = [
     icon: '🏡',
     tag: '戸建て向け',
     items: [
-      { id: 'inspection',  label: 'インスペクション（建物診断）を確認した', note: '専門家による建物状況調査報告書を入手。特に築年数が古い場合は必須' },
+      { id: 'inspection',  label: 'インスペクション（建物診断）を依頼した', note: '専門家による建物状況調査。特に中古戸建ては必須。さくら事務所が業界最大手', linkType: 'sakura', linkLabel: 'さくら事務所', linkCls: 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100' },
       { id: 'boundary',    label: '土地の境界が確定している',            note: '未確定なら売主負担での確定を交渉' },
       { id: 'private_road',label: '私道負担・通行権を確認した',          note: '私道に面する場合は持分・掘削権に注意' },
       { id: 'floor_area',  label: '建ぺい率・容積率を確認した',          note: '将来の増改築の可能性に影響する' },
