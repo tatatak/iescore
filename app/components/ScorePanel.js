@@ -2797,9 +2797,10 @@ function getChecklistUrl(linkType, name, buildingAddress) {
     : '';
   const kw = name || '';
   const kwAddr = stripped ? `${kw} ${stripped}` : kw;
-  if (linkType === 'homes')  return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
-  if (linkType === 'suumo')  return `https://suumo.jp/library/search/ichiran.html?qr=${encodeURIComponent(kwAddr)}`;
-  if (linkType === 'athome') return `https://www.athome.co.jp/bldg-library/bldname_search/${encodeURIComponent(kw)}/`;
+  if (linkType === 'homes')     return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
+  if (linkType === 'suumo')     return `https://suumo.jp/library/search/ichiran.html?qr=${encodeURIComponent(kwAddr)}`;
+  if (linkType === 'athome')    return `https://www.athome.co.jp/bldg-library/bldname_search/${encodeURIComponent(kw)}/`;
+  if (linkType === 'mogecheck') return 'https://mogecheck.jp/';
   return null;
 }
 
@@ -2812,6 +2813,13 @@ const CHECKLIST = [
       { id: 'check_homes',  label: 'HOMESで築年・管理費・修繕積立金を確認した',   note: '築年・管理費・修繕積立金・売出価格の相場確認に', linkType: 'homes',  linkLabel: 'HOMES', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
       { id: 'check_suumo',  label: 'SUUMOで売出価格・掲載履歴を確認した',         note: '値下げ履歴・掲載期間・類似物件の価格比較に',  linkType: 'suumo',  linkLabel: 'SUUMO', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
       { id: 'check_athome', label: 'アットホームで物件情報を確認した',             note: '他ポータルとの価格差・掲載情報の比較に',      linkType: 'athome', linkLabel: 'athome', linkCls: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' },
+    ],
+  },
+  {
+    category: '住宅ローンを比較する',
+    icon: '🏦',
+    items: [
+      { id: 'check_mogecheck', label: 'モゲチェックで金利・借入条件を比較した', note: '複数銀行の金利を一括比較。無料で利用可能', linkType: 'mogecheck', linkLabel: 'モゲチェック', linkCls: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
     ],
   },
   {
