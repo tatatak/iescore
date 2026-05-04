@@ -223,7 +223,8 @@ export default function Home() {
           {/* マンション選択時の底部バー */}
           {selectedPin && (
             <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-xl z-30 px-4 pt-3 pb-4">
-              <div className="flex items-start justify-between mb-2.5">
+              {/* PCのみ: マンション名・住所を表示 */}
+              <div className="hidden md:flex items-start justify-between mb-2.5">
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">選択中のマンション</p>
                   <p className="font-bold text-gray-900 text-sm truncate">🏢 {selectedPin.name}</p>
@@ -236,7 +237,7 @@ export default function Home() {
                   className="text-gray-400 hover:text-gray-600 text-xl shrink-0 ml-3 leading-none"
                 >✕</button>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 {[
                   { href: (() => {
                     const s = selectedPin.address
@@ -259,6 +260,11 @@ export default function Home() {
                     {label}
                   </a>
                 ))}
+                {/* スマホ用 ✕ */}
+                <button
+                  onClick={() => setSelectedPin(null)}
+                  className="md:hidden shrink-0 text-gray-400 hover:text-gray-600 text-lg leading-none px-1"
+                >✕</button>
               </div>
             </div>
           )}
