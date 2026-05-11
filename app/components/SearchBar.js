@@ -137,6 +137,7 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
     const item = { lng, lat, name: displayName, featureType };
     clearTimeout(timerRef.current); // 進行中タイマーをキャンセル
     justSelectedRef.current = true;
+    setTimeout(() => { justSelectedRef.current = false; }, 600); // 後続入力に備えてリセット
     onSelect(item);
     saveToHistory(item);
     setHistory(loadHistory());
@@ -147,6 +148,7 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
   const handleHistorySelect = (item) => {
     clearTimeout(timerRef.current); // 進行中タイマーをキャンセル
     justSelectedRef.current = true;
+    setTimeout(() => { justSelectedRef.current = false; }, 600);
     onSelect(item);
     saveToHistory(item);
     setHistory(loadHistory());
@@ -176,6 +178,13 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
           if (!query) {
             setIsOpen(true);
           } else if (query.length >= 2 && !justSelectedRef.current) {
+            search(query);
+          }
+        }}
+        onClick={() => {
+          // すでにフォーカス済みの状態でクリックしたとき（onFocusは発火しない）
+          if (query.length >= 2 && !isOpen) {
+            justSelectedRef.current = false;
             search(query);
           }
         }}
