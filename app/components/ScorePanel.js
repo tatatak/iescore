@@ -4142,8 +4142,13 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   }, [popData?.muniCode]);
 
   // 建物名（住所レベル検索時のみ OSM から取得）
+  // ②で明示的に選択した場合は skipBuildingSearch=true が付くため、その名前を優先する
   useEffect(() => {
     if (!location || location.featureType !== 'address') return;
+    if (location.skipBuildingSearch) {
+      setBuildingName(location.name);
+      return;
+    }
     fetch(`/api/buildings?lng=${location.lng}&lat=${location.lat}`)
       .then(r => r.json())
       .then(d => {
