@@ -15,15 +15,22 @@ function saveToHistory(item) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
 }
 
+function googleTypesToFeatureType(types = []) {
+  if (types.some(t => ['street_address', 'premise', 'subpremise'].includes(t))) return 'address';
+  return 'neighborhood';
+}
+
 // ① 住所・エリア検索フォーム
 export default function SearchBar({ onSelect, externalQuery, proximity }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [history, setHistory] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   const timerRef = useRef(null);
   const inputRef = useRef(null);
-  const justSelectedRef = useRef(false); // 選択直後フラグ（フォーカス再検索を抑制）
+  const sessionTokenRef = useRef(null);
+  const justSelectedRef = useRef(false);
 
   const scrollToEnd = () => {
     const el = inputRef.current;
@@ -43,44 +50,17 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
 
   const search = async (q) => {
     if (!q || q.length < 2) { setResults([]); return; }
-    // 選択直後フラグが立っていれば検索しない（タイマー遅延・非同期レース対策）
     if (justSelectedRef.current) return;
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    const prox = proximity ? `&proximity=${proximity.lng},${proximity.lat}` : '';
-    const mapboxUrl = `https://api.mapbox.com/search/searchbox/v1/forward?q=${encodeURIComponent(q)}&access_token=${token}&language=ja&country=jp&limit=6&types=address,place,locality,neighborhood,district${prox}`;
-    const gsiUrl = `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`;
-
+    if (!sessionTokenRef.current) {
+      sessionTokenRef.current = crypto.randomUUID();
+    }
     try {
-      const [mapboxRes, gsiRes] = await Promise.allSettled([fetch(mapboxUrl), fetch(gsiUrl)]);
-
-      // API応答が返ってきた時点で再チェック（非同期レース対策）
+      const res = await fetch(
+        `/api/places-autocomplete?input=${encodeURIComponent(q)}&sessiontoken=${sessionTokenRef.current}`
+      );
       if (justSelectedRef.current) return;
-
-      const mapboxFeatures = mapboxRes.status === 'fulfilled'
-        ? ((await mapboxRes.value.json()).features || [])
-        : [];
-
-      // 国土地理院の結果をMapbox形式に変換して補完
-      let gsiFeatures = [];
-      if (gsiRes.status === 'fulfilled') {
-        const gsiData = await gsiRes.value.json().catch(() => []);
-        const mapboxNames = new Set(mapboxFeatures.map(f => f.properties.name_preferred || f.properties.name));
-        gsiFeatures = (Array.isArray(gsiData) ? gsiData : [])
-          .slice(0, 4)
-          .filter(f => f.geometry?.coordinates && !mapboxNames.has(f.properties?.title))
-          .map((f, i) => ({
-            geometry: { coordinates: f.geometry.coordinates },
-            properties: {
-              name: f.properties.title,
-              name_preferred: f.properties.title,
-              place_formatted: '国土地理院',
-              feature_type: 'address',
-              mapbox_id: `gsi_${i}_${q}`,
-            },
-          }));
-      }
-
-      setResults([...mapboxFeatures, ...gsiFeatures]);
+      const data = await res.json();
+      setResults(data.predictions || []);
       setIsOpen(true);
     } catch (e) {
       console.error(e);
@@ -89,7 +69,7 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
 
   const handleChange = (e) => {
     const val = e.target.value;
-    justSelectedRef.current = false; // 再入力で選択直後フラグをリセット
+    justSelectedRef.current = false;
     setQuery(val);
     clearTimeout(timerRef.current);
     if (!val) {
@@ -100,53 +80,43 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
     timerRef.current = setTimeout(() => search(val), 300);
   };
 
-  const handleSelect = (feature) => {
-    const [lng, lat] = feature.geometry.coordinates;
-    const name = feature.properties.name_preferred || feature.properties.name;
-    const featureType = feature.properties.feature_type || 'address';
-    const isArea = featureType && !['address', 'poi', 'street'].includes(featureType);
+  const handleSelect = async (prediction) => {
+    const mainText = prediction.structured_formatting?.main_text || prediction.description;
+    const displayName = (prediction.description || mainText).replace(/,?\s*日本$/, '');
+    const placeId = prediction.place_id;
+    const sessionToken = sessionTokenRef.current;
+    sessionTokenRef.current = null;
 
-    // エリア選択時: 市区名を先頭に付与して曖昧さを排除
-    // 例: "二階堂" → "鎌倉市二階堂"
-    let displayName = name;
-    if (isArea) {
-      const ctx = feature.properties.context || {};
-      // ① Mapbox v6 context から市区名取得
-      let city = ctx.locality?.name || ctx.place?.name || '';
-
-      // ② place_formatted の先頭（ASCII・全角カンマ両対応）
-      if (!city || name.includes(city)) {
-        const pf = (feature.properties.place_formatted || '').split(/[,、]/)[0]?.trim() || '';
-        if (pf && /[市区郡町村]$/.test(pf) && !name.includes(pf)) city = pf;
-      }
-
-      // ③ 現在の検索クエリが市区名なら最終手段として使用
-      if (!city || name.includes(city)) {
-        const q = query.trim();
-        if (q.endsWith(name) && q.length > name.length) {
-          // クエリが既に "東京都港区" → name="港区" のような形 → クエリをそのまま使う
-          displayName = q;
-        } else if (/^.+[市区郡町村]$/.test(q) && !name.includes(q)) {
-          city = q;
-        }
-      }
-
-      if (city && !name.includes(city)) displayName = `${city}${name}`;
-    }
-
-    const item = { lng, lat, name: displayName, featureType };
-    clearTimeout(timerRef.current); // 進行中タイマーをキャンセル
+    clearTimeout(timerRef.current);
     justSelectedRef.current = true;
-    setTimeout(() => { justSelectedRef.current = false; }, 600); // 後続入力に備えてリセット
-    onSelect(item);
-    saveToHistory(item);
-    setHistory(loadHistory());
+    setTimeout(() => { justSelectedRef.current = false; }, 600);
     setQuery(displayName);
     setIsOpen(false);
+    setSelecting(true);
+
+    try {
+      const res = await fetch(
+        `/api/places-details?placeId=${placeId}&sessiontoken=${sessionToken || ''}`
+      );
+      const data = await res.json();
+      if (data.status !== 'OK' || !data.result?.geometry) return;
+
+      const { lat, lng } = data.result.geometry.location;
+      const types = data.result.types || [];
+      const featureType = googleTypesToFeatureType(types);
+      const item = { lng, lat, name: displayName, featureType };
+      onSelect(item);
+      saveToHistory(item);
+      setHistory(loadHistory());
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSelecting(false);
+    }
   };
 
   const handleHistorySelect = (item) => {
-    clearTimeout(timerRef.current); // 進行中タイマーをキャンセル
+    clearTimeout(timerRef.current);
     justSelectedRef.current = true;
     setTimeout(() => { justSelectedRef.current = false; }, 600);
     onSelect(item);
@@ -182,7 +152,6 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
           }
         }}
         onClick={() => {
-          // すでにフォーカス済みの状態でクリックしたとき（onFocusは発火しない）
           if (query.length >= 2 && !isOpen) {
             justSelectedRef.current = false;
             search(query);
@@ -190,8 +159,13 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
         }}
         onBlur={() => setTimeout(() => setIsOpen(false), 150)}
         placeholder="① 住所を入力しよう"
-        className="w-full px-4 py-1.5 text-sm border border-gray-300 rounded-full focus:outline-none focus:border-blue-500"
+        className={`w-full px-4 py-1.5 text-sm border border-gray-300 rounded-full focus:outline-none focus:border-blue-500 ${selecting ? 'opacity-60' : ''}`}
       />
+      {selecting && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
 
       {showHistory && (
         <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[70] overflow-hidden">
@@ -219,16 +193,18 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
 
       {showResults && (
         <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[70] overflow-hidden">
-          {results.map((f) => (
+          {results.map((p) => (
             <li
-              key={f.properties?.mapbox_id || f.id || f.properties?.name}
-              onMouseDown={() => handleSelect(f)}
+              key={p.place_id}
+              onMouseDown={() => handleSelect(p)}
               className="px-4 py-2 text-sm cursor-pointer hover:bg-blue-50"
             >
               <p className="font-medium text-gray-800">
-                {f.properties.name_preferred || f.properties.name}
+                {p.structured_formatting?.main_text || p.description}
               </p>
-              <p className="text-xs text-gray-400">{f.properties.place_formatted || f.properties.full_address}</p>
+              {p.structured_formatting?.secondary_text && (
+                <p className="text-xs text-gray-400">{p.structured_formatting.secondary_text}</p>
+              )}
             </li>
           ))}
         </ul>
