@@ -15,6 +15,15 @@ function saveToHistory(item) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
 }
 
+function cleanJapanPrefix(str = '') {
+  return str.replace(/^日本[、,]\s*/, '').replace(/[、,]\s*日本$/, '');
+}
+
+function googleTypesToFeatureType(types = []) {
+  if (types.some(t => ['street_address', 'premise', 'subpremise'].includes(t))) return 'address';
+  return 'neighborhood';
+}
+
 // ① 住所・エリア検索フォーム
 export default function SearchBar({ onSelect, externalQuery, proximity }) {
   const [query, setQuery] = useState('');
@@ -24,6 +33,7 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
   const timerRef = useRef(null);
   const inputRef = useRef(null);
   const justSelectedRef = useRef(false);
+  const sessionTokenRef = useRef(null);
 
   const scrollToEnd = () => {
     const el = inputRef.current;
@@ -44,41 +54,21 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
   const search = async (q) => {
     if (!q || q.length < 2) { setResults([]); return; }
     if (justSelectedRef.current) return;
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    const prox = proximity ? `&proximity=${proximity.lng},${proximity.lat}` : '';
-    const mapboxUrl = `https://api.mapbox.com/search/searchbox/v1/forward?q=${encodeURIComponent(q)}&access_token=${token}&language=ja&country=jp&limit=6&types=address,place,locality,neighborhood,district${prox}`;
-    const gsiUrl = `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`;
+
+    if (!sessionTokenRef.current) sessionTokenRef.current = crypto.randomUUID();
 
     try {
-      const [mapboxRes, gsiRes] = await Promise.allSettled([fetch(mapboxUrl), fetch(gsiUrl)]);
-
+      const res = await fetch(
+        `/api/places-autocomplete?input=${encodeURIComponent(q)}&sessiontoken=${sessionTokenRef.current}`
+      );
       if (justSelectedRef.current) return;
-
-      const mapboxFeatures = mapboxRes.status === 'fulfilled'
-        ? ((await mapboxRes.value.json()).features || [])
-        : [];
-
-      let gsiFeatures = [];
-      if (gsiRes.status === 'fulfilled') {
-        const gsiData = await gsiRes.value.json().catch(() => []);
-        const mapboxNames = new Set(mapboxFeatures.map(f => f.properties.name_preferred || f.properties.name));
-        gsiFeatures = (Array.isArray(gsiData) ? gsiData : [])
-          .slice(0, 4)
-          .filter(f => f.geometry?.coordinates && !mapboxNames.has(f.properties?.title))
-          .map((f, i) => ({
-            geometry: { coordinates: f.geometry.coordinates },
-            properties: {
-              name: f.properties.title,
-              name_preferred: f.properties.title,
-              place_formatted: '国土地理院',
-              feature_type: 'address',
-              mapbox_id: `gsi_${i}_${q}`,
-            },
-          }));
+      const data = await res.json();
+      if (data.predictions && data.predictions.length > 0) {
+        setResults(data.predictions);
+        setIsOpen(true);
+      } else {
+        setResults([]);
       }
-
-      setResults([...mapboxFeatures, ...gsiFeatures]);
-      setIsOpen(true);
     } catch (e) {
       console.error(e);
     }
@@ -97,43 +87,37 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
     timerRef.current = setTimeout(() => search(val), 300);
   };
 
-  const handleSelect = (feature) => {
-    const [lng, lat] = feature.geometry.coordinates;
-    const name = feature.properties.name_preferred || feature.properties.name;
-    const featureType = feature.properties.feature_type || 'address';
-    const isArea = featureType && !['address', 'poi', 'street'].includes(featureType);
+  const handleSelect = async (prediction) => {
+    const mainText = prediction.structured_formatting?.main_text || prediction.description;
+    const rawDescription = prediction.description || mainText;
+    const displayName = cleanJapanPrefix(rawDescription);
 
-    let displayName = name;
-    if (isArea) {
-      const ctx = feature.properties.context || {};
-      let city = ctx.locality?.name || ctx.place?.name || '';
-
-      if (!city || name.includes(city)) {
-        const pf = (feature.properties.place_formatted || '').split(/[,、]/)[0]?.trim() || '';
-        if (pf && /[市区郡町村]$/.test(pf) && !name.includes(pf)) city = pf;
-      }
-
-      if (!city || name.includes(city)) {
-        const q = query.trim();
-        if (q.endsWith(name) && q.length > name.length) {
-          displayName = q;
-        } else if (/^.+[市区郡町村]$/.test(q) && !name.includes(q)) {
-          city = q;
-        }
-      }
-
-      if (city && !name.includes(city)) displayName = `${city}${name}`;
-    }
-
-    const item = { lng, lat, name: displayName, featureType };
     clearTimeout(timerRef.current);
     justSelectedRef.current = true;
-    setTimeout(() => { justSelectedRef.current = false; }, 600);
-    onSelect(item);
-    saveToHistory(item);
-    setHistory(loadHistory());
     setQuery(displayName);
     setIsOpen(false);
+
+    const usedToken = sessionTokenRef.current;
+    sessionTokenRef.current = null;
+    setTimeout(() => { justSelectedRef.current = false; }, 600);
+
+    try {
+      const res = await fetch(
+        `/api/places-details?placeId=${prediction.place_id}&sessiontoken=${usedToken || ''}`
+      );
+      const data = await res.json();
+      if (data.result?.geometry?.location) {
+        const { lat, lng } = data.result.geometry.location;
+        const types = data.result.types || [];
+        const featureType = googleTypesToFeatureType(types);
+        const item = { lat, lng, name: displayName, featureType };
+        onSelect(item);
+        saveToHistory(item);
+        setHistory(loadHistory());
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleHistorySelect = (item) => {
@@ -209,16 +193,18 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
 
       {showResults && (
         <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[70] overflow-hidden">
-          {results.map((f) => (
+          {results.map((p) => (
             <li
-              key={f.properties?.mapbox_id || f.id || f.properties?.name}
-              onMouseDown={() => handleSelect(f)}
+              key={p.place_id}
+              onMouseDown={() => handleSelect(p)}
               className="px-4 py-2 text-sm cursor-pointer hover:bg-blue-50"
             >
               <p className="font-medium text-gray-800">
-                {f.properties.name_preferred || f.properties.name}
+                {p.structured_formatting?.main_text || p.description}
               </p>
-              <p className="text-xs text-gray-400">{f.properties.place_formatted || f.properties.full_address}</p>
+              <p className="text-xs text-gray-400">
+                {cleanJapanPrefix(p.structured_formatting?.secondary_text || '')}
+              </p>
             </li>
           ))}
         </ul>
