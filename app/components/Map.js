@@ -6,6 +6,14 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const HAZARD_LAYERS = [
   {
     id: 'flood',
@@ -39,23 +47,33 @@ const ISO_CONTOURS = [
   { minutes:  5, color: '#22c55e', fillOpacity: 0.2  },
 ];
 
-export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, onBuildingsLoaded, selectedPin, propertyType }) {
+export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, onBuildingsLoaded, selectedPin, propertyType, onConvenienceData, highlightTarget, onNoiseData }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
+  const mapStyleLoadedRef = useRef(false);
   const flyToRef = useRef(null);
+  const areaNameRef = useRef(''); // エリア検索時の地名（建物選択では更新しない）
   const activeLayersRef = useRef(activeLayers);
   const prevActiveLayersRef = useRef({});
   const poiMarkersRef = useRef([]);
   const onMapClickRef = useRef(onMapClick);
   const onBuildingsLoadedRef = useRef(onBuildingsLoaded);
+  const onConvenienceDataRef = useRef(onConvenienceData);
+  const onNoiseDataRef = useRef(onNoiseData);
+  const mapConvCleanupRef = useRef(null);
+  const noiseIdleCleanupRef = useRef(null);
   const lastBuildingsRef = useRef([]);
   const selectedPinMarkerRef = useRef(null);
   const locationMarkerRef = useRef(null);
+  const highlightedMarkerRef = useRef(null);
+  const savedZoomRef = useRef(null);
   const [loadingPOI, setLoadingPOI] = useState(null);
 
   useEffect(() => { activeLayersRef.current = activeLayers; }, [activeLayers]);
   useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
   useEffect(() => { onBuildingsLoadedRef.current = onBuildingsLoaded; }, [onBuildingsLoaded]);
+  useEffect(() => { onConvenienceDataRef.current = onConvenienceData; }, [onConvenienceData]);
+  useEffect(() => { onNoiseDataRef.current = onNoiseData; }, [onNoiseData]);
 
   // 地図初期化
   useEffect(() => {
@@ -67,6 +85,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
       center: [139.6917, 35.6895],
       zoom: 13,
       language: 'ja',
+      customAttribution: '国土数値情報（国土交通省）・国土地理院・防災科研J-SHIS',
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -112,6 +131,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     });
 
     map.current.on('load', () => {
+      mapStyleLoadedRef.current = true;
       HAZARD_LAYERS.forEach(({ id, tiles }) => {
         tiles.forEach((tileUrl, i) => {
           const sourceId = `${id}-source-${i}`;
@@ -167,10 +187,26 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
   // flyTo
   useEffect(() => {
     if (!flyTo || !map.current) return;
+
+    // 前回の idle リスナーをキャンセル
+    if (mapConvCleanupRef.current) {
+      mapConvCleanupRef.current();
+      mapConvCleanupRef.current = null;
+    }
+
     flyToRef.current = flyTo;
-    if (!flyTo.skipBuildingSearch) lastBuildingsRef.current = [];
+    // 場所が変わったのでPOIキャッシュを全破棄
+    poiMarkersRef.current.forEach(m => m.remove());
+    poiMarkersRef.current = [];
+    if (!flyTo.skipBuildingSearch) {
+      lastBuildingsRef.current = [];
+      areaNameRef.current = flyTo.name || '';
+    }
     const isArea = flyTo.featureType && !['address', 'poi'].includes(flyTo.featureType);
-    map.current.flyTo({ center: [flyTo.lng, flyTo.lat], zoom: isArea ? 14 : 17, essential: true });
+    map.current.flyTo({ center: [flyTo.lng, flyTo.lat], zoom: 17, essential: true });
+
+    // Overpass で全POIカウントを取得（タイル読み込みと無関係に即時実行）
+    fetchAllCountsFromOverpass(flyTo.lng, flyTo.lat);
 
     // ロケーションピン（住所・エリア検索時）
     if (locationMarkerRef.current) {
@@ -204,11 +240,25 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
         .setLngLat([flyTo.lng, flyTo.lat])
         .addTo(map.current);
     }
+    if (isArea) {
+      fetchAndDrawBoundary(flyTo.name);
+    } else {
+      clearBoundary();
+    }
     if (activeLayersRef.current.isochrone) fetchIsochrone(flyTo.lng, flyTo.lat);
     // マンションモードのみ建物を取得（ドロップダウン用）、マーカーはチェックボックス状態に従う
     // skipBuildingSearch=true はマンション選択時のフライトなので建物リストを再取得しない
     if (propertyType !== 'house' && !flyTo.skipBuildingSearch) fetchBuildings(flyTo, activeLayersRef.current.buildings);
-    ['supermarket', 'station', 'medical', 'kindergarten', 'school', 'busstop', 'reform'].forEach(type => {
+
+    // 騒音解析：タイル読み込み完了後に実行
+    if (noiseIdleCleanupRef.current) { noiseIdleCleanupRef.current(); noiseIdleCleanupRef.current = null; }
+    clearNoiseHighlights();
+    onNoiseDataRef.current?.(null);
+    const noiseHandler = () => { analyzeNoise(flyTo.lng, flyTo.lat); };
+    map.current.once('idle', noiseHandler);
+    noiseIdleCleanupRef.current = () => map.current?.off('idle', noiseHandler);
+
+    ['supermarket', 'konbini', 'station', 'medical', 'kindergarten', 'school', 'busstop', 'reform'].forEach(type => {
       if (activeLayersRef.current[type]) fetchPOI(type, flyTo.lng, flyTo.lat);
     });
   }, [flyTo]);
@@ -217,8 +267,8 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
   useEffect(() => {
     if (!map.current) return;
 
-    // ハザードレイヤーはスタイルロード後のみ操作可（タイルロード中はスキップ）
-    if (map.current.isStyleLoaded()) {
+    // ハザードレイヤーはスタイルロード後のみ操作可
+    if (mapStyleLoadedRef.current) {
       HAZARD_LAYERS.forEach(({ id, tiles }) => {
         tiles.forEach((_, i) => {
           const layerId = `${id}-layer-${i}`;
@@ -233,20 +283,22 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     if (activeLayers.isochrone !== prev.isochrone) {
       if (activeLayers.isochrone) {
         if (flyToRef.current) fetchIsochrone(flyToRef.current.lng, flyToRef.current.lat);
-        map.current.easeTo({ zoom: 15, essential: true });
+        const isMobile = window.innerWidth < 768;
+        map.current.easeTo({ zoom: isMobile ? 13 : 15, essential: true });
       } else {
         setIsochroneVisibility('none');
       }
     }
 
-    ['supermarket', 'station', 'medical', 'kindergarten', 'school', 'busstop', 'reform'].forEach(type => {
+    ['supermarket', 'konbini', 'station', 'medical', 'kindergarten', 'school', 'busstop', 'reform'].forEach(type => {
       if (activeLayers[type] === prev[type]) return;
       if (activeLayers[type]) {
-        if (flyToRef.current) fetchPOI(type, flyToRef.current.lng, flyToRef.current.lat);
+        if (!showCachedPOIMarkers(type) && flyToRef.current) fetchPOI(type, flyToRef.current.lng, flyToRef.current.lat);
       } else {
-        clearPOIMarkers(type);
+        hidePOIMarkers(type);
       }
     });
+
 
     // buildings: チェックON → キャッシュ済みリストからマーカー追加（再フェッチしない）
     if (activeLayers.buildings !== prev.buildings) {
@@ -261,8 +313,122 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
       }
     }
 
+    if (activeLayers.noise !== prev.noise) {
+      if (activeLayers.noise) drawNoiseHighlights();
+      else clearNoiseHighlights();
+    }
+
     prevActiveLayersRef.current = activeLayers;
   }, [activeLayers]);
+
+  const noiseGeomRef = useRef(null); // { features: [...] }
+
+  const clearNoiseHighlights = () => {
+    if (!map.current) return;
+    ['noise-hl-glow3','noise-hl-glow2','noise-hl-glow1','noise-hl-core'].forEach(id => {
+      if (map.current.getLayer(id)) map.current.removeLayer(id);
+    });
+    if (map.current.getSource('noise-hl')) map.current.removeSource('noise-hl');
+  };
+
+  const drawNoiseHighlights = () => {
+    if (!map.current || !mapStyleLoadedRef.current || !noiseGeomRef.current) return;
+    clearNoiseHighlights();
+    map.current.addSource('noise-hl', { type: 'geojson', data: noiseGeomRef.current });
+    // 外側から内側へ重ねてグロー表現（音が広がるイメージ）
+    map.current.addLayer({ id: 'noise-hl-glow3', type: 'line', source: 'noise-hl',
+      paint: { 'line-color': ['get', 'color'], 'line-width': 400, 'line-opacity': 0.015, 'line-blur': 120 } });
+    map.current.addLayer({ id: 'noise-hl-glow2', type: 'line', source: 'noise-hl',
+      paint: { 'line-color': ['get', 'color'], 'line-width': 180, 'line-opacity': 0.05, 'line-blur': 50 } });
+    map.current.addLayer({ id: 'noise-hl-glow1', type: 'line', source: 'noise-hl',
+      paint: { 'line-color': ['get', 'color'], 'line-width': 60, 'line-opacity': 0.14, 'line-blur': 16 } });
+    map.current.addLayer({ id: 'noise-hl-core', type: 'line', source: 'noise-hl',
+      paint: { 'line-color': ['get', 'color'], 'line-width': 4, 'line-opacity': 0.90 } });
+  };
+
+  const analyzeNoise = (lng, lat) => {
+    if (!map.current || !mapStyleLoadedRef.current) return;
+    const center = map.current.project([lng, lat]);
+    const R = 450;
+    const bbox = [[center.x - R, center.y - R], [center.x + R, center.y + R]];
+    const features = map.current.queryRenderedFeatures(bbox);
+
+    let nearestRailM = Infinity, nearestRailName = null, nearestRailFeature = null;
+    let nearestRoadM = Infinity, nearestRoadClass = null, nearestRoadFeature = null;
+    const MAJOR_ROAD = new Set(['motorway', 'trunk', 'primary', 'secondary']);
+
+    for (const f of features) {
+      const cls = f.properties?.class;
+      const layerId = f.layer?.id || '';
+      const isRail = cls === 'rail' || layerId.includes('rail');
+      const isMajorRoad = MAJOR_ROAD.has(cls);
+      if (!isRail && !isMajorRoad) continue;
+      const geo = f.geometry;
+      if (!geo) continue;
+      const lines = geo.type === 'LineString' ? [geo.coordinates]
+                  : geo.type === 'MultiLineString' ? geo.coordinates : [];
+      for (const line of lines) {
+        for (const [clng, clat] of line) {
+          const d = haversineM(lat, lng, clat, clng);
+          if (isRail && d < nearestRailM) {
+            nearestRailM = d; nearestRailName = f.properties?.name_ja || f.properties?.name || null;
+            nearestRailFeature = f;
+          }
+          if (isMajorRoad && d < nearestRoadM) {
+            nearestRoadM = d; nearestRoadClass = cls; nearestRoadFeature = f;
+          }
+        }
+      }
+    }
+
+    // ジオメトリを建物中心から400m以内に切り抜く
+    // OSMフィーチャーは路線全体を持つため、そのまま描画すると視覚的中心が建物からずれる
+    const clipGeomToRadius = (geo, clat, clng, radiusM) => {
+      const clipLine = (coords) => {
+        let nearestIdx = 0, minD = Infinity;
+        coords.forEach(([cx, cy], i) => {
+          const d = haversineM(clat, clng, cy, cx);
+          if (d < minD) { minD = d; nearestIdx = i; }
+        });
+        let s = nearestIdx, e = nearestIdx;
+        while (s > 0 && haversineM(clat, clng, coords[s-1][1], coords[s-1][0]) < radiusM) s--;
+        while (e < coords.length - 1 && haversineM(clat, clng, coords[e+1][1], coords[e+1][0]) < radiusM) e++;
+        const seg = coords.slice(s, e + 1);
+        return seg.length >= 2 ? seg : null;
+      };
+      if (geo.type === 'LineString') {
+        const seg = clipLine(geo.coordinates);
+        return seg ? { type: 'LineString', coordinates: seg } : null;
+      }
+      if (geo.type === 'MultiLineString') {
+        const segs = geo.coordinates.map(clipLine).filter(Boolean);
+        return segs.length > 0 ? { type: 'MultiLineString', coordinates: segs } : null;
+      }
+      return geo;
+    };
+
+    const hlFeatures = [];
+    if (nearestRailFeature) {
+      const clipped = clipGeomToRadius(nearestRailFeature.geometry, lat, lng, 400);
+      if (clipped) hlFeatures.push({ type: 'Feature', geometry: clipped, properties: { color: '#dc2626' } });
+    }
+    if (nearestRoadFeature) {
+      const clipped = clipGeomToRadius(nearestRoadFeature.geometry, lat, lng, 400);
+      if (clipped) hlFeatures.push({ type: 'Feature', geometry: clipped, properties: { color: '#ea580c' } });
+    }
+    noiseGeomRef.current = hlFeatures.length > 0
+      ? { type: 'FeatureCollection', features: hlFeatures } : null;
+
+    // noise レイヤーがすでに ON なら即描画
+    if (activeLayersRef.current.noise) drawNoiseHighlights();
+
+    onNoiseDataRef.current?.({
+      railM: nearestRailM < Infinity ? Math.round(nearestRailM) : null,
+      railName: nearestRailName,
+      roadM: nearestRoadM < Infinity ? Math.round(nearestRoadM) : null,
+      roadClass: nearestRoadClass,
+    });
+  };
 
   const fetchIsochrone = async (lng, lat) => {
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -272,7 +438,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     try {
       const res = await fetch(url);
       const data = await res.json();
-      if (!map.current || !map.current.isStyleLoaded()) return;
+      if (!map.current || !mapStyleLoadedRef.current) return;
 
       if (map.current.getSource('iso-source')) {
         map.current.getSource('iso-source').setData(data);
@@ -302,26 +468,53 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     }
   };
 
+  // 検索クエリに付与する市区名（建物選択後も直前のエリア名を使う）
+  const getAreaHint = () => {
+    const name = areaNameRef.current || flyToRef.current?.name || '';
+    const m2 = name.match(/^(.+?市.+?区)/);
+    if (m2) return m2[1];
+    const m1 = name.match(/^(.+?[市区郡])/);
+    return m1 ? m1[1] : (name.length > 12 ? name.slice(0, 12) : name);
+  };
+
   const POI_CONFIG = {
     supermarket: {
       tags: ['shop=supermarket'],
       emoji: '🛒', color: '#16a34a', pulseColor: '#22c55e', label: 'スーパー', radius: 1500,
+      filter: (el) => {
+        const n = el.tags?.name || '';
+        return !['セブン', 'ローソン', 'ファミリ', 'ミニストップ', 'デイリー', 'セイコーマート', 'ポプラ', 'ニューデイズ', 'キオスク', 'コンビニ'].some(k => n.includes(k));
+      },
+    },
+    konbini: {
+      tags: ['shop=convenience'],
+      emoji: '🏪', color: '#7c3aed', pulseColor: '#a78bfa', label: 'コンビニ', radius: 1000,
     },
     station: {
       tags: ['railway=station', 'railway=tram_stop'],
       emoji: '🚉', color: '#1d4ed8', pulseColor: '#60a5fa', label: '駅', radius: 2000,
     },
     medical: {
-      tags: ['amenity=hospital', 'amenity=clinic', 'amenity=doctors'],
+      tags: ['amenity=hospital', 'amenity=clinic', 'amenity=doctors', 'amenity=dentist',
+             'healthcare=doctor', 'healthcare=clinic', 'healthcare=hospital', 'healthcare=dentist'],
       emoji: '🏥', color: '#dc2626', pulseColor: '#f87171', label: '医療機関', radius: 1500,
       popupBuilder: (el) => {
         const name = el.tags?.name || '医療機関';
         const amenity = el.tags?.amenity || '';
-        const typeLabel = amenity === 'hospital' ? '病院' : amenity === 'clinic' ? 'クリニック' : '診療所';
+        const hc = el.tags?.healthcare || '';
+        const typeLabel = el.tags?._typeLabel
+          || ((amenity === 'hospital' || hc === 'hospital') ? '病院'
+          : (amenity === 'dentist' || hc === 'dentist') ? '歯科'
+          : (amenity === 'clinic' || hc === 'clinic') ? 'クリニック'
+          : '診療所');
         const phone = el.tags?.phone || el.tags?.['contact:phone'] || el.tags?.['contact:mobile'] || '';
         const hours = el.tags?.opening_hours || '';
         const speciality = el.tags?.['healthcare:speciality'] || el.tags?.['medical_system:western'] || '';
-        const searchQ = encodeURIComponent(name);
+        const area = getAreaHint();
+        const searchQ = encodeURIComponent(area ? `${name} ${area}` : name);
+        const elLat = el.lat ?? el.center?.lat;
+        const elLon = el.lon ?? el.center?.lon;
+        const mapsQ = elLat && elLon ? `${elLat},${elLon}` : searchQ;
         return `
           <p style="font-size:12px;margin:0;font-weight:600">${name}</p>
           <p style="font-size:10px;margin:2px 0 0;color:#888">${typeLabel}${speciality ? ' · ' + speciality : ''}</p>
@@ -330,21 +523,29 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
           <div style="margin-top:6px;display:flex;gap:6px">
             <a href="https://www.google.com/search?q=${searchQ}" target="_blank" rel="noopener"
                style="font-size:10px;color:#2563eb;text-decoration:none;background:#eff6ff;padding:2px 7px;border-radius:4px">🔍 Web検索</a>
-            <a href="https://www.google.com/maps/search/${searchQ}" target="_blank" rel="noopener"
+            <a href="https://www.google.com/maps?q=${mapsQ}" target="_blank" rel="noopener"
                style="font-size:10px;color:#2563eb;text-decoration:none;background:#eff6ff;padding:2px 7px;border-radius:4px">📍 地図</a>
           </div>`;
       },
     },
     kindergarten: {
-      tags: ['amenity=kindergarten', 'amenity=childcare'],
+      customQuery: (r, lat, lng) =>
+        `[out:json][timeout:15];(` +
+        `node["amenity"="kindergarten"](around:${r},${lat},${lng});way["amenity"="kindergarten"](around:${r},${lat},${lng});` +
+        `node["amenity"="childcare"](around:${r},${lat},${lng});way["amenity"="childcare"](around:${r},${lat},${lng});` +
+        `node["amenity"="social_facility"]["social_facility"="day_care"](around:${r},${lat},${lng});way["amenity"="social_facility"]["social_facility"="day_care"](around:${r},${lat},${lng});` +
+        `);out center;`,
       emoji: '👶', color: '#db2777', pulseColor: '#f9a8d4', label: '幼稚園・保育園', radius: 1000,
       popupBuilder: (el) => {
-        const name = el.tags?.name || '幼稚園・保育園';
-        const amenity = el.tags?.amenity || '';
-        const typeLabel = amenity === 'kindergarten' ? '幼稚園' : amenity === 'childcare' ? '保育園' : '幼稚園・保育園';
+        const name = el.tags?.name || '幼稚園・こども園';
+        const typeLabel = el.tags?._typeLabel || '幼稚園';
         const phone = el.tags?.phone || el.tags?.['contact:phone'] || el.tags?.['contact:mobile'] || '';
         const hours = el.tags?.opening_hours || '';
-        const searchQ = encodeURIComponent(name);
+        const area = getAreaHint();
+        const searchQ = encodeURIComponent(area ? `${name} ${area}` : name);
+        const elLat = el.lat ?? el.center?.lat;
+        const elLon = el.lon ?? el.center?.lon;
+        const mapsQ = elLat && elLon ? `${elLat},${elLon}` : searchQ;
         return `
           <p style="font-size:12px;margin:0;font-weight:600">${name}</p>
           <p style="font-size:10px;margin:2px 0 0;color:#888">${typeLabel}</p>
@@ -353,7 +554,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
           <div style="margin-top:6px;display:flex;gap:6px">
             <a href="https://www.google.com/search?q=${searchQ}" target="_blank" rel="noopener"
                style="font-size:10px;color:#2563eb;text-decoration:none;background:#eff6ff;padding:2px 7px;border-radius:4px">🔍 Web検索</a>
-            <a href="https://www.google.com/maps/search/${searchQ}" target="_blank" rel="noopener"
+            <a href="https://www.google.com/maps?q=${mapsQ}" target="_blank" rel="noopener"
                style="font-size:10px;color:#2563eb;text-decoration:none;background:#eff6ff;padding:2px 7px;border-radius:4px">📍 地図</a>
           </div>`;
       },
@@ -383,6 +584,76 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     poiMarkersRef.current = poiMarkersRef.current.filter(m => m._poiType !== type);
   };
 
+  const applyMarkerHighlight = (el) => {
+    const icon  = el.querySelector('.iescore-poi-icon');
+    const pulse = el.querySelector('.iescore-poi-pulse');
+    if (icon)  { icon.style.transform = 'scale(1.7)'; icon.style.boxShadow = '0 0 0 3px white, 0 0 0 5px rgba(0,0,0,0.25)'; icon.style.transition = 'transform 0.15s, box-shadow 0.15s'; }
+    if (pulse) { pulse.style.animationDuration = '0.5s'; pulse.style.width = '42px'; pulse.style.height = '42px'; }
+    el.style.zIndex = '100';
+  };
+
+  const clearMarkerHighlight = (el) => {
+    const icon  = el.querySelector('.iescore-poi-icon');
+    const pulse = el.querySelector('.iescore-poi-pulse');
+    if (icon)  { icon.style.transform = ''; icon.style.boxShadow = ''; }
+    if (pulse) { pulse.style.animationDuration = ''; pulse.style.width = ''; pulse.style.height = ''; }
+    el.style.zIndex = '';
+  };
+
+  useEffect(() => {
+    if (!highlightTarget || !map.current) return;
+    const { lat, lng } = highlightTarget;
+
+    // 前のハイライトを解除
+    if (highlightedMarkerRef.current) {
+      clearMarkerHighlight(highlightedMarkerRef.current.getElement());
+      if (highlightedMarkerRef.current.getPopup()?.isOpen()) highlightedMarkerRef.current.togglePopup();
+      highlightedMarkerRef.current = null;
+    }
+
+    // 対象マーカーを座標で検索（約110m以内）
+    // HeartRails と OSM で同じ駅の座標が数十m単位でずれるケースがあるため余裕を持たせる
+    const EPS = 0.001;
+    const { poiType } = highlightTarget;
+    const found = poiMarkersRef.current.find(m => {
+      if (m._isHidden) return false;
+      if (poiType && m._poiType !== poiType) return false;
+      const pos = m.getLngLat();
+      return Math.abs(pos.lat - lat) < EPS && Math.abs(pos.lng - lng) < EPS;
+    });
+
+    // lat===null は「ハイライト解除＋元の住所に戻る」シグナル
+    if (lat === null) {
+      if (flyToRef.current) {
+        const returnZoom = savedZoomRef.current ?? map.current.getZoom();
+        savedZoomRef.current = null;
+        map.current.flyTo({ center: [flyToRef.current.lng, flyToRef.current.lat], zoom: returnZoom, essential: true });
+      }
+      return;
+    }
+
+    savedZoomRef.current = map.current.getZoom();
+    map.current.flyTo({ center: [lng, lat], zoom: map.current.getZoom(), essential: true });
+
+    if (found) {
+      applyMarkerHighlight(found.getElement());
+      if (!found.getPopup()?.isOpen()) found.togglePopup();
+      highlightedMarkerRef.current = found;
+    }
+  }, [highlightTarget]);
+
+  const hidePOIMarkers = (type) => {
+    poiMarkersRef.current
+      .filter(m => m._poiType === type && !m._isHidden)
+      .forEach(m => { m.remove(); m._isHidden = true; });
+  };
+
+  const showCachedPOIMarkers = (type) => {
+    const hidden = poiMarkersRef.current.filter(m => m._poiType === type && m._isHidden);
+    hidden.forEach(m => { m.addTo(map.current); m._isHidden = false; });
+    return hidden.length > 0;
+  };
+
   const addBuildingMarkers = (list) => {
     clearPOIMarkers('buildings');
     const cfg = POI_CONFIG.buildings;
@@ -404,61 +675,224 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     });
   };
 
+  const clearBoundary = () => {
+    if (!map.current) return;
+    ['boundary-fill', 'boundary-outline'].forEach(id => {
+      if (map.current.getLayer(id)) map.current.removeLayer(id);
+    });
+    if (map.current.getSource('boundary')) map.current.removeSource('boundary');
+  };
+
+  const fetchAndDrawBoundary = async (name) => {
+    clearBoundary();
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=geojson&polygon_geojson=1&limit=1&accept-language=ja`,
+        { headers: { 'User-Agent': 'iescore.com/1.0 (contact: admin@iescore.com)' } }
+      );
+      const data = await res.json();
+      const feature = data.features?.[0];
+      const gtype = feature?.geometry?.type;
+      if (!feature || !['Polygon', 'MultiPolygon'].includes(gtype)) return;
+      if (!map.current.isStyleLoaded()) return;
+      map.current.addSource('boundary', { type: 'geojson', data: feature });
+      map.current.addLayer({
+        id: 'boundary-fill',
+        type: 'fill',
+        source: 'boundary',
+        paint: { 'fill-color': '#2563eb', 'fill-opacity': 0.08 },
+      });
+      map.current.addLayer({
+        id: 'boundary-outline',
+        type: 'line',
+        source: 'boundary',
+        paint: { 'line-color': '#2563eb', 'line-width': 2, 'line-dasharray': [4, 2] },
+      });
+    } catch { /* silent */ }
+  };
+
   const fetchBuildings = async (flyTo, showMarkers) => {
     clearPOIMarkers('buildings');
-    const { lng, lat, name, featureType } = flyTo;
-    const types = 'apartments|residential|house|detached|terrace|semidetached_house|bungalow';
-
-    // 区/町/村名を抽出（例: "東京都渋谷区" → "渋谷区"）
-    const m = (name || '').match(/([^\s都道府県市]+[区町村])$/);
-    const areaName = m ? m[1] : null;
-    const useAreaQuery = featureType && !['address', 'poi'].includes(featureType) && areaName;
-
-    // ±0.15度（約15km）のbboxをグローバルフィルターとして付与し、
-    // 「南区」など全国に同名が存在する区名が他都市にマッチするのを防ぐ
-    const bboxFilter = `[bbox:${lat - 0.15},${lng - 0.15},${lat + 0.15},${lng + 0.15}]`;
-
-    const query = useAreaQuery
-      ? `[out:json][timeout:30]${bboxFilter};area["name"="${areaName}"]["admin_level"~"[6-9]"]->.a;(way["building"~"${types}"]["name"](area.a);relation["building"~"${types}"]["name"](area.a););out center 300;`
-      : `[out:json][timeout:15];(way["building"~"${types}"]["name"](around:1500,${lat},${lng});relation["building"~"${types}"]["name"](around:1500,${lat},${lng}););out center 100;`;
+    const { lng, lat, featureType } = flyTo;
+    const isArea = featureType && !['address', 'poi'].includes(featureType);
+    const radius = isArea ? 400 : 20;
 
     setLoadingPOI('マンション');
+    let buildingList = [];
     try {
-      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-      const text = await res.text();
-      if (!text.startsWith('{')) return;
-      const elements = JSON.parse(text).elements || [];
+      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+      const res = await fetch(
+        `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/${lng},${lat}.json?radius=${radius}&limit=50&access_token=${token}`
+      );
+      const data = await res.json();
 
+      const EXCLUDE_LAYERS = new Set(['road', 'road_label', 'water', 'water_label', 'admin', 'place_label', 'country_label', 'state_label', 'natural_label', 'airport_label', 'transit_stop_label']);
       const EXCLUDE_KW = ['社宅', '寮', '宿舎', '官舎'];
-      const buildingList = [];
-      elements.forEach(el => {
-        const elLat = el.lat ?? el.center?.lat;
-        const elLng = el.lon ?? el.center?.lon;
-        const name = el.tags?.name;
-        if (!elLat || !elLng || !name) return;
-        if (EXCLUDE_KW.some(kw => name.includes(kw))) return;
-        if (/^[0-9A-Za-z０-９\-－]+号棟$/.test(name) || /^[A-Za-z]棟$/.test(name)) return;
-        buildingList.push({ name, lat: elLat, lng: elLng });
+      const seen = new Set();
+
+      (data.features || []).forEach(feat => {
+        const rawName = feat.properties?.name_ja || feat.properties?.name;
+        const fname = rawName?.replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, '').trim();
+        if (!fname || seen.has(fname)) return;
+        const layer = feat.properties?.tilequery?.layer || '';
+        if (EXCLUDE_LAYERS.has(layer)) return;
+        if (EXCLUDE_KW.some(kw => fname.includes(kw))) return;
+        if (/^[0-9A-Za-z０-９\-－]+号棟$/.test(fname) || /^[A-Za-z]棟$/.test(fname)) return;
+        const coords = feat.geometry?.coordinates;
+        const featLng = Array.isArray(coords) && typeof coords[0] === 'number' ? coords[0] : lng;
+        const featLat = Array.isArray(coords) && typeof coords[1] === 'number' ? coords[1] : lat;
+        seen.add(fname);
+        buildingList.push({ name: fname, lat: featLat, lng: featLng });
       });
 
       lastBuildingsRef.current = buildingList;
       if (activeLayersRef.current.buildings) addBuildingMarkers(buildingList);
-      onBuildingsLoadedRef.current?.(buildingList);
     } catch {
       // silent
     } finally {
+      onBuildingsLoadedRef.current?.(buildingList);
       setLoadingPOI(null);
     }
   };
 
+  // Overpass + 国土数値情報KSJで全POIカウントを一括取得
+  const fetchAllCountsFromOverpass = async (centerLng, centerLat) => {
+    const KONBINI_KEYWORDS = ['セブン', 'ローソン', 'ファミリ', 'ミニストップ', 'デイリー', 'セイコーマート', 'ポプラ', 'ニューデイズ', 'キオスク', 'コンビニ'];
+
+    // Overpass（医療・幼稚園はKSJで取得）と KSJ を並列実行
+    const [overpassRes, ksjRes] = await Promise.allSettled([
+      (async () => {
+        const q = [
+          '[out:json][timeout:25];(',
+          `node["shop"~"^(supermarket|convenience)$"](around:1000,${centerLat},${centerLng});`,
+          `way["shop"~"^(supermarket|convenience)$"](around:1000,${centerLat},${centerLng});`,
+          `node["highway"="bus_stop"](around:500,${centerLat},${centerLng});`,
+          `node["amenity"="school"](around:1500,${centerLat},${centerLng});`,
+          `way["amenity"="school"](around:1500,${centerLat},${centerLng});`,
+          ');out center;',
+        ].join('');
+        const doFetch = async () => {
+          const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q });
+          if (!res.ok) throw new Error('overpass ' + res.status);
+          return res.json();
+        };
+        try {
+          return await doFetch();
+        } catch {
+          await new Promise(r => setTimeout(r, 2500));
+          return await doFetch();
+        }
+      })(),
+      fetch(`/api/ksj-poi?lat=${centerLat}&lng=${centerLng}&radius=1000`).then(r => r.json()),
+    ]);
+
+    let supermarkets = 0, supermarkets500 = 0, konbinis = 0, konbinis500 = 0,
+        busStops = 0, busStops200 = 0, schools = 0;
+    const supermarketList = [], konbiniList = [], busStopList = [], schoolList = [];
+
+    if (overpassRes.status === 'fulfilled') {
+      const data = overpassRes.value;
+      const seen = new Set();
+      for (const el of data.elements || []) {
+        const eLat = el.lat ?? el.center?.lat;
+        const eLng = el.lon ?? el.center?.lon;
+        if (!eLat || !eLng) continue;
+        const key = `${eLat.toFixed(5)},${eLng.toFixed(5)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const d = haversineM(centerLat, centerLng, eLat, eLng);
+        const tags = el.tags || {};
+        const name = tags.name || '';
+        if (tags.shop === 'supermarket' || tags.shop === 'convenience') {
+          const isKonbini = tags.shop === 'convenience' || KONBINI_KEYWORDS.some(k => name.includes(k));
+          if (isKonbini) {
+            if (d <= 1000) { konbinis++; if (name) konbiniList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
+            if (d <= 500) konbinis500++;
+          } else {
+            if (d <= 1000) { supermarkets++; if (name) supermarketList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
+            if (d <= 500) supermarkets500++;
+          }
+        } else if (tags.highway === 'bus_stop') {
+          if (d <= 500) { busStops++; if (name) busStopList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
+          if (d <= 200) busStops200++;
+        } else if (tags.amenity === 'school') {
+          const ok = name.includes('小学校') || name.includes('中学校') || name.includes('義務教育学校') ||
+            /[^\x00-\x7F]小$/.test(name) || /[^\x00-\x7F]中$/.test(name);
+          if (ok && !name.includes('専門') && !name.includes('大学') && !name.includes('高校') && d <= 1500) {
+            schools++;
+            if (name) schoolList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng });
+          }
+        }
+      }
+      [supermarketList, konbiniList, busStopList, schoolList]
+        .forEach(l => l.sort((a, b) => a.distanceM - b.distanceM));
+    }
+
+    // 国土数値情報から医療機関・幼稚園カウント
+    let hospitals = 0, hospitals500 = 0, hospitalList = [];
+    let kindergartens = 0, kindergartens500 = 0, kindergartenList = [];
+    if (ksjRes.status === 'fulfilled') {
+      const ksj = ksjRes.value;
+      // 医療: 病院+診療所+歯科を合算
+      hospitals = (ksj.hospitals || 0) + (ksj.clinics || 0) + (ksj.dentals || 0);
+      hospitals500 = (ksj.hospitals500 || 0) + (ksj.clinics500 || 0) + (ksj.dentals500 || 0);
+      hospitalList = [...(ksj.hospitalList || []), ...(ksj.clinicList || []), ...(ksj.dentalList || [])]
+        .map(f => ({ name: f.name, distanceM: f.distM, lat: f.lat, lng: f.lng }))
+        .sort((a, b) => a.distanceM - b.distanceM)
+        .slice(0, 20);
+      // 幼稚園+こども園を合算
+      kindergartens = (ksj.kindergartens || 0) + (ksj.kodomoen || 0);
+      kindergartens500 = (ksj.kindergartens500 || 0) + (ksj.kodomoen500 || 0);
+      kindergartenList = [...(ksj.kindergartenList || []), ...(ksj.kodomoenList || [])]
+        .map(f => ({ name: f.name, distanceM: f.distM, lat: f.lat, lng: f.lng }))
+        .sort((a, b) => a.distanceM - b.distanceM)
+        .slice(0, 20);
+    }
+
+    onConvenienceDataRef.current?.({
+      supermarkets, supermarkets500, supermarketList,
+      konbinis, konbinis500, konbiniList,
+      hospitals, hospitals500, hospitalList,
+      kindergartens, kindergartens500, kindergartenList,
+      busStops, busStops200, busStopList,
+      schools, schoolList,
+    });
+  };
+
   const fetchPOI = async (type, lng, lat) => {
-    clearPOIMarkers(type);
     const cfg = POI_CONFIG[type];
     setLoadingPOI(cfg.label);
     try {
       let elements = [];
 
-      if (cfg.apiPath) {
+      if (type === 'medical' || type === 'kindergarten') {
+        // 国土数値情報KSJから取得（医療・幼稚園共通）
+        const res = await fetch(`/api/ksj-poi?lat=${lat}&lng=${lng}&radius=${cfg.radius}`);
+        const d = await res.json();
+        if (type === 'medical') {
+          const TYPE_LABEL = { hospital: '病院', clinic: '診療所', dental: '歯科' };
+          elements = [...(d.hospitalList || []), ...(d.clinicList || []), ...(d.dentalList || [])]
+            .map(f => ({
+              lat: f.lat, lon: f.lng,
+              tags: {
+                name: f.name,
+                amenity: f.type === 'hospital' ? 'hospital' : f.type === 'dental' ? 'dentist' : 'clinic',
+                _typeLabel: TYPE_LABEL[f.type] || '医療機関',
+              },
+            }));
+        } else {
+          // kindergarten: 幼稚園+こども園
+          elements = [...(d.kindergartenList || []), ...(d.kodomoenList || [])]
+            .map(f => ({
+              lat: f.lat, lon: f.lng,
+              tags: {
+                name: f.name,
+                amenity: 'kindergarten',
+                _typeLabel: f.type === 'kodomoen' ? '認定こども園' : '幼稚園',
+              },
+            }));
+        }
+      } else if (cfg.apiPath) {
         // カスタムAPI（リフォーム会社等）
         const res = await fetch(cfg.apiPath(lat, lng));
         const data = await res.json();
@@ -478,6 +912,26 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
         elements = JSON.parse(text).elements || [];
       }
 
+      if (cfg.filter) elements = elements.filter(cfg.filter);
+
+      // スーパーの Overpass 結果で件数も更新（地図表示と同じデータを使い回す）
+      if (type === 'supermarket' && flyToRef.current) {
+        const { lat: cLat, lng: cLng } = flyToRef.current;
+        const list = [];
+        let cnt500 = 0;
+        elements.forEach(el => {
+          const eLat = el.lat ?? el.center?.lat;
+          const eLng = el.lon ?? el.center?.lon;
+          if (!eLat || !eLng) return;
+          const d = Math.round(haversineM(cLat, cLng, eLat, eLng));
+          if (d <= 1000) list.push({ name: el.tags?.name || '', distanceM: d, lat: eLat, lng: eLng });
+          if (d <= 500) cnt500++;
+        });
+        list.sort((a, b) => a.distanceM - b.distanceM);
+        onConvenienceDataRef.current?.({ supermarkets: list.length, supermarkets500: cnt500, supermarketList: list });
+      }
+
+      clearPOIMarkers(type);
       elements.forEach(el => {
         const elLat = el.lat ?? el.center?.lat;
         const elLng = el.lon ?? el.center?.lon;

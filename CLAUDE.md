@@ -148,17 +148,47 @@ const url = `https://www.google.com/maps/search/${encodeURIComponent(name + ' ' 
 
 ---
 
-## データソース一覧
+## データソース一覧とライセンス
 
-| データ | 入手先 | APIキー | コスト |
-|---|---|---|---|
-| 成約価格・地価公示 | 国交省 不動産情報ライブラリ | ✅ 申請済み | 無料 |
-| 人口推移・国勢調査 | e-Stat API（総務省） | ✅ アカウント取得済み・APIキー申請が次のステップ | 無料 |
-| 将来人口推計 | 国立社会保障・人口問題研究所 | 不要（CSV） | 無料 |
-| ハザードマップ4種 | 国土地理院タイル | 不要 | 無料 |
-| 駅別乗降客数 | 国土数値情報（国交省） | 不要（GeoJSON） | 無料 |
-| 地図ベース | Google Maps or Mapbox | 要取得 | 無料枠内 |
-| リフォーム・建築会社 | 各都道府県 建設業許可業者名簿 | 不要（Excel公開） | 無料 |
+iescore は商用サービス（アフィリエイト収益モデル）のため、各データの商用利用可否を確認済み。
+
+| データ | 入手先 | 商用利用 | 条件 | ファイル/API |
+|---|---|---|---|---|
+| 成約価格・地価公示 | 国交省 REINFOLIB | ✅ | 出典表示 | API |
+| 人口推移・国勢調査 | e-Stat API（総務省） | ✅ | 出典表示 | API |
+| ハザードマップ4種 | 国土地理院タイル | ✅ | 出典表示 | タイルURL |
+| 地盤データ | 防災科研 J-SHIS | ✅ | 出典表示 | API |
+| **医療機関** | 国土数値情報 P04（国交省）| ✅ | 出典表示 | `public/data/ksj-medical.json` |
+| **幼稚園・こども園** | 国土数値情報 P29（国交省）| ✅ | 出典表示 | `public/data/ksj-kindergarten.json` |
+| 用途地域 | 国土数値情報 A29（国交省）| ✅ | 出典表示 | GeoJSON |
+| 住所検索 | 国土地理院 住所検索API | ✅ | 出典表示 | API |
+| **最寄り駅** | HeartRails Express | ✅ | 「HeartRails Express」クレジット必須 | API |
+| スーパー・コンビニ・バス停等 | OpenStreetMap（Overpass） | ✅ ODbL | 「© OpenStreetMap contributors」表示必須 | API |
+| 地図タイル・ジオコーディング | Mapbox | ✅ | 商用プラン（有料）・帰属表示自動 | SDK |
+| リフォーム会社 | 各都道府県 建設業許可業者名簿 | ✅ | 出典表示 | GeoJSON |
+
+### 出典表示の実装状況
+
+- **地図上**：Mapbox の `customAttribution` に「国土数値情報（国土交通省）・国土地理院・防災科研J-SHIS」を追加済み。Mapboxが「© Mapbox © OpenStreetMap contributors」を自動表示。
+- **スコアパネル下部フッター**：全データソースを表示済み（`ScorePanel.js` 末尾）。
+
+### 国土数値情報のデータ詳細
+
+| ファイル | データ種別 | 年度 | 件数 | 備考 |
+|---|---|---|---|---|
+| `public/data/ksj-medical.json` | P04 医療機関 | 2020年 | 179,046件 | 病院・診療所・歯科 |
+| `public/data/ksj-kindergarten.json` | P29 学校 | 2021年 | 15,660件 | 幼稚園・認定こども園のみ抽出 |
+
+ダウンロード・変換スクリプト: `scripts/build-ksj-medical.py` / `scripts/build-ksj-kindergarten.py`
+
+データ更新時は各スクリプトを再実行して `public/data/` を上書きし、`vercel --prod` でデプロイ。
+
+### HeartRails の商用利用について（2026年5月確認）
+
+https://express.heartrails.com/api.html より：
+> 「APIは商用、非商用を問わず、無料でご利用になれます。無料でご利用になられる際には、アプリケーション内に『HeartRails Express』のクレジットを記載してください。」
+
+→ **商用OK。クレジット表示のみ必須。** 大規模サイトになった場合は有料プランを検討。
 
 ---
 

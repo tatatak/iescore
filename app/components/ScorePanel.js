@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 
 // 鉄道事業者名 → 短縮表記
 const OPERATOR_ABBR = {
@@ -159,11 +160,14 @@ function GroundScoreCard({ groundData, groundLoading }) {
 // 利便性サブカテゴリ スコア関数
 function calcBusStopScore(n)        { if (!n) return 1; if (n >= 5) return 10; if (n >= 3) return 8; if (n >= 2) return 6; if (n >= 1) return 4; return 1; }
 function calcSupermarketScore(n500, n1k) { if (n500 == null) return 5; if (n500 >= 3) return 10; if (n500 >= 2) return 9; if (n500 >= 1) return 7; if (n1k >= 3) return 5; if (n1k >= 1) return 3; return 1; }
+function calcKonbiniScore(n500, n1k)    { if (n500 == null) return 5; if (n500 >= 3) return 10; if (n500 >= 2) return 8; if (n500 >= 1) return 6; if (n1k >= 2) return 4; if (n1k >= 1) return 3; return 1; }
 function calcMedicalScore(n)        { if (n == null) return 5; if (n >= 5) return 10; if (n >= 3) return 8; if (n >= 2) return 6; if (n >= 1) return 4; return 2; }
 function calcKindergartenScore(n)   { if (n == null) return 5; if (n >= 3) return 10; if (n >= 2) return 8; if (n >= 1) return 5; return 2; }
 function calcSchoolScore(n)         { if (n == null) return 5; if (n >= 2) return 10; if (n >= 1) return 7; return 3; }
 
-function ConvSubCard({ icon, label, score, layerId, loading, activeLayers, onToggleLayer, children, topAction }) {
+function ConvSubCard({ icon, label, score, layerId, loading, activeLayers, onToggleLayer, children, topAction, list, onHighlightItem }) {
+  const [showList, setShowList] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(null);
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-2">
@@ -171,14 +175,53 @@ function ConvSubCard({ icon, label, score, layerId, loading, activeLayers, onTog
           <span className="text-xl">{icon}</span>
           <span className="text-sm font-semibold text-gray-700">{label}</span>
         </div>
-        <Stars score={loading ? 3 : score} />
+        <div className="flex items-center gap-2">
+          {list && list.length > 0 && (
+            <button
+              onClick={() => setShowList(v => !v)}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-0.5 rounded bg-blue-50 border border-blue-100"
+            >
+              {showList ? '▲ 閉じる' : `一覧 ▼`}
+            </button>
+          )}
+          <Stars score={loading ? 3 : score} />
+        </div>
       </div>
       {loading ? (
         <p className="text-sm text-gray-500">読み込み中…</p>
       ) : children}
+      {showList && list && list.length > 0 && (
+        <ul className="mt-2 max-h-36 overflow-y-auto border-t border-gray-100 pt-1.5 space-y-0.5">
+          {list.map((item, i) => {
+            const clickable = !!(item.lat && item.lng && onHighlightItem);
+            return (
+              <li key={i}
+                className={`text-xs flex justify-between items-center py-0.5 px-1 rounded transition-colors ${clickable ? 'cursor-pointer hover:bg-blue-50 active:bg-blue-100' : ''} ${activeIdx === i ? 'bg-blue-50' : ''}`}
+                onClick={() => {
+                  if (!clickable) return;
+                  // レイヤーOFFなら自動でONにする
+                  if (layerId && activeLayers && !activeLayers[layerId]) onToggleLayer?.(layerId);
+                  if (activeIdx === i) {
+                    setActiveIdx(null);
+                    onHighlightItem(null, null, null); // 解除シグナル
+                  } else {
+                    setActiveIdx(i);
+                    onHighlightItem(item.lat, item.lng, layerId);
+                  }
+                }}
+              >
+                <span className={`truncate ${activeIdx === i ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
+                  {clickable && <span className="mr-1 opacity-50">📍</span>}{item.name}
+                </span>
+                <span className="text-gray-400 shrink-0 ml-2 tabular-nums">{item.distanceM}m</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       <div className="mt-3 flex flex-col gap-1.5">
         {topAction}
-        <button
+        {layerId && <button
           onClick={() => onToggleLayer(layerId)}
           className={`w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
             activeLayers[layerId]
@@ -187,7 +230,7 @@ function ConvSubCard({ icon, label, score, layerId, loading, activeLayers, onTog
           }`}
         >
           {icon} 地図に表示
-        </button>
+        </button>}
       </div>
     </div>
   );
@@ -396,7 +439,7 @@ function LandslideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleL
   );
 }
 
-function HightideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLayer }) {
+function HightideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLayer, location }) {
   const score = hazardLoading ? 3 : (hazardData?.hightideScore ?? 10);
   const label = hazardData?.hightideLabel ?? null;
   const valueText = label ? `浸水深 ${label}` : '浸水なし（区域外）';
@@ -425,16 +468,16 @@ function HightideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLa
         </>
       )}
       <p className="text-xs text-gray-500 mt-2">★多=リスク低。国交省 高潮浸水想定区域データ使用</p>
-      <button
-        onClick={() => onToggleLayer('hightide')}
-        className={`mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
-          activeLayers.hightide
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`}
-      >
-        🌀 地図に高潮浸水エリアを表示
-      </button>
+      {location && (
+        <a
+          href={`https://disaportal.gsi.go.jp/maps/?ll=${location.lat},${location.lng}&z=15&base=pale`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 w-full py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
+        >
+          🌀 重ねるハザードマップで確認
+        </a>
+      )}
     </div>
   );
 }
@@ -574,6 +617,139 @@ function NuisanceCard({ nuisanceData, nuisanceLoading }) {
   );
 }
 
+function calcNoiseScore(noiseData) {
+  if (!noiseData) return null;
+  const { railM, roadM } = noiseData;
+  const railScore = railM == null ? 10
+    : railM < 50 ? 1 : railM < 100 ? 3 : railM < 200 ? 5 : railM < 400 ? 7 : 10;
+  const roadScore = roadM == null ? 10
+    : roadM < 30 ? 1 : roadM < 50 ? 3 : roadM < 100 ? 5 : roadM < 200 ? 7 : 10;
+  return Math.min(railScore, roadScore);
+}
+
+function getNoiseDiagnosis(noiseData) {
+  if (!noiseData) return null;
+  const { railM, roadM, railName, roadClass } = noiseData;
+  const ROAD_LABEL = { motorway: '高速道路', trunk: '幹線道路', primary: '主要道路', secondary: '主要道路' };
+  const roadLabel = ROAD_LABEL[roadClass] ?? '幹線道路';
+  const railLabel = railName ?? '線路';
+
+  // 線路と道路の両方が至近
+  if (railM != null && railM < 100 && roadM != null && roadM < 50) {
+    return { bg: 'bg-red-50 border-red-100', color: 'text-red-700',
+      title: '騒音リスク：非常に高い',
+      text: `${railLabel}（${railM}m）と${roadLabel}（${roadM}m）が至近に重なっています。電車の走行音・踏切・交通騒音が複合的に発生しやすい環境です。内見時は必ず夜間・朝のラッシュ時間帯も確認することをおすすめします。` };
+  }
+  // 線路が至近（100m未満）
+  if (railM != null && railM < 100) {
+    return { bg: 'bg-red-50 border-red-100', color: 'text-red-700',
+      title: '線路が至近：騒音リスク高',
+      text: `${railLabel}まで約${railM}mです。電車の走行音・踏切の警報音が日常的に聞こえる可能性があります。防音サッシの有無や運行本数・終電時刻を事前に確認しましょう。` };
+  }
+  // 幹線道路が至近（50m未満）
+  if (roadM != null && roadM < 50) {
+    return { bg: 'bg-red-50 border-red-100', color: 'text-red-700',
+      title: `${roadLabel}が至近：騒音リスク高`,
+      text: `${roadLabel}まで約${roadM}mです。大型車・バイクの通行音が昼夜問わず発生しやすい環境です。幹線道路沿いは振動も伴うことがあるため、内見時に窓を閉めた状態と開けた状態の両方を確認してください。` };
+  }
+  // 線路が中距離（100〜200m）
+  if (railM != null && railM < 200) {
+    return { bg: 'bg-orange-50 border-orange-100', color: 'text-orange-700',
+      title: '線路がやや近い：注意',
+      text: `${railLabel}まで約${railM}mです。窓を開けていると走行音が聞こえる場合があります。上層階ほど音が届きやすいため、希望階での内見を推奨します。` };
+  }
+  // 道路が近い（50〜100m）
+  if (roadM != null && roadM < 100) {
+    return { bg: 'bg-orange-50 border-orange-100', color: 'text-orange-700',
+      title: `${roadLabel}がやや近い：注意`,
+      text: `${roadLabel}まで約${roadM}mです。交通量の多い時間帯は騒音が気になる可能性があります。朝・夕の通勤時間帯に現地確認することをおすすめします。` };
+  }
+  // 線路が400m未満
+  if (railM != null && railM < 400) {
+    return { bg: 'bg-yellow-50 border-yellow-100', color: 'text-yellow-700',
+      title: '騒音リスク：比較的低い',
+      text: `最寄り線路まで約${railM}mあり、日常生活での騒音への影響は限定的です。ただし地形・建物配置によって音の届き方が変わるため、現地確認を忘れずに。` };
+  }
+  // 道路が200m未満
+  if (roadM != null && roadM < 200) {
+    return { bg: 'bg-yellow-50 border-yellow-100', color: 'text-yellow-700',
+      title: '騒音リスク：比較的低い',
+      text: `${roadLabel}まで約${roadM}mあります。通常の生活では大きな問題になりにくい距離ですが、風向きや季節によって音の感じ方が変わることがあります。` };
+  }
+  // 両方とも遠い
+  return { bg: 'bg-green-50 border-green-100', color: 'text-green-700',
+    title: '騒音リスク：低い',
+    text: '主要な騒音源（線路・幹線道路）から十分な距離があります。静かな住環境が期待できます。' };
+}
+
+function NoiseScoreCard({ noiseData, activeLayers, onToggleLayer }) {
+  const score = calcNoiseScore(noiseData);
+  const diagnosis = noiseData ? getNoiseDiagnosis(noiseData) : null;
+  const ROAD_LABEL = { motorway: '高速道路', trunk: '幹線道路', primary: '主要道路', secondary: '主要道路' };
+  const riskTag = (m, thresholds) => {
+    if (m == null) return null;
+    if (m < thresholds[0]) return { label: '高', cls: 'text-red-600 bg-red-50 border-red-200' };
+    if (m < thresholds[1]) return { label: '中', cls: 'text-orange-500 bg-orange-50 border-orange-200' };
+    if (m < thresholds[2]) return { label: '低', cls: 'text-yellow-600 bg-yellow-50 border-yellow-200' };
+    return { label: '問題なし', cls: 'text-green-600 bg-green-50 border-green-200' };
+  };
+  const railRisk = riskTag(noiseData?.railM, [100, 200, 400]);
+  const roadRisk = riskTag(noiseData?.roadM, [50, 100, 200]);
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🔊</span>
+          <span className="text-sm font-semibold text-gray-700">騒音リスク</span>
+        </div>
+        {score != null && <Stars score={score} />}
+      </div>
+      {noiseData == null ? (
+        <p className="text-sm text-gray-500">解析中…</p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">🚃 最寄り線路{noiseData.railName ? `（${noiseData.railName}）` : ''}</span>
+              {noiseData.railM != null ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold">{noiseData.railM < 1000 ? `${noiseData.railM}m` : `${(noiseData.railM/1000).toFixed(1)}km`}</span>
+                  <span className={`px-1.5 py-0.5 rounded border font-bold text-[10px] ${railRisk.cls}`}>{railRisk.label}</span>
+                </div>
+              ) : <span className="text-gray-400">範囲外</span>}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">🚗 最寄り{ROAD_LABEL[noiseData.roadClass] ?? '幹線道路'}</span>
+              {noiseData.roadM != null ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold">{noiseData.roadM < 1000 ? `${noiseData.roadM}m` : `${(noiseData.roadM/1000).toFixed(1)}km`}</span>
+                  <span className={`px-1.5 py-0.5 rounded border font-bold text-[10px] ${roadRisk.cls}`}>{roadRisk.label}</span>
+                </div>
+              ) : <span className="text-gray-400">範囲外</span>}
+            </div>
+          </div>
+          {diagnosis && (
+            <div className={`mt-2 rounded-lg px-3 py-2 border text-xs ${diagnosis.bg}`}>
+              <p className={`font-semibold mb-0.5 ${diagnosis.color}`}>{diagnosis.title}</p>
+              <p className="text-gray-600 leading-relaxed">{diagnosis.text}</p>
+            </div>
+          )}
+          <p className="text-xs text-gray-500 mt-2">★多=リスク低。地図タイルデータから算出</p>
+        </>
+      )}
+      <button
+        onClick={() => onToggleLayer('noise')}
+        className={`mt-3 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
+          activeLayers.noise ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        }`}
+      >
+        🔊 地図に騒音源をハイライト表示
+      </button>
+    </div>
+  );
+}
+
 // 嫌悪施設スコア 1-10（距離と件数で判定）
 function calcNuisanceScore(nuisanceData) {
   const facilities = nuisanceData?.facilities || [];
@@ -593,97 +769,256 @@ function calcZoningScore(zoningData) {
   return 5;
 }
 
-function calcAssetZoningScore(zoningData) {
+// 将来性スコア: 用途地域ベース + 高度利用地区/立地適正化計画 + 乗降客数トレンド
+function calcFutureScore(zoningData, urbanData, passengerData) {
   const d = zoningData?.useDistrict;
-  if (!d) return null;
-  if (d.includes('第一種低層'))    return 9;
-  if (d.includes('第二種低層'))    return 8;
-  if (d.includes('田園住居'))      return 8;
-  if (d.includes('第一種中高層'))  return 8;
-  if (d.includes('第二種中高層'))  return 7;
-  if (d.includes('第一種住居'))    return 7;
-  if (d.includes('第二種住居'))    return 6;
-  if (d.includes('準住居'))        return 6;
-  if (d.includes('近隣商業'))      return 5;
-  if (d.includes('商業'))          return 5;
-  if (d.includes('準工業'))        return 4;
-  if (d.includes('工業専用'))      return 1;
-  if (d.includes('工業'))          return 2;
-  return 5;
+  let base;
+  if (!d)                           base = 5;
+  else if (d.includes('商業'))      base = 9;
+  else if (d.includes('近隣商業'))  base = 8;
+  else if (d.includes('準住居') || d.includes('第二種住居')) base = 7;
+  else if (d.includes('第一種住居') || d.includes('第二種中高層')) base = 6;
+  else if (d.includes('第一種中高層') || d.includes('第二種低層') || d.includes('田園住居')) base = 5;
+  else if (d.includes('第一種低層')) base = 4;
+  else if (d.includes('準工業'))    base = 6;
+  else if (d.includes('工業専用')) base = 2;
+  else if (d.includes('工業'))      base = 3;
+  else base = 5;
+
+  const urbanBonus = (urbanData?.isKoudo ? 1 : 0) + (urbanData?.isToshi ? 1 : 0);
+
+  // 最寄り駅の乗降客数トレンド（2019→2023）補正
+  const trend = passengerData?.stations?.[0]?.trend ?? null;
+  const passengerBonus = trend == null ? 0 : trend >= 5 ? 1 : trend <= -10 ? -1 : 0;
+
+  return Math.min(10, Math.max(1, base + urbanBonus + passengerBonus));
 }
 
-function AdvancedZoningCard({ zoningData, zoningLoading }) {
-  function getAssetComment(d) {
-    if (!d) return null;
-    if (d.includes('第一種低層') || d.includes('第二種低層')) return {
-      color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-100',
-      title: '資産価値：安定型',
-      text: '建築規制が最も厳しく、高さ・用途ともに制限されます。周辺環境が急変しにくく、長期的な資産価値の安定が期待できます。ただし開発余地が少ないため、地価の急上昇は起きにくい傾向があります。',
-    };
-    if (d.includes('中高層住居専用')) return {
-      color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-100',
-      title: '資産価値：比較的安定',
-      text: 'マンション建設が可能な住居専用地域です。良好な住環境を保ちつつ、駅近では再開発による地価上昇の可能性もあります。需要が高く資産価値が維持されやすい地域です。',
-    };
-    if (d.includes('田園住居')) return {
-      color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-100',
-      title: '資産価値：安定（農地保護エリア）',
-      text: '農地と住宅が共存する地域です。開発が制限されるため環境の変化が少なく、落ち着いた住環境が維持されやすいです。ただし利便性向上による地価上昇は期待しにくいです。',
-    };
-    if (d.includes('第一種住居') || d.includes('第二種住居')) return {
-      color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100',
-      title: '資産価値：標準',
-      text: '住居地域としての用途は守られつつ、一定の商業施設も立地可能です。利便性と住環境のバランスが取れており、幅広い需要が見込める地域です。',
-    };
-    if (d.includes('準住居')) return {
-      color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100',
-      title: '資産価値：標準〜やや変動あり',
-      text: '幹線道路沿いに多い地域です。利便性が高い一方、交通量・騒音が資産価値に影響することがあります。道路拡張・再開発の際には地価変動が生じる場合もあります。',
-    };
-    if (d.includes('近隣商業')) return {
-      color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100',
-      title: '資産価値：利便性次第で上昇余地あり',
-      text: '商業施設の集積により利便性が高く、地価上昇の可能性があります。一方、周辺の商業開発で住環境が変化するリスクもあります。店舗・サービス業の増加が資産価値にプラスに働くケースが多いです。',
-    };
-    if (d.includes('商業')) return {
-      color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100',
-      title: '資産価値：再開発ポテンシャル高い',
-      text: '最も高い建物・用途が認められる地域です。再開発や大規模商業施設の誘致により地価が上昇する可能性があります。ただし住宅としての長期保有には周辺環境の大きな変化リスクを考慮する必要があります。',
-    };
-    if (d.includes('準工業')) return {
-      color: 'text-orange-700', bg: 'bg-orange-50 border-orange-100',
-      title: '資産価値：変動リスクあり（再開発余地もあり）',
-      text: '工場・倉庫の建設が許可される地域です。旧工場跡地の再開発で地価が急上昇するケースがある一方、新たな工業施設の立地で住環境が悪化するリスクもあります。周辺の開発計画の把握が重要です。',
-    };
-    if (d.includes('工業')) return {
-      color: 'text-red-700', bg: 'bg-red-50 border-red-100',
-      title: '資産価値：リスク高め',
-      text: '将来的に工場や大型施設が建設される可能性があります。住宅としての資産価値は長期的に低下するリスクが高く、売却時の需要が限定される場合があります。',
-    };
+// 乗降客数折れ線グラフ（LandPriceChartと同サイズ）
+function PassengerLineChart({ yearly }) {
+  const [containerRef, W] = useContainerWidth();
+  const years = [2019, 2020, 2021, 2022, 2023];
+  const H = 72;
+  const PAD = { top: 16, bottom: 18, left: 8, right: 8 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  const vals = years.map(y => yearly[y] ?? null);
+  const validVals = vals.filter(v => v != null);
+  if (!validVals.length) return null;
+  const maxV = Math.max(...validVals);
+  const minV = Math.min(...validVals);
+  const range = maxV - minV || maxV;
+
+  const pts = years.map((yr, i) => {
+    const v = yearly[yr];
+    if (v == null) return null;
     return {
-      color: 'text-gray-700', bg: 'bg-gray-50 border-gray-100',
-      title: '資産価値への影響',
-      text: '周辺の開発計画や人口動向と合わせて判断することをおすすめします。',
+      x: PAD.left + (i / 4) * chartW,
+      y: PAD.top + chartH - ((v - minV) / range) * chartH,
+      yr, v,
     };
+  });
+  const validPts = pts.filter(Boolean);
+  const pathD = validPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const isUp = validPts.length >= 2 && validPts[validPts.length - 1].v >= validPts[0].v;
+  const lineColor = isUp ? '#3b82f6' : '#ef4444';
+
+  return (
+    <div ref={containerRef}>
+      {W > 0 && (
+        <svg width={W} height={H}>
+          <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
+          {validPts.length >= 2 && (
+            <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          )}
+          {pts.map((p, i) => (
+            <g key={years[i]}>
+              {p && <circle cx={p.x} cy={p.y} r="3.5" fill={lineColor} />}
+              {p && (i === 0 || i === 4) && (() => {
+                const ly = Math.max(12, p.y - 10);
+                const anchor = i === 0 ? 'start' : 'end';
+                const label = `${(p.v / 10000).toFixed(1)}万`;
+                return (
+                  <>
+                    <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700"
+                      stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{label}</text>
+                    <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700" fill={lineColor}>{label}</text>
+                  </>
+                );
+              })()}
+              <text x={PAD.left + (i / 4) * chartW} y={H - 2} textAnchor="middle" fontSize="11" fill="#9ca3af">
+                {String(years[i]).slice(2)}
+              </text>
+            </g>
+          ))}
+        </svg>
+      )}
+    </div>
+  );
+}
+
+// HeartRails駅名+路線名 × REINFOLIB乗降客数リスト をfuzzyマッチ
+// HeartRails の路線名プレフィックス → REINFOLIB の事業者名キーワード
+const HR_OP_MAP = [
+  [/^JR/, '旅客鉄道'],
+  [/^東急/, '東急'],
+  [/^阪急/, '阪急'],
+  [/^阪神/, '阪神'],
+  [/^近鉄/, '近畿日本'],
+  [/^南海/, '南海'],
+  [/^名鉄/, '名古屋鉄道'],
+  [/^西鉄/, '西日本鉄道'],
+  [/^東武/, '東武'],
+  [/^西武/, '西武'],
+  [/^京急/, '京急'],
+  [/^小田急/, '小田急'],
+  [/^京王/, '京王'],
+  [/^京成/, '京成'],
+  [/^相鉄/, '相模鉄道'],
+  [/^東京メトロ/, '東京地下鉄'],
+  [/^都営/, '東京都交通局'],
+];
+
+function matchPassenger(stationName, hrLine, psList) {
+  const sameStation = psList.filter(ps => ps.name === stationName);
+  if (!sameStation.length) return null;
+  if (sameStation.length === 1) return sameStation[0];
+
+  // 1st pass: 路線名の部分一致（例: 阪急今津線→今津線、阪急神戸本線→神戸線）
+  const stripped = (hrLine ?? '')
+    .replace(/^(東急|東京メトロ|東京都交通局|都営|JR|京急|小田急|東武|西武|京王|相鉄|京成|阪急|阪神|近鉄|南海|名鉄|西鉄)/, '')
+    .trim();
+  for (const ps of sameStation) {
+    const psLine = ps.line ?? '';
+    if (stripped && (psLine.includes(stripped) || stripped.includes(psLine))) return ps;
   }
 
-  const comment = getAssetComment(zoningData?.useDistrict);
+  // 2nd pass: 事業者名マッチ（例: JR神戸線→東海道線は路線名が異なるが「旅客鉄道」で一致）
+  for (const [re, opKeyword] of HR_OP_MAP) {
+    if (re.test(hrLine ?? '')) {
+      const opMatch = sameStation.find(ps => (ps.operator ?? '').includes(opKeyword));
+      if (opMatch) return opMatch;
+    }
+  }
+
+  return null;
+}
+
+function StationPassengerCard({ passengerData, passengerLoading, convStations = [] }) {
+  const psList = passengerData?.stations ?? [];
+  const stations = convStations.slice(0, 4).map(s => {
+    const ps = matchPassenger(s.name, s.operator, psList);
+    return { name: s.name, operator: s.operator, walkMin: s.walkMin, yearly: ps?.yearly ?? {}, trend: ps?.trend ?? null };
+  });
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xl">📈</span>
+        <span className="text-sm font-semibold text-gray-700">駅乗降客数トレンド（2019→2023）</span>
+      </div>
+
+      {passengerLoading ? (
+        <p className="text-sm text-gray-500">読み込み中…</p>
+      ) : stations.length === 0 ? (
+        <p className="text-sm text-gray-500">データなし</p>
+      ) : (
+        <div className="space-y-3">
+          {stations.map((s, i) => {
+            const trend = s.trend;
+            const trendCls = trend == null ? 'text-gray-400'
+              : trend >= 5  ? 'text-green-600'
+              : trend <= -10 ? 'text-red-600'
+              : 'text-blue-600';
+            const trendIcon = trend == null ? '' : trend >= 5 ? '↑' : trend <= -10 ? '↓' : '→';
+            const latest = s.yearly[2023] ?? s.yearly[2022] ?? null;
+            const hasYearly = Object.keys(s.yearly).length > 0;
+
+            return (
+              <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <span className="text-sm font-semibold text-gray-800">{s.name}</span>
+                    {s.operator && <span className="text-xs text-gray-400 ml-1">（{s.operator}）</span>}
+                  </div>
+                  <span className="text-xs text-gray-400">徒歩{s.walkMin}分</span>
+                </div>
+                {hasYearly ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-0.5">
+                      {latest != null && (
+                        <span className="text-sm font-bold text-gray-700">
+                          {(latest / 10000).toFixed(1)}万人
+                          <span className="text-xs font-normal text-gray-400 ml-0.5">（2023年）</span>
+                        </span>
+                      )}
+                      {trend != null && (
+                        <span className={`text-xs font-semibold ${trendCls}`}>
+                          {trendIcon} 2019比{trend > 0 ? '+' : ''}{trend}%
+                        </span>
+                      )}
+                    </div>
+                    <PassengerLineChart yearly={s.yearly} />
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-400 mt-1">データ非公開（事業者未提供）</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p className="text-xs text-gray-500 mt-2">出典: 国土交通省 国土数値情報（REINFOLIB）</p>
+    </div>
+  );
+}
+
+function FutureScoreCard({ zoningData, urbanData, passengerData, zoningLoading, urbanLoading }) {
+  const loading = zoningLoading || urbanLoading;
+  const score = calcFutureScore(zoningData, urbanData, passengerData);
+  const d = zoningData?.useDistrict;
+
+  const comment = !d ? null
+    : score >= 9 ? { bg: 'bg-green-50 border-green-100', color: 'text-green-700', title: '再開発ポテンシャル：高',   text: '高い容積率・用途の自由度があり、大規模再開発が起きやすいエリアです。地価上昇の恩恵を受けやすい立地です。' }
+    : score >= 7 ? { bg: 'bg-blue-50 border-blue-100',   color: 'text-blue-700',   title: '再開発ポテンシャル：中〜高', text: '商業・住居混在エリアで、周辺開発による地価上昇が期待できる立地です。' }
+    : score >= 5 ? { bg: 'bg-yellow-50 border-yellow-100', color: 'text-yellow-700', title: '再開発ポテンシャル：標準', text: '標準的な住宅地です。周辺開発の動向を継続して確認することをおすすめします。' }
+    : { bg: 'bg-gray-50 border-gray-100', color: 'text-gray-700', title: '再開発ポテンシャル：低', text: '建築規制が厳しいエリアです。住環境の安定性は高い一方、地価の急上昇は起きにくい傾向があります。' };
+
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-xl">🏙️</span>
-          <span className="text-sm font-semibold text-gray-700">用途地域（資産目線）</span>
+          <span className="text-xl">🏗️</span>
+          <span className="text-sm font-semibold text-gray-700">将来性</span>
         </div>
-        {!zoningLoading && <Stars score={calcAssetZoningScore(zoningData)} />}
+        {!loading && <Stars score={score} />}
       </div>
-      {zoningLoading ? (
+
+      {loading ? (
         <p className="text-sm text-gray-500">読み込み中…</p>
-      ) : !zoningData?.useDistrict ? (
+      ) : !d ? (
         <p className="text-sm text-gray-500">データなし</p>
       ) : (
         <>
-          <p className="text-sm font-semibold text-gray-800 mb-2">{zoningData.useDistrict}</p>
+          <div className="space-y-1 mb-2">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-gray-500 w-20 shrink-0">用途地域</span>
+              <span className="text-gray-700 font-medium">{d}</span>
+            </div>
+            {urbanData?.isKoudo && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-gray-500 w-20 shrink-0">都市計画指定</span>
+                <span className="text-green-700 font-medium bg-green-50 px-1.5 py-0.5 rounded">🏗️ 高度利用地区</span>
+              </div>
+            )}
+            {urbanData?.isToshi && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-gray-500 w-20 shrink-0">立地適正化</span>
+                <span className="text-blue-700 font-medium bg-blue-50 px-1.5 py-0.5 rounded">📍 都市機能誘導区域</span>
+              </div>
+            )}
+          </div>
           {comment && (
             <div className={`rounded-lg px-3 py-2 border text-xs ${comment.bg}`}>
               <p className={`font-semibold mb-0.5 ${comment.color}`}>{comment.title}</p>
@@ -692,6 +1027,7 @@ function AdvancedZoningCard({ zoningData, zoningLoading }) {
           )}
         </>
       )}
+      <p className="text-xs text-gray-500 mt-2">出典: 国土交通省 都市計画決定GIS（REINFOLIB）</p>
     </div>
   );
 }
@@ -762,6 +1098,32 @@ function calcLandPriceScore(trend) {
   if (trend >= -5) return 3;
   if (trend >= -10) return 2;
   return 1;
+}
+
+// 成約価格トレンドスコア 1-10
+function calcTrendScore(trendData, propertyType) {
+  if (!trendData) return 5;
+  const years = Object.keys(trendData).map(Number).sort();
+  const pts = (propertyType === 'house'
+    ? years.map(y => ({ year: y, value: trendData[y]?.houseAvgPrice }))
+    : years.map(y => ({ year: y, value: trendData[y]?.condoAvgUnitPrice }))
+  ).filter(p => p.value != null);
+  if (pts.length < 2) return 5;
+  const overallPct = Math.round(((pts[pts.length - 1].value - pts[0].value) / pts[0].value) * 100);
+  const peakValue = Math.max(...pts.map(p => p.value));
+  const peakIdx   = pts.findIndex(p => p.value === peakValue);
+  const fromPeakPct = Math.round(((pts[pts.length - 1].value - peakValue) / peakValue) * 100);
+  const hasPeakedAndDeclined = pts.length >= 3 && peakIdx > 0 && peakIdx < pts.length - 1 && fromPeakPct <= -3;
+  return hasPeakedAndDeclined
+    ? (overallPct >= 10 ? 5 : overallPct >= 5 ? 4 : overallPct >= 0 ? 3 : 2)
+    : overallPct >= 15 ? 10
+    : overallPct >= 10 ? 9
+    : overallPct >=  5 ? 8
+    : overallPct >=  2 ? 7
+    : overallPct >= -2 ? 6
+    : overallPct >= -5 ? 4
+    : overallPct >= -10 ? 3
+    : 2;
 }
 
 // 人口スコア 1-10
@@ -912,11 +1274,15 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
   if (!condos?.avgUnitPrice) return null;
 
   const eraData = selectedEra === 'all'
-    ? { label: '全年代平均', avgUnitPrice: condos.avgUnitPrice, avgPrice: condos.avgPrice, avgArea: condos.avgArea, count: condos.count }
+    ? { label: '全年代平均', avgUnitPrice: condos.avgUnitPrice, avgPrice: condos.avgPrice, avgArea: condos.avgArea, count: condos.count, p25: condos.p25, p50: condos.p50, p75: condos.p75 }
     : condos.eraStats?.[selectedEra];
 
   const areaNum = parseFloat(area) || 0;
-  const estimate = eraData?.avgUnitPrice && areaNum > 0 ? Math.round(eraData.avgUnitPrice * areaNum) : null;
+  const hasP = eraData?.p50 != null && eraData?.p25 != null && eraData?.p75 != null && (eraData?.count ?? 0) >= 5;
+  const refUnitPrice = hasP ? eraData.p50 : eraData?.avgUnitPrice;
+  const estimate = refUnitPrice && areaNum > 0 ? Math.round(refUnitPrice * areaNum) : null;
+  const simRangeMin = hasP && eraData.p25 && areaNum > 0 ? Math.round(eraData.p25 * areaNum) : null;
+  const simRangeMax = hasP && eraData.p75 && areaNum > 0 ? Math.round(eraData.p75 * areaNum) : null;
 
   return (
     <div className="border-t border-gray-100 pt-3 mt-1">
@@ -949,7 +1315,14 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
         <>
           <div className="bg-blue-50 rounded-lg px-3 py-2 mb-2">
             <p className="text-xs text-gray-500 mb-0.5">{eraData.label}</p>
-            <p className="text-lg font-bold text-blue-700">{eraData.avgUnitPrice}万円/㎡</p>
+            {hasP ? (
+              <>
+                <p className="text-lg font-bold text-blue-700">{eraData.p50}万円/㎡ <span className="text-xs font-normal text-gray-500">（中央値）</span></p>
+                <p className="text-xs text-gray-500 mt-0.5">適正レンジ（P25〜P75）: {eraData.p25}〜{eraData.p75}万円/㎡</p>
+              </>
+            ) : (
+              <p className="text-lg font-bold text-blue-700">{eraData.avgUnitPrice}万円/㎡</p>
+            )}
             <div className="flex flex-wrap gap-x-3 text-xs text-gray-500 mt-0.5">
               {eraData.avgPrice && <span>平均成約価格 約{eraData.avgPrice.toLocaleString()}万円</span>}
               {eraData.avgArea  && <span>平均面積 約{eraData.avgArea}㎡</span>}
@@ -970,9 +1343,19 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
           </div>
           {estimate && (
             <div className="bg-white rounded-lg px-3 py-2 border border-blue-200">
-              <p className="text-xs text-gray-500">このエリアの目安</p>
-              <p className="text-lg font-bold text-blue-700">約{estimate.toLocaleString()}万円</p>
-              <p className="text-xs text-gray-500">{eraData.avgUnitPrice}万円/㎡ × {area}㎡</p>
+              {hasP && simRangeMin && simRangeMax ? (
+                <>
+                  <p className="text-xs text-gray-500">適正レンジ（P25〜P75）</p>
+                  <p className="text-lg font-bold text-blue-700">約{simRangeMin.toLocaleString()}万〜{simRangeMax.toLocaleString()}万円</p>
+                  <p className="text-xs text-gray-500">中央値 {eraData.p50}万円/㎡ × {area}㎡ ≒ 約{estimate.toLocaleString()}万円</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-500">このエリアの目安</p>
+                  <p className="text-lg font-bold text-blue-700">約{estimate.toLocaleString()}万円</p>
+                  <p className="text-xs text-gray-500">{eraData.avgUnitPrice}万円/㎡ × {area}㎡</p>
+                </>
+              )}
             </div>
           )}
         </>
@@ -1061,10 +1444,44 @@ function yearToEra(y) {
   return 'era2011';
 }
 
-function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = 'condo', condos, houses, homesUrl, googleUrl, onScoreChange = null, onHouseAdjustChange }) {
+function getBaseRentYield(address) {
+  if (!address) return 6.5;
+  if (/東京都/.test(address)) {
+    if (/千代田区|中央区|港区|新宿区|渋谷区/.test(address)) return 3.8;
+    if (/文京区|台東区|墨田区|江東区|品川区|目黒区|大田区|世田谷区|杉並区|豊島区|北区|荒川区|板橋区|練馬区|足立区|葛飾区|江戸川区/.test(address)) return 4.3;
+    return 5.0;
+  }
+  if (/横浜市|川崎市/.test(address)) return 5.0;
+  if (/大阪市|名古屋市|福岡市|札幌市|仙台市|さいたま市|千葉市|京都市|神戸市|広島市|北九州市|熊本市|岡山市|相模原市/.test(address)) return 5.2;
+  if (/神奈川県|千葉県|埼玉県|愛知県|大阪府|兵庫県|福岡県|京都府|宮城県|北海道|広島県|静岡県/.test(address)) return 6.0;
+  return 7.5;
+}
+
+function calcRentYield(address, builtYear, nearestStationM, areaNum) {
+  let y = getBaseRentYield(address);
+  const yr = parseInt(builtYear) || 0;
+  if (yr > 0 && yr <= 1981) y += 1.5;
+  else if (yr >= 2000) y -= 0.3;
+  if (nearestStationM != null) {
+    const walkMin = Math.round(nearestStationM * 1.3 / 80);
+    if (walkMin <= 5) y -= 0.5;
+    else if (walkMin >= 15) y += 0.5;
+  }
+  // 専有面積による補正（小さいほど利回り高）
+  if (areaNum > 0) {
+    if (areaNum < 25) y += 2.5;
+    else if (areaNum < 35) y += 2.0;
+    else if (areaNum < 50) y += 1.0;
+    else if (areaNum >= 70) y -= 0.5;
+  }
+  return Math.round(Math.max(2.5, Math.min(12.0, y)) * 10) / 10;
+}
+
+function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = 'condo', condos, houses, homesUrl, googleUrl, onScoreChange = null, onHouseAdjustChange, address = null, nearestStationM = null }) {
   const [price, setPrice] = useState('5000');
   const [down, setDown]   = useState('1000');
   const [area, setArea]   = useState('70');
+  const [floor, setFloor] = useState('');
   const [landArea, setLandArea]         = useState('120');
   const [buildingArea, setBuildingArea] = useState('100');
   const [structure, setStructure]       = useState('木造');
@@ -1087,8 +1504,10 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
   const [varYears, setVarYears] = useState('35');
   const [fixRate, setFixRate] = useState('3.4');
   const [fixYears, setFixYears] = useState('35');
-  const [mgmt, setMgmt]   = useState('15000');
-  const [reserve, setReserve] = useState('10000');
+  const [mgmt, setMgmt]       = useState('');
+  const [reserve, setReserve] = useState('');
+  const [mgmtManual, setMgmtManual]       = useState(false);
+  const [reserveManual, setReserveManual] = useState(false);
   const [rateData, setRateData] = useState(null);
 
   useEffect(() => {
@@ -1101,6 +1520,16 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
       })
       .catch(() => {});
   }, []);
+
+  // 面積変更時に管理費・修繕積立金のデフォルト値を自動計算（200円/㎡、500円単位）
+  // ユーザーが手動入力した場合は上書きしない
+  useEffect(() => {
+    const a = parseFloat(area) || 0;
+    if (a <= 0) return;
+    const def = String(Math.round(a * 200 / 500) * 500);
+    if (!mgmtManual)    setMgmt(def);
+    if (!reserveManual) setReserve(def);
+  }, [area]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const p = parseFloat(price) || 0;
   const d = parseFloat(down) || 0;
@@ -1124,14 +1553,16 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
   // 築年から年代を自動判定
   const autoEra = yearToEra(builtYear);
   const eraKey  = autoEra ?? 'all';
-  const unitPrice = condos
-    ? (eraKey === 'all'
-        ? condos.avgUnitPrice
-        : (condos.eraStats?.[eraKey]?.avgUnitPrice ?? condos.avgUnitPrice))
-    : null;
+  const eraData = eraKey === 'all' ? condos : (condos?.eraStats?.[eraKey] ?? condos);
+  const unitPrice = eraData?.avgUnitPrice ?? null;
   const eraLabel = eraKey === 'all'
     ? '全年代平均'
     : (condos?.eraStats?.[eraKey]?.label ?? '');
+  const p25 = eraData?.p25 ?? null;
+  const p50 = eraData?.p50 ?? null;
+  const p75 = eraData?.p75 ?? null;
+  const p90 = eraData?.p90 ?? null;
+  const hasPercentiles = p25 != null && p75 != null && (eraData?.count ?? 0) >= 5;
 
   const areaNum         = parseFloat(area)          || 0;
   const landAreaNum     = parseFloat(landArea)      || 0;
@@ -1141,15 +1572,45 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
   const breakdownSum    = landPriceNum + buildingPriceNum;
   const breakdownMismatch = breakdownSum > 0 && p > 0 && Math.abs(breakdownSum - p) > 1;
   const actualUnitPrice = p > 0 && areaNum > 0 ? p / areaNum : null;
-  const ratio = actualUnitPrice && unitPrice ? actualUnitPrice / unitPrice : null;
-  const feedback = ratio === null ? null
-    : ratio < 0.85 ? { label: 'お得！',       sub: '平均より15%以上割安',     color: 'text-green-700',  bg: 'bg-green-50 border-green-200' }
-    : ratio < 0.95 ? { label: '割安な方',      sub: '平均より少し安め',         color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200' }
-    : ratio < 1.05 ? { label: '相場内',        sub: 'エリア平均に近い水準',     color: 'text-gray-700',   bg: 'bg-gray-50 border-gray-200' }
-    : ratio < 1.20 ? { label: 'やや高め',      sub: '交渉する余地があるかも',   color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' }
-    :                { label: 'かなり高め',     sub: 'しっかり価格交渉を',       color: 'text-red-700',    bg: 'bg-red-50 border-red-200' };
-  const estimate = unitPrice && areaNum > 0 ? Math.round(unitPrice * areaNum) : null;
+
+  // パーセンタイルが使える場合はパーセンタイルベース、足りない場合は平均比率ベース
+  const ratio = !hasPercentiles && actualUnitPrice && unitPrice ? actualUnitPrice / unitPrice : null;
+  const feedback = hasPercentiles && actualUnitPrice != null
+    ? actualUnitPrice < p25
+      ? { label: 'お得！',     sub: '成約の下位25%以内の割安水準', color: 'text-green-700',  bg: 'bg-green-50 border-green-200' }
+      : actualUnitPrice <= p75
+      ? { label: '適正',       sub: '成約の中央50%の範囲内',       color: 'text-gray-700',   bg: 'bg-gray-50 border-gray-200' }
+      : actualUnitPrice <= p90
+      ? { label: 'やや高め',   sub: '上位25%水準。交渉の余地あり', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' }
+      : { label: 'かなり高め', sub: '上位10%水準。価格交渉を',     color: 'text-red-700',    bg: 'bg-red-50 border-red-200' }
+    : ratio === null ? null
+    : ratio < 0.85 ? { label: 'お得！',   sub: '平均より15%以上割安',   color: 'text-green-700',  bg: 'bg-green-50 border-green-200' }
+    : ratio < 0.95 ? { label: '割安な方', sub: '平均より少し安め',       color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200' }
+    : ratio < 1.05 ? { label: '相場内',   sub: 'エリア平均に近い水準',   color: 'text-gray-700',   bg: 'bg-gray-50 border-gray-200' }
+    : ratio < 1.20 ? { label: 'やや高め', sub: '交渉する余地があるかも', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' }
+    :                { label: 'かなり高め', sub: 'しっかり価格交渉を',   color: 'text-red-700',    bg: 'bg-red-50 border-red-200' };
+  // 参照価格: パーセンタイルあり→中央値、なし→平均
+  const refPrice = (hasPercentiles ? p50 : unitPrice) ?? null;
+  // 所在階による価格補正（文献値ベースの目安）
+  const floorNum = parseInt(floor) || 0;
+  const floorAdj = floorNum === 0 ? 1.0
+    : floorNum === 1 ? 0.88
+    : floorNum <= 3  ? 0.94
+    : floorNum <= 6  ? 1.00
+    : Math.min(1 + (floorNum - 6) * 0.015, 1.20);
+  const floorAdjPct = floorNum > 0 ? Math.round((floorAdj - 1) * 100) : 0;
+  const estimate = refPrice && areaNum > 0 ? Math.round(refPrice * areaNum * floorAdj) : null;
+  const rangeMin = hasPercentiles && p25 && areaNum > 0 ? Math.round(p25 * areaNum * floorAdj) : null;
+  const rangeMax = hasPercentiles && p75 && areaNum > 0 ? Math.round(p75 * areaNum * floorAdj) : null;
   const needsBuiltYear = !builtYear && ratio !== null;
+  // 想定賃料（P50市場価値ベース・マンションのみ）
+  const rentYield = propertyType === 'condo' && builtYear && p50 && areaNum > 0
+    ? calcRentYield(address, builtYear, nearestStationM, areaNum)
+    : null;
+  const marketValueM = p50 && areaNum > 0 ? Math.round(p50 * areaNum * floorAdj) : null;
+  const estimatedMonthlyRentM = rentYield && marketValueM
+    ? Math.round(marketValueM * rentYield / 100 / 12 * 10) / 10
+    : null;
 
   // 管理費・修繕積立金の相場感
   const reserveMin = areaNum > 0 ? Math.round(areaNum * 200) : null;
@@ -1210,7 +1671,8 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
   const registration   = p > 0 ? Math.round(p * 0.01 + 20) : 0;
   const loanFee        = p > 0 ? Math.round(p * 0.85 * 0.022) : 0;
   const acquisitionTax = p > 0 ? Math.round(p * 0.005) : 0;
-  const totalMisc      = brokerage + registration + loanFee + acquisitionTax;
+  const fireInsurance  = p > 0 ? (propertyType === 'house' ? 15 : 5) : 0;
+  const totalMisc      = brokerage + registration + loanFee + acquisitionTax + fireInsurance;
 
   const [openHint, setOpenHint] = useState(null);
 
@@ -1233,7 +1695,9 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
     : houseRatio < 1.25 ? { label: 'やや高め',  sub: '交渉する余地があるかも', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' }
     :                     { label: 'かなり高め', sub: 'しっかり価格交渉を',     color: 'text-red-700',    bg: 'bg-red-50 border-red-200' };
 
-  const loanScoreVal = ratio != null
+  const loanScoreVal = hasPercentiles && actualUnitPrice != null
+    ? (actualUnitPrice < p25 ? 10 : actualUnitPrice <= p50 ? 8 : actualUnitPrice <= p75 ? 6 : actualUnitPrice <= p90 ? 4 : 2)
+    : ratio != null
     ? (ratio < 0.85 ? 10 : ratio < 0.95 ? 8 : ratio < 1.05 ? 6 : ratio < 1.20 ? 4 : 2)
     : houseRatio != null
     ? (houseRatio < 0.80 ? 10 : houseRatio < 0.92 ? 8 : houseRatio < 1.08 ? 6 : houseRatio < 1.25 ? 4 : 2)
@@ -1245,11 +1709,14 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
       score:         loanScoreVal,
       price:         p > 0 ? p : null,
       area:          areaNum > 0 ? areaNum : null,
+      floor:         propertyType === 'condo' && parseInt(floor) > 0 ? parseInt(floor) : null,
       builtYear:     builtYear || null,
       feedbackLabel: (feedback ?? hFeedback)?.label ?? null,
       feedbackSub:   (feedback ?? hFeedback)?.sub   ?? null,
-      eraLabel:      ratio != null ? eraLabel : null,
+      eraLabel:      (ratio != null || hasPercentiles) ? eraLabel : null,
       estimate,
+      rangeMin,
+      rangeMax,
       totalMisc:     p > 0 ? totalMisc : null,
       down:          d > 0 ? d : null,
       loanAmount:    p > 0 ? Math.max(0, p - d) : null,
@@ -1268,6 +1735,9 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
       structure:     propertyType === 'house' ? structure : null,
       landPrice:     propertyType === 'house' && landPriceNum > 0     ? landPriceNum     : null,
       buildingPrice: propertyType === 'house' && buildingPriceNum > 0 ? buildingPriceNum : null,
+      estimatedMonthlyRentM: estimatedMonthlyRentM ?? null,
+      rentYield:             rentYield             ?? null,
+      marketValueM:          marketValueM          ?? null,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanScoreVal, p, d, areaNum, landAreaNum, buildingAreaNum, structure, landPriceNum, buildingPriceNum, builtYear, monthlyVar, monthlyFix, mgmt, reserve, varRate, fixRate, varYears, fixYears]);
@@ -1318,59 +1788,25 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         </div>
       )}
 
-      {/* エリア比較（condosデータあり時） */}
-      {condos?.avgUnitPrice && (
-        <div className="mb-3">
-          {autoEra && (
-            <p className="text-xs text-gray-500 mb-1.5">
-              築年 {builtYear} → <span className="font-medium text-blue-600">{eraLabel}</span> の平均と比較
-            </p>
-          )}
-          {needsBuiltYear ? (
-            <div className="rounded-lg px-3 py-2.5 border bg-amber-50 border-amber-200">
-              <p className="text-sm font-bold text-amber-700">築年を入力してください</p>
-              <p className="text-xs text-amber-600 mt-0.5">年代別の正確な相場と比較するために築年（西暦）の入力が必要です。</p>
-            </div>
-          ) : feedback ? (
-            <div className={`rounded-lg px-3 py-2.5 border ${feedback.bg}`}>
-              <div className="flex items-center justify-between mb-0.5">
-                <div className="flex items-center gap-2">
-                  <p className={`text-base font-bold ${feedback.color}`}>{feedback.label}</p>
-                  {loanScoreVal != null && <Stars score={loanScoreVal} />}
-                </div>
-                <p className={`text-xs font-medium ${feedback.color}`}>{feedback.sub}</p>
-              </div>
-              <div className="flex gap-3 text-xs text-gray-500">
-                <span>入力: {Math.round(actualUnitPrice * 10) / 10}万/㎡</span>
-                <span>{eraLabel}: {unitPrice}万/㎡</span>
-              </div>
-              {estimate && <p className="text-xs text-gray-500 mt-0.5">エリア目安: 約{estimate.toLocaleString()}万円</p>}
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-              <p className="text-xs text-gray-500">物件価格・広さを入力するとエリア平均と比較します</p>
-              {estimate && (
-                <p className="text-sm font-bold text-blue-700 mt-0.5">
-                  {eraLabel}の目安: 約{estimate.toLocaleString()}万円
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="mb-3">
-        {/* 1行目: 物件価格 ＋ 建物構造（戸建て）or 専有面積（マンション） */}
-        <div className="grid grid-cols-2 gap-2 mb-2">
+        {/* 1行目: 物件価格 ＋ 専有面積・所在階（マンション）or 建物構造（戸建て） */}
+        <div className={`grid gap-2 mb-2 ${propertyType === 'condo' ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <div>
             <p className="text-xs text-gray-500 mb-1">物件価格（万円）</p>
             <input type="text" inputMode="numeric" value={price} onChange={e => setPrice(toHalfInt(e.target.value))} className={inputCls} />
           </div>
           {propertyType === 'condo' ? (
-            <div>
-              <p className="text-xs text-gray-500 mb-1">専有面積（㎡）</p>
-              <input type="text" inputMode="numeric" value={area} onChange={e => setArea(toHalfInt(e.target.value))} className={inputCls} />
-            </div>
+            <>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">専有面積（㎡）</p>
+                <input type="text" inputMode="numeric" value={area} onChange={e => setArea(toHalfInt(e.target.value))} className={inputCls} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">所在階（任意）</p>
+                <input type="text" inputMode="numeric" value={floor} onChange={e => setFloor(toHalfInt(e.target.value))} placeholder="例: 5" className={inputCls} />
+              </div>
+            </>
           ) : (
             <div>
               <p className="text-xs text-gray-500 mb-1">建物構造</p>
@@ -1484,7 +1920,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               {googleUrl && (
                 <a href={googleUrl} target="_blank" rel="noopener noreferrer"
                   className="text-center text-xs px-2 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg font-medium hover:bg-blue-100 transition-colors whitespace-nowrap">
-                  🔍 Web検索で確認
+                  🔍 Webで検索
                 </a>
               )}
             </div>
@@ -1511,6 +1947,89 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         )}
       </div>
 
+      {/* エリア比較（築年入力の直下） */}
+      {condos?.avgUnitPrice && (
+        <div className="mb-3">
+          {autoEra && builtYear && (
+            <p className="text-xs text-gray-500 mb-1.5">
+              築年 {builtYear} → <span className="font-medium text-blue-600">{eraLabel}</span> の成約分布と比較（{eraData?.count ?? condos?.count}件）
+            </p>
+          )}
+          {!builtYear ? (
+            <div className="rounded-lg px-3 py-2.5 border bg-amber-50 border-amber-200">
+              <p className="text-sm font-bold text-amber-700">築年を入力してください</p>
+              <p className="text-xs text-amber-600 mt-0.5">年代別の正確な相場と比較するために築年（西暦）の入力が必要です。</p>
+            </div>
+          ) : feedback ? (
+            <div className={`rounded-lg px-3 py-2.5 border ${feedback.bg}`}>
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-2">
+                  <p className={`text-base font-bold ${feedback.color}`}>{feedback.label}</p>
+                  {loanScoreVal != null && <Stars score={loanScoreVal} />}
+                </div>
+                <p className={`text-xs font-medium ${feedback.color}`}>{feedback.sub}</p>
+              </div>
+              <div className="flex gap-3 text-xs text-gray-500">
+                <span>入力: {Math.round(actualUnitPrice * 10) / 10}万/㎡</span>
+                {hasPercentiles
+                  ? <span>中央値(P50): {p50}万/㎡</span>
+                  : <span>{eraLabel}: {unitPrice}万/㎡</span>}
+              </div>
+              {hasPercentiles && rangeMin && rangeMax ? (
+                <p className="text-xs text-gray-500 mt-0.5">適正レンジ（P25〜P75）: 約{rangeMin.toLocaleString()}万〜{rangeMax.toLocaleString()}万円</p>
+              ) : estimate ? (
+                <p className="text-xs text-gray-500 mt-0.5">エリア目安（平均）: 約{estimate.toLocaleString()}万円</p>
+              ) : null}
+              {floorAdjPct !== 0 && (estimate || (rangeMin && rangeMax)) && (
+                <p className="text-[10px] text-gray-400 mt-0.5">※ {floorNum}階補正 {floorAdjPct > 0 ? '+' : ''}{floorAdjPct}%を適用（文献値ベースの目安）</p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+              <p className="text-xs text-gray-500">物件価格・広さを入力するとエリアの成約分布と比較します</p>
+              {hasPercentiles && areaNum > 0 ? (
+                <p className="text-sm font-bold text-blue-700 mt-0.5">
+                  適正レンジ（P25〜P75）: 約{rangeMin?.toLocaleString()}万〜{rangeMax?.toLocaleString()}万円
+                </p>
+              ) : estimate ? (
+                <p className="text-sm font-bold text-blue-700 mt-0.5">
+                  {eraLabel}の目安: 約{estimate.toLocaleString()}万円
+                </p>
+              ) : null}
+              {floorAdjPct !== 0 && (estimate || (rangeMin && rangeMax)) && (
+                <p className="text-[10px] text-gray-400 mt-0.5">※ {floorNum}階補正 {floorAdjPct > 0 ? '+' : ''}{floorAdjPct}%を適用（文献値ベースの目安）</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 頭金 + 手元現金サマリー */}
+      <div className="mb-3">
+        <p className="text-xs text-gray-500 mb-1">頭金（万円）</p>
+        <input type="text" inputMode="numeric" value={down} onChange={e => setDown(toHalfInt(e.target.value))} className={inputCls} />
+        {p > 0 && (
+          <div className="mt-2 bg-blue-50 rounded-lg px-3 py-2 border border-blue-100 text-xs">
+            <div className="flex justify-between">
+              <span className="text-gray-500">頭金</span>
+              <span className="font-medium text-gray-700">{d.toLocaleString()}万円</span>
+            </div>
+            <div className="flex justify-between mt-0.5">
+              <span className="text-gray-500">＋ 諸費用（目安）</span>
+              <span className="font-medium text-gray-700">約{totalMisc.toLocaleString()}万円</span>
+            </div>
+            <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t border-blue-200">
+              <span className="text-xs font-bold text-gray-600">手元現金の合計</span>
+              <span className="text-base font-bold text-blue-700">約{Math.round(d + totalMisc).toLocaleString()}万円</span>
+            </div>
+            <div className="flex justify-between items-baseline mt-1 pt-1 border-t border-blue-100">
+              <span className="text-xs text-gray-500">ローン借入額</span>
+              <span className="text-base font-semibold text-gray-700">{Math.max(0, p - d).toLocaleString()}万円</span>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* 諸費用の概算（インプット直後） */}
       {p > 0 && (
         <div className="mb-3 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
@@ -1522,6 +2041,8 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               { label: '融資手数料（2.2%目安）',     value: loanFee },
               { label: '不動産取得税（軽減後目安）', value: acquisitionTax, hintKey: 'acquisitionTax',
                 hint: '購入の翌年に都道府県から納税通知書が届きます（引渡しが年末に近い場合は翌々年になることも）。払い忘れに注意。中古住宅で床面積50㎡以上・1982年以降築などの要件を満たすと税額から最大45万円が控除されます（この概算はその軽減後の値です）。' },
+              { label: `火災保険（5年一括・${propertyType === 'house' ? '木造戸建て' : 'マンション'}目安）`, value: fireInsurance, hintKey: 'fireInsurance',
+                hint: '構造・延床面積・補償内容によって大きく異なります。木造戸建ては保険料が高め（5年で10〜30万円）、マンション（RC・SRC）は安め（5年で3〜8万円）。複数社を一括比較して最安値を探すのがおすすめです。地震保険（任意）を追加する場合はさらに同額程度が目安です。' },
             ].map(({ label, value, hintKey, hint }) => (
               <div key={label} className="px-1">
                 <div className="flex justify-between items-center">
@@ -1552,39 +2073,18 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         </div>
       )}
 
-      {/* 頭金 + 手元現金サマリー */}
-      <div className="mb-3">
-        <p className="text-xs text-gray-500 mb-1">頭金（万円）</p>
-        <input type="text" inputMode="numeric" value={down} onChange={e => setDown(toHalfInt(e.target.value))} className={inputCls} />
-        {p > 0 && (
-          <div className="mt-2 bg-blue-50 rounded-lg px-3 py-2 border border-blue-100 text-xs">
-            <div className="flex justify-between">
-              <span className="text-gray-500">頭金</span>
-              <span className="font-medium text-gray-700">{d.toLocaleString()}万円</span>
-            </div>
-            <div className="flex justify-between mt-0.5">
-              <span className="text-gray-500">＋ 諸費用（目安）</span>
-              <span className="font-medium text-gray-700">約{totalMisc.toLocaleString()}万円</span>
-            </div>
-            <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t border-blue-200">
-              <span className="text-xs font-bold text-gray-600">手元現金の合計</span>
-              <span className="text-base font-bold text-blue-700">約{Math.round(d + totalMisc).toLocaleString()}万円</span>
-            </div>
-            <div className="flex justify-between items-baseline mt-1 pt-1 border-t border-blue-100">
-              <span className="text-xs text-gray-500">ローン借入額</span>
-              <span className="text-base font-semibold text-gray-700">{Math.max(0, p - d).toLocaleString()}万円</span>
-            </div>
-          </div>
-        )}
-      </div>
-
       {(monthlyVar || monthlyFix) && (
         <>
           {showMgmt && (
             <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
-                <p className="text-xs text-gray-500 mb-1">管理費（月・円）</p>
-                <input type="text" inputMode="numeric" value={mgmt} onChange={e => setMgmt(toHalfInt(e.target.value))} className={inputCls} />
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-gray-500">管理費（月・円）</p>
+                  {mgmtManual && (
+                    <button onClick={() => { setMgmtManual(false); const a = parseFloat(area)||0; if(a>0) setMgmt(String(Math.round(a*200/500)*500)); }} className="text-[10px] text-blue-500 hover:underline">↩ 自動</button>
+                  )}
+                </div>
+                <input type="text" inputMode="numeric" value={mgmt} onChange={e => { setMgmt(toHalfInt(e.target.value)); setMgmtManual(true); }} className={inputCls} />
                 {mgmtStatus && (
                   <button
                     onClick={() => setOpenHint(openHint === 'mgmt' ? null : 'mgmt')}
@@ -1599,8 +2099,13 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                 )}
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">修繕積立金（月・円）</p>
-                <input type="text" inputMode="numeric" value={reserve} onChange={e => setReserve(toHalfInt(e.target.value))} className={inputCls} />
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-gray-500">修繕積立金（月・円）</p>
+                  {reserveManual && (
+                    <button onClick={() => { setReserveManual(false); const a = parseFloat(area)||0; if(a>0) setReserve(String(Math.round(a*200/500)*500)); }} className="text-[10px] text-blue-500 hover:underline">↩ 自動</button>
+                  )}
+                </div>
+                <input type="text" inputMode="numeric" value={reserve} onChange={e => { setReserve(toHalfInt(e.target.value)); setReserveManual(true); }} className={inputCls} />
                 {reserveStatus && (
                   <button
                     onClick={() => setOpenHint(openHint === 'reserve' ? null : 'reserve')}
@@ -1756,6 +2261,34 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               </div>
             ) : null)}
           </div>
+
+          {/* 資産性チェック: 想定賃料 vs ローン返済 */}
+          {estimatedMonthlyRentM && (monthlyVar || monthlyFix) && (() => {
+            const loanMonthlyM = Math.round((monthlyVar || monthlyFix) / 10000 * 10) / 10;
+            const diffM = Math.round((loanMonthlyM - estimatedMonthlyRentM) * 10) / 10;
+            return (
+              <div className="mb-3 bg-violet-50 rounded-xl px-3 py-2.5 border border-violet-100">
+                <p className="text-xs font-bold text-violet-700 mb-2">🏘 資産性チェック（もし貸したら？）</p>
+                <div className="flex flex-col gap-1 text-xs">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-gray-500">想定月額賃料（P50×利回り{rentYield}%）</span>
+                    <span className="font-bold text-sm text-violet-700">約{estimatedMonthlyRentM}万円/月</span>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-gray-500">月額ローン返済{monthlyVar ? '（変動）' : '（固定）'}</span>
+                    <span className="font-bold text-sm text-gray-700">{loanMonthlyM}万円/月</span>
+                  </div>
+                  <div className={`flex justify-between items-baseline pt-1.5 mt-0.5 border-t border-violet-200 ${diffM > 0 ? 'text-orange-700' : 'text-green-700'}`}>
+                    <span className="font-semibold">返済 − 賃料</span>
+                    <span className="font-bold text-sm">
+                      {diffM > 0 ? `+${diffM}万円/月（賃料を超過）` : `${diffM}万円/月（賃料が上回る）`}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5">※ エリアP50（市場中央値）×{areaNum}㎡×利回り{rentYield}%で試算。実際の賃料は個別物件・設備・需要により異なります</p>
+              </div>
+            );
+          })()}
 
           {/* 必要収入の目安 */}
           {(monthlyVar || monthlyFix) && (() => {
@@ -2059,7 +2592,10 @@ function useContainerWidth(fallback = 300) {
   const [width, setWidth] = useState(fallback);
   useEffect(() => {
     if (!ref.current) return;
-    const ro = new ResizeObserver(entries => setWidth(Math.round(entries[0].contentRect.width)));
+    const ro = new ResizeObserver(entries => {
+      const w = Math.round(entries[0].contentRect.width);
+      if (w > 0) setWidth(w); // display:none 時の width=0 は無視
+    });
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, []);
@@ -2241,18 +2777,7 @@ function PriceTrendCard({ trendData, loading, propertyType }) {
   };
   const style = PATTERN_STYLE[trendPattern];
 
-  // スコア：ピーク後下落はペナルティ
-  const trendScore = overallPct == null ? null
-    : hasPeakedAndDeclined
-      ? (overallPct >= 10 ? 5 : overallPct >= 5 ? 4 : overallPct >= 0 ? 3 : 2)
-      : overallPct >= 15 ? 10
-      : overallPct >= 10 ? 9
-      : overallPct >=  5 ? 8
-      : overallPct >=  2 ? 7
-      : overallPct >= -2 ? 6
-      : overallPct >= -5 ? 4
-      : overallPct >= -10 ? 3
-      : 2;
+  const trendScore = overallPct == null ? null : calcTrendScore(trendData, propertyType);
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -2755,7 +3280,7 @@ function getConvHint(mapLayer, convData) {
       if (convData.busStops == null) return null;
       return {
         mark: convData.busStops >= 5 ? '◎' : convData.busStops >= 1 ? '○' : '✕',
-        text: `バス停${convData.busStops}件（500m圏）`,
+        text: `バス停 200m圏${convData.busStops200 ?? 0}件 / 500m圏${convData.busStops}件`,
         good: convData.busStops >= 1,
       };
     case 'supermarket':
@@ -2769,14 +3294,14 @@ function getConvHint(mapLayer, convData) {
       if (convData.hospitals == null) return null;
       return {
         mark: convData.hospitals >= 5 ? '◎' : convData.hospitals >= 2 ? '○' : convData.hospitals >= 1 ? '△' : '✕',
-        text: `病院・クリニック${convData.hospitals}件（1km圏）`,
+        text: `病院・クリニック ${convData.hospitals500 ?? 0}件（500m圏） / ${convData.hospitals}件（1km圏）`,
         good: convData.hospitals >= 1,
       };
     case 'kindergarten':
       if (convData.kindergartens == null) return null;
       return {
         mark: convData.kindergartens >= 3 ? '◎' : convData.kindergartens >= 1 ? '○' : '✕',
-        text: `保育園・幼稚園${convData.kindergartens}件（1km圏）`,
+        text: `保育園・幼稚園 ${convData.kindergartens500 ?? 0}件（500m圏） / ${convData.kindergartens}件（1km圏）`,
         good: convData.kindergartens >= 1,
       };
     case 'school':
@@ -2798,33 +3323,31 @@ function getChecklistUrl(linkType, name, buildingAddress) {
   const kw = name || '';
   const kwAddr = stripped ? `${kw} ${stripped}` : kw;
   if (linkType === 'homes')     return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
-  if (linkType === 'suumo')     return `https://suumo.jp/library/search/ichiran.html?qr=${encodeURIComponent(kwAddr)}`;
-  if (linkType === 'athome')    return `https://www.athome.co.jp/bldg-library/bldname_search/${encodeURIComponent(kw)}/`;
+
   if (linkType === 'mogecheck')   return 'https://mogecheck.jp/';
   if (linkType === 'sakura')      return 'https://www.sakurajimusyo.com/inspect/';
   if (linkType === 'kazukuri')    return 'https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YRHE';
   if (linkType === 'kufuieta')    return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5YJRM';
   if (linkType === 'nurikae')     return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5YJRM';
   if (linkType === 'reform_pro')  return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+1SBLE+46CI+5YRHE';
+  if (linkType === 'takara')      return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+16VZM+4S2Q+60H7L';
+  if (linkType === 'insuweb')     return 'https://px.a8.net/svt/ejp?a8mat=4B3IIK+FFHG6Q+2PS+2BFWFM';
+  if (linkType === 'takuhai')     return 'https://px.a8.net/svt/ejp?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX';
+  if (linkType === 'nomcom')      return 'https://px.a8.net/svt/ejp?a8mat=4B3NYW+N7XDE+5M76+BXB8X';
+  if (linkType === 'gmohikari')   return 'https://px.a8.net/svt/ejp?a8mat=4B3NYW+NTCZ6+50+6MDJ6P';
   return null;
 }
 
 const CHECKLIST = [
   {
-    category: '物件情報を確認する',
-    icon: '🔍',
-    tag: 'マンション向け',
+    category: '建物・権利',
+    icon: '🏡',
+    tag: '戸建て向け',
     items: [
-      { id: 'check_homes',  label: 'HOMESで築年・管理費・修繕積立金を確認した',   note: '築年・管理費・修繕積立金・売出価格の相場確認に', linkType: 'homes',  linkLabel: 'HOMES', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
-      { id: 'check_suumo',  label: 'SUUMOで売出価格・掲載履歴を確認した',         note: '値下げ履歴・掲載期間・類似物件の価格比較に',  linkType: 'suumo',  linkLabel: 'SUUMO', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
-      { id: 'check_athome', label: 'アットホームで物件情報を確認した',             note: '他ポータルとの価格差・掲載情報の比較に',      linkType: 'athome', linkLabel: 'athome', linkCls: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' },
-    ],
-  },
-  {
-    category: '住宅ローンを比較する',
-    icon: '🏦',
-    items: [
-      { id: 'check_mogecheck', label: 'モゲチェックで金利・借入条件を比較した', note: '複数銀行の金利を一括比較。無料で利用可能', linkType: 'mogecheck', linkLabel: 'モゲチェック', linkCls: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
+      { id: 'boundary',    label: '土地の境界が確定している',            note: '未確定なら売主負担での確定を交渉' },
+      { id: 'private_road',label: '私道負担・通行権を確認した',          note: '私道に面する場合は持分・掘削権に注意' },
+      { id: 'floor_area',  label: '建ぺい率・容積率を確認した',          note: '将来の増改築の可能性に影響する' },
+      { id: 'inspection',  label: 'インスペクション（建物診断）を依頼した', note: '専門家による建物状況調査。特に中古戸建ては必須。さくら事務所が業界最大手', linkType: 'sakura', linkLabel: 'さくら事務所', linkCls: 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100' },
     ],
   },
   {
@@ -2832,20 +3355,24 @@ const CHECKLIST = [
     icon: '🏗️',
     tag: 'マンション向け',
     items: [
-      { id: 'condition',   label: '外壁・共用部の管理状態を確認した',   note: '管理組合の議事録・修繕履歴も確認' },
-      { id: 'repair_plan', label: '長期修繕計画を取り寄せた',           note: '大規模修繕の予定時期・費用の見通しを確認' },
-      { id: 'vacancy',     label: '賃貸化率・空室数を確認した',         note: '賃貸が多すぎると管理が荒れやすい傾向がある' },
+      { id: 'condition',   label: '外壁・共用部の管理状態を確認した',   note: '管理組合の議事録・修繕履歴も確認。→ 不動産仲介会社に依頼' },
+      { id: 'repair_plan', label: '長期修繕計画を取り寄せた',           note: '大規模修繕の予定時期・費用の見通しを確認。→ 不動産仲介会社に取り寄せ依頼' },
+      { id: 'vacancy',     label: '賃貸化率・空室数を確認した',         note: '賃貸が多すぎると管理が荒れやすい傾向がある。→ 不動産仲介会社に確認' },
     ],
   },
   {
-    category: '建物・権利',
-    icon: '🏡',
-    tag: '戸建て向け',
+    category: '周辺環境（現地確認）',
+    icon: '🌆',
     items: [
-      { id: 'inspection',  label: 'インスペクション（建物診断）を依頼した', note: '専門家による建物状況調査。特に中古戸建ては必須。さくら事務所が業界最大手', linkType: 'sakura', linkLabel: 'さくら事務所', linkCls: 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100' },
-      { id: 'boundary',    label: '土地の境界が確定している',            note: '未確定なら売主負担での確定を交渉' },
-      { id: 'private_road',label: '私道負担・通行権を確認した',          note: '私道に面する場合は持分・掘削権に注意' },
-      { id: 'floor_area',  label: '建ぺい率・容積率を確認した',          note: '将来の増改築の可能性に影響する' },
+      { id: 'night_visit', label: '夜間・週末の環境を現地確認した',           note: '昼間は静かでも夜は繁華街になる・騒音源があるケースがある' },
+      { id: 'adult_biz',   label: '周辺に風俗店・パチンコ店がないか確認した', note: '用途地域が「商業」「準工業」では出店が合法。Googleマップで「風俗」「パチンコ」を検索して確認' },
+    ],
+  },
+  {
+    category: '火災保険を比較する',
+    icon: '🔥',
+    items: [
+      { id: 'check_insuweb', label: 'インズウェブで火災保険を一括見積もりした', note: '最大10社から一括見積もり。無料・最短3分。SBIホールディングス運営', linkType: 'insuweb', linkLabel: 'インズウェブ', linkCls: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' },
     ],
   },
   {
@@ -2866,6 +3393,14 @@ const CHECKLIST = [
     ],
   },
   {
+    category: '宅配ボックスを設置する',
+    icon: '📦',
+    tag: '戸建て向け',
+    items: [
+      { id: 'takuhai', label: '宅配ボックスを設置した（再配達ゼロ・防犯対策）', note: '工事不要・防水・防錆。玄関をすっきり保ちながら再配達をゼロに', linkType: 'takuhai', linkLabel: '宅配ボックス名品館', linkCls: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' },
+    ],
+  },
+  {
     category: 'リフォームを検討する',
     icon: '🔨',
     items: [
@@ -2873,11 +3408,17 @@ const CHECKLIST = [
     ],
   },
   {
-    category: '周辺環境（現地確認）',
-    icon: '🌆',
+    category: '住み替えを検討する',
+    icon: '🏠',
     items: [
-      { id: 'night_visit', label: '夜間・週末の環境を現地確認した',           note: '昼間は静かでも夜は繁華街になる・騒音源があるケースがある' },
-      { id: 'adult_biz',   label: '周辺に風俗店・パチンコ店がないか確認した', note: '用途地域が「商業」「準工業」では出店が合法。Googleマップで「風俗」「パチンコ」を検索して確認' },
+      { id: 'nomcom', label: 'ノムコムで不動産の売却査定を依頼した', note: '野村不動産グループ運営。マンション・戸建て・土地の無料査定依頼ができる', linkType: 'nomcom', linkLabel: 'ノムコム', linkCls: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' },
+    ],
+  },
+  {
+    category: 'インターネット回線を見直す',
+    icon: '📡',
+    items: [
+      { id: 'gmohikari', label: 'GMO光アクセスの料金プランを確認した', note: '全国対応の高速光回線。工事費実質無料・最大2ヶ月無料キャンペーンあり', linkType: 'gmohikari', linkLabel: 'GMO光アクセス', linkCls: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
     ],
   },
 ];
@@ -3236,7 +3777,7 @@ function ReportModal({ onClose, location, propertyType, buildingAddress,
                 detail={`${loanData.feedbackLabel}（${loanData.feedbackSub ?? ''}）${loanData.eraLabel ? ` ／ 比較: ${loanData.eraLabel}` : ''}${loanData.estimate ? ` ／ エリア目安 約${loanData.estimate.toLocaleString()}万円` : ''}`} />
             )}
             {loanData.totalMisc > 0 && (
-              <ReportRow icon="🧾" label="諸費用の概算" score={null} detail={`約${loanData.totalMisc.toLocaleString()}万円（仲介手数料・登記・融資手数料・取得税）`} />
+              <ReportRow icon="🧾" label="諸費用の概算" score={null} detail={`約${loanData.totalMisc.toLocaleString()}万円（仲介手数料・登記・融資手数料・取得税・火災保険）`} />
             )}
             {loanData.down > 0 && loanPrice && (
               <ReportRow icon="🏦" label="頭金 → ローン借入" score={null}
@@ -3263,10 +3804,10 @@ function ReportModal({ onClose, location, propertyType, buildingAddress,
         <section style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', letterSpacing: '2px', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '8px' }}>利便性</h2>
           <ReportRow icon="🚉" label="駅"             score={s.station}      detail={stationDetail} />
-          <ReportRow icon="🚌" label="バス停"         score={s.bus}          detail={convData ? `${convData.busStops ?? 0}件（500m圏）` : '取得中'} />
+          <ReportRow icon="🚌" label="バス停"         score={s.bus}          detail={convData ? `200m圏 ${convData.busStops200 ?? 0}件 ／ 500m圏 ${convData.busStops ?? 0}件` : '取得中'} />
           <ReportRow icon="🛒" label="スーパー"       score={s.supermarket}  detail={convData ? `500m圏 ${convData.supermarkets500 ?? 0}件 ／ 1km圏 ${convData.supermarkets ?? 0}件` : '取得中'} />
-          <ReportRow icon="🏥" label="医療機関"       score={s.hospital}     detail={convData ? `病院・クリニック ${convData.hospitals ?? 0}件（1km圏）` : '取得中'} />
-          <ReportRow icon="🎒" label="保育園・幼稚園" score={s.kindergarten} detail={convData ? `${convData.kindergartens ?? 0}件（1km圏）` : '取得中'} />
+          <ReportRow icon="🏥" label="医療機関"       score={s.hospital}     detail={convData ? `500m圏 ${convData.hospitals500 ?? 0}件 ／ 1km圏 ${convData.hospitals ?? 0}件` : '取得中'} />
+          <ReportRow icon="🎒" label="保育園・幼稚園" score={s.kindergarten} detail={convData ? `500m圏 ${convData.kindergartens500 ?? 0}件 ／ 1km圏 ${convData.kindergartens ?? 0}件` : '取得中'} />
           <ReportRow icon="🏫" label="小中学校"       score={s.school}       detail={convData ? `${convData.schools ?? 0}件（1.5km圏）` : '取得中'} />
         </section>
 
@@ -3359,7 +3900,7 @@ function SaveModal({ defaultName, onSave, onCancel }) {
   );
 }
 
-export default function ScorePanel({ location, activeLayers, onToggleLayer, onFlyTo, onOpenDrawer, buildingAddress, propertyType = 'condo' }) {
+export default function ScorePanel({ location, activeLayers, onToggleLayer, onFlyTo, buildingAddress, propertyType = 'condo', onTotalChange, buildingsLoading, mapConvData, onHighlightPOI, noiseData }) {
   const [activeTab, setActiveTab] = useState('main');
   const [checkedItems, setCheckedItems] = useState({});
   const [saved, setSaved] = useState([]);
@@ -3375,21 +3916,162 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [groundLoading, setGroundLoading] = useState(false);
   const [convData, setConvData] = useState(null);
   const [convLoading, setConvLoading] = useState(false);
+  const mapConvDataRef = useRef(null);
   const [landPriceData, setLandPriceData] = useState(null);
   const [landPriceLoading, setLandPriceLoading] = useState(false);
   const [buildingName, setBuildingName] = useState(null);
   const [zoningData, setZoningData] = useState(null);
   const [zoningLoading, setZoningLoading] = useState(false);
+  const [urbanData, setUrbanData] = useState(null);
+  const [urbanLoading, setUrbanLoading] = useState(false);
+  const [passengerData, setPassengerData] = useState(null);
+  const [passengerLoading, setPassengerLoading] = useState(false);
   const [nuisanceData, setNuisanceData] = useState(null);
   const [nuisanceLoading, setNuisanceLoading] = useState(false);
   const [loanScore, setLoanScore] = useState(null);
   const [loanPrice, setLoanPrice] = useState(null);
   const [loanData, setLoanData] = useState(null);
+  const [stationHighlightIdx, setStationHighlightIdx] = useState(null);
   const [houseAdjustRate, setHouseAdjustRate] = useState(0);
   const [showReport, setShowReport] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [trendData, setTrendData] = useState(null);
   const [trendLoading, setTrendLoading] = useState(false);
+  const [aiPromptOpen, setAiPromptOpen] = useState(false);
+  const [aiPromptText, setAiPromptText] = useState('');
+  const [aiUserNote, setAiUserNote] = useState('');
+  const [aiCopied, setAiCopied] = useState(false);
+
+  const buildAIPrompt = () => {
+    const name = buildingName || location.name;
+    const addr = buildingAddress || '';
+    const typeLabel = propertyType === 'condo' ? 'マンション' : '戸建て';
+    const currentYear = new Date().getFullYear();
+    const lines = [];
+    lines.push('あなたは、データに基づき客観的なアドバイスを行う不動産コンサルタントです。');
+    lines.push('');
+    lines.push(`以下は【${name}${addr ? '（' + addr + '）' : ''}】の不動産データです（イエスコア調べ）。`);
+    lines.push(`物件種別: ${typeLabel} ／ 総合スコア: ${total}/10`);
+
+    // 物件詳細（イエカルテ入力値）
+    const hasDetail = loanData && (loanData.price || loanData.area || loanData.builtYear || loanData.mgmt || loanData.reserve);
+    if (hasDetail) {
+      lines.push('');
+      lines.push('■ 物件詳細（イエカルテ入力値）');
+      if (loanData.price)      lines.push(`  物件価格: ${loanData.price.toLocaleString()}万円`);
+      if (loanData.area)       lines.push(`  専有面積: ${loanData.area}㎡`);
+      if (loanData.floor)      lines.push(`  所在階: ${loanData.floor}階`);
+      if (loanData.builtYear)  lines.push(`  築年数: ${loanData.builtYear}年竣工（築${currentYear - parseInt(loanData.builtYear)}年）`);
+      if (loanData.mgmt)       lines.push(`  管理費: 月${loanData.mgmt.toLocaleString()}円${loanData.mgmtLabel ? `（${loanData.mgmtLabel}）` : ''}`);
+      if (loanData.reserve)    lines.push(`  修繕積立金: 月${loanData.reserve.toLocaleString()}円${loanData.reserveLabel ? `（${loanData.reserveLabel}）` : ''}`);
+      if (loanData.mgmt && loanData.reserve) lines.push(`  管理費＋修繕積立金: 月${(loanData.mgmt + loanData.reserve).toLocaleString()}円`);
+      if (loanData.monthlyVar) lines.push(`  月返済額（変動 ${loanData.varRate}%・${loanData.varYears}年）: 月${Math.round(loanData.monthlyVar).toLocaleString()}円`);
+      if (loanData.monthlyFix) lines.push(`  月返済額（固定 ${loanData.fixRate}%・${loanData.fixYears}年）: 月${Math.round(loanData.monthlyFix).toLocaleString()}円`);
+      if (loanData.estimatedMonthlyRentM) {
+        lines.push(`  想定月額賃料（P50市場価値${loanData.marketValueM?.toLocaleString()}万円×利回り${loanData.rentYield}%試算）: 約${loanData.estimatedMonthlyRentM}万円/月`);
+        const loanM = loanData.monthlyVar || loanData.monthlyFix;
+        if (loanM) {
+          const loanMonthlyM = Math.round(loanM / 10000 * 10) / 10;
+          const diffM = Math.round((loanMonthlyM - loanData.estimatedMonthlyRentM) * 10) / 10;
+          lines.push(`  返済vs賃料の差: ${diffM > 0 ? '+' : ''}${diffM}万円/月（${diffM > 0 ? 'ローン返済が賃料を超過' : '賃料がローン返済を上回る'}）`);
+        }
+      }
+      if (propertyType === 'house') {
+        if (loanData.landArea)     lines.push(`  土地面積: ${loanData.landArea}㎡`);
+        if (loanData.buildingArea) lines.push(`  建物面積: ${loanData.buildingArea}㎡`);
+        if (loanData.structure)    lines.push(`  構造: ${loanData.structure}`);
+      }
+    }
+
+    lines.push('');
+    lines.push('■ 地盤・ハザード（防災科研J-SHIS・国土地理院データ）');
+    if (groundData?.jname) lines.push(`  地形分類: ${groundData.jname}`);
+    if (groundData?.arv)   lines.push(`  表層地盤増幅率: ${groundData.arv}倍（1.0が基準。大きいほど地震時に揺れやすい）`);
+    lines.push(`  洪水浸水想定: ${hazardData?.floodLabel ? `想定浸水深 ${hazardData.floodLabel}` : '浸水なし（区域外）'}`);
+    lines.push(`  土砂災害リスク: ${hazardData?.landslideLabel ?? '区域外'}`);
+    lines.push(`  津波浸水想定: ${hazardData?.tsunamiLabel ? `想定浸水深 ${hazardData.tsunamiLabel}` : '区域外'}`);
+    lines.push(`  高潮浸水想定: ${hazardData?.hightideLabel ? `想定浸水深 ${hazardData.hightideLabel}` : '区域外'}`);
+
+    lines.push('');
+    lines.push('■ 利便性（OpenStreetMapデータ）');
+    if (convData?.nearestStation) lines.push(`  最寄り駅: ${convData.nearestStation} 徒歩約${convData.nearestStationM ? Math.round(convData.nearestStationM * 1.3 / 80) : '?'}分`);
+    if (convData?.busStops != null)      lines.push(`  バス停: 200m圏${convData.busStops200 ?? 0}箇所 / 500m圏${convData.busStops}箇所`);
+    if (convData?.supermarkets != null)  lines.push(`  スーパー: 500m圏${convData.supermarkets500 ?? 0}軒 / 1km圏${convData.supermarkets}軒`);
+    if (convData?.hospitals != null)     lines.push(`  病院・クリニック: 500m圏${convData.hospitals500 ?? 0}軒 / 1km圏${convData.hospitals}軒`);
+    if (convData?.kindergartens != null) lines.push(`  保育園・幼稚園: 500m圏${convData.kindergartens500 ?? 0}軒 / 1km圏${convData.kindergartens}軒`);
+    if (convData?.schools != null)       lines.push(`  小学校(1km圏): ${convData.schools}校`);
+
+    lines.push('');
+    lines.push('■ 周辺相場・資産性（国土交通省REINFOLIB成約データ）');
+    if (propertyType === 'condo' && txData?.condos?.length > 0) {
+      const prices = txData.condos.map(c => c.unitPrice).filter(Boolean);
+      if (prices.length) {
+        const avg = Math.round(prices.reduce((s, v) => s + v, 0) / prices.length);
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        lines.push(`  周辺マンション㎡単価: 平均 約${avg}万円（最安 ${min}万円〜最高 ${max}万円、直近${prices.length}件）`);
+      }
+    }
+    if (propertyType === 'house' && txData?.houses?.length > 0) {
+      const prices = txData.houses.map(h => h.price).filter(Boolean);
+      if (prices.length) {
+        const avg = Math.round(prices.reduce((s, v) => s + v, 0) / prices.length);
+        lines.push(`  周辺戸建て成約価格（直近平均）: 約${avg}万円（${prices.length}件）`);
+      }
+    }
+    if (loanData?.area && loanData?.price) {
+      const unitPrice = Math.round(loanData.price / loanData.area * 10) / 10;
+      lines.push(`  この物件の㎡単価: 約${unitPrice}万円/㎡（${loanData.price}万円 ÷ ${loanData.area}㎡）`);
+    }
+    if (zoningData?.useDistrict) lines.push(`  用途地域: ${zoningData.useDistrict}`);
+    if (landPriceData?.latestPrice) lines.push(`  公示地価: 約${Math.round(landPriceData.latestPrice / 10000)}万円/㎡`);
+    if (landPriceData?.trend != null) lines.push(`  公示地価トレンド（直近5年）: ${landPriceData.trend > 0 ? '+' : ''}${landPriceData.trend}%`);
+
+    // 人口動向
+    if (popData?.data?.length >= 2) {
+      const first = popData.data[0];
+      const last  = popData.data[popData.data.length - 1];
+      const pct   = Math.round((last.population - first.population) / first.population * 1000) / 10;
+      lines.push('');
+      lines.push('■ 人口動向');
+      lines.push(`  ${popData.muniName ?? ''}の人口: ${last.population.toLocaleString()}人（${last.year}年）`);
+      lines.push(`  ${first.year}〜${last.year}年の変化: ${pct > 0 ? '+' : ''}${pct}%`);
+    }
+
+    // 嫌悪施設
+    const facilities = nuisanceData?.facilities || [];
+    lines.push('');
+    lines.push('■ 嫌悪施設（周辺500m以内）');
+    if (facilities.length === 0) {
+      lines.push('  該当施設なし');
+    } else {
+      facilities.forEach(f => lines.push(`  ${f.label}: ${f.distanceM}m`));
+    }
+
+    if (noiseData) {
+      const ROAD_LABEL = { motorway: '高速道路', trunk: '幹線道路', primary: '主要道路', secondary: '主要道路' };
+      lines.push('■ 騒音リスク（地図タイルデータから算出）');
+      if (noiseData.railM != null) lines.push(`  最寄り線路${noiseData.railName ? `（${noiseData.railName}）` : ''}: ${noiseData.railM}m`);
+      if (noiseData.roadM != null) lines.push(`  最寄り${ROAD_LABEL[noiseData.roadClass] ?? '幹線道路'}: ${noiseData.roadM}m`);
+      const noiseDiag = getNoiseDiagnosis(noiseData);
+      if (noiseDiag) lines.push(`  評価: ${noiseDiag.title}`);
+    }
+
+    lines.push('');
+    lines.push('このエリアでのマイホーム購入を検討しています。上記データを踏まえてアドバイスをください。');
+    lines.push('（データ出典: イエスコア https://www.iescore.com ）');
+    return lines.join('\n');
+  };
+
+  const handleOpenAIModal = () => {
+    setAiPromptText(buildAIPrompt());
+    setAiUserNote('');
+    setAiPromptOpen(true);
+    setAiCopied(false);
+  };
+
+  const buildFinalPrompt = () =>
+    aiUserNote.trim() ? `${aiPromptText}\n\n【質問】${aiUserNote.trim()}` : aiPromptText;
 
   const handleLoanScoreChange = useCallback((data) => {
     setLoanScore(data.score);
@@ -3421,6 +4103,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
 
     setHazardData(null);
     setHazardLoading(true);
+    mapConvDataRef.current = null;
     setConvData(null);
     setConvLoading(true);
     setLandPriceData(null);
@@ -3428,22 +4111,35 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     setBuildingName(null);
     setZoningData(null);
     setZoningLoading(true);
+    setUrbanData(null);
+    setUrbanLoading(true);
+    setPassengerData(null);
+    setPassengerLoading(true);
     setNuisanceData(null);
     setNuisanceLoading(true);
     setCheckedItems({});
     setTrendData(null);
+
+    // 駅乗降客数は lat/lng だけで取得できるので location 変化直後にフェッチ
+    if (location?.lat && location?.lng) {
+      fetch(`/api/station-passengers?lat=${location.lat}&lng=${location.lng}`)
+        .then(r => r.json())
+        .then(d => setPassengerData(d))
+        .catch(() => setPassengerData(null))
+        .finally(() => setPassengerLoading(false));
+    }
   }, [location]);
 
-  // アドバンスドを開いたとき、かつ muniCode が取れているときだけトレンド取得
+  // muniCode が取れたらバックグラウンドでトレンド取得（総合スコアに反映するため常時フェッチ）
   useEffect(() => {
-    if (!showAdvanced || !popData?.muniCode || trendData || trendLoading) return;
+    if (!popData?.muniCode || trendData || trendLoading) return;
     setTrendLoading(true);
     fetch(`/api/transactions/trend?muniCode=${popData.muniCode}&lng=${location.lng}&lat=${location.lat}`)
       .then(r => r.json())
       .then(d => setTrendData(d.yearlyStats || null))
       .catch(() => {})
       .finally(() => setTrendLoading(false));
-  }, [showAdvanced, popData?.muniCode]);
+  }, [popData?.muniCode]);
 
   // 建物名（住所レベル検索時のみ OSM から取得）
   useEffect(() => {
@@ -3490,16 +4186,26 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .finally(() => setGroundLoading(false));
   }, [location]);
 
-  // 利便性（Overpass）: 場所確定から5秒後に単独取得（muniCode待ちを解消）
+  // 地図タイルから届いた POI カウント（mapConvData）を convData にマージ
+  useEffect(() => {
+    mapConvDataRef.current = mapConvData;
+    if (!mapConvData) return;
+    setConvData(prev => ({ ...(prev || {}), ...mapConvData }));
+  }, [mapConvData]);
+
+  // 利便性（HeartRails 駅データ）: 場所確定から1秒後に取得
   useEffect(() => {
     if (!location) return;
     const timer = setTimeout(() => {
       fetch(`/api/convenience?lng=${location.lng}&lat=${location.lat}`)
         .then(r => r.json())
-        .then(d => setConvData(d))
+        .then(d => {
+          // API は駅情報のみ返す。POIデータは Overpass から mapConvData 経由で来る
+          setConvData(prev => ({ ...(prev || {}), ...d }));
+        })
         .catch(() => setConvData(null))
         .finally(() => setConvLoading(false));
-    }, 5000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [location]);
 
@@ -3536,6 +4242,13 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .then(d => setZoningData(d))
       .catch(() => setZoningData(null))
       .finally(() => setZoningLoading(false));
+
+    fetch(`/api/urban?lat=${location.lat}&lng=${location.lng}`)
+      .then(r => r.json())
+      .then(d => setUrbanData(d))
+      .catch(() => setUrbanData(null))
+      .finally(() => setUrbanLoading(false));
+
   }, [popData?.muniCode]);
 
   const toggleCheck = (id) => setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
@@ -3605,7 +4318,46 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     setActiveTab('main');
   };
 
+  useEffect(() => {
+    if (!location) { onTotalChange?.(null); return; }
+    const t = Math.round(
+      [calcPriceScore(txData), calcHazardScore(hazardData), groundData?.score ?? 5,
+       calcConvScore(convData), calcPopScore(popData), calcLandPriceScore(landPriceData?.trend),
+       calcZoningScore(zoningData), calcNuisanceScore(nuisanceData),
+       calcTrendScore(trendData, propertyType), calcFutureScore(zoningData, urbanData, passengerData),
+      ].reduce((a, b) => a + b, 0) / 10
+    );
+    onTotalChange?.(t);
+  }, [location, txData, hazardData, groundData, convData, popData, landPriceData, zoningData, nuisanceData, trendData, urbanData, passengerData, propertyType]);
+
   if (!location) {
+    if (activeTab === 'saved') {
+      return (
+        <div className="flex-1 bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden">
+          <div className="flex border-b border-gray-200 bg-white shrink-0">
+            <button
+              onClick={() => setActiveTab('main')}
+              className="flex-1 py-2.5 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              イエカルテ
+            </button>
+            <button
+              className="flex-1 py-2.5 text-xs font-semibold text-blue-600 border-b-2 border-blue-600"
+            >
+              保存済み ({saved.length})
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <SavedList
+              saved={saved}
+              onSelect={handleSelectSaved}
+              onDelete={handleDelete}
+              onCompare={setCompareProps}
+            />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex-1 bg-gray-50 border-l border-gray-200 flex flex-col items-center justify-center p-6 text-center">
         <span className="text-4xl mb-3">🏠</span>
@@ -3625,16 +4377,69 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     );
   }
 
-  const hazardScore = calcHazardScore(hazardData);
-  const convScore   = calcConvScore(convData);
-  const groundScore = groundData?.score ?? 5;
+  const hazardScore    = calcHazardScore(hazardData);
+  const convScore      = calcConvScore(convData);
+  const groundScore    = groundData?.score ?? 5;
   const landPriceScore = calcLandPriceScore(landPriceData?.trend);
   const total = Math.round(
-    [calcPriceScore(txData), hazardScore, groundScore, convScore, calcPopScore(popData), landPriceScore].reduce((s, v) => s + v, 0) / 6
+    [calcPriceScore(txData), hazardScore, groundScore, convScore, calcPopScore(popData), landPriceScore,
+     calcZoningScore(zoningData), calcNuisanceScore(nuisanceData),
+     calcTrendScore(trendData, propertyType),
+    ].reduce((s, v) => s + v, 0) / 9
   );
 
   return (
     <>
+      {aiPromptOpen && (
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/50 p-4" onClick={() => setAiPromptOpen(false)}>
+          <div className="bg-white rounded-2xl w-full md:max-w-lg shadow-2xl flex flex-col gap-3 p-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between shrink-0">
+              <h3 className="font-bold text-gray-900 text-sm">🤖 AIに質問する</h3>
+              <button onClick={() => setAiPromptOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <textarea
+              readOnly
+              value={aiPromptText}
+              className="w-full h-64 text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 resize-none text-gray-500"
+              onFocus={e => e.target.select()}
+            />
+            <div className="shrink-0">
+              <label className="text-xs font-medium text-gray-700 block mb-1">💬 気になることを追記（任意）</label>
+              <textarea
+                value={aiUserNote}
+                onChange={e => { setAiUserNote(e.target.value); setAiCopied(false); }}
+                placeholder="例：この物件は高すぎますか？他に注意点はありますか？"
+                className="w-full h-32 text-sm border border-blue-200 rounded-lg p-3 resize-none focus:outline-none focus:border-blue-400"
+              />
+            </div>
+            <button
+              onClick={() => { navigator.clipboard.writeText(buildFinalPrompt()).catch(() => {}); setAiCopied(true); setTimeout(() => setAiCopied(false), 2000); }}
+              className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors shrink-0 ${aiCopied ? 'bg-green-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+            >
+              {aiCopied ? '✓ コピーしました！' : '📋 プロンプトをコピー'}
+            </button>
+            <p className="text-xs text-center text-gray-400 shrink-0">またはそのまま開く（ChatGPTは自動入力対応）</p>
+            <div className="flex gap-2 shrink-0">
+              {[
+                { label: 'ChatGPT', color: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100', getUrl: () => `https://chatgpt.com/?q=${encodeURIComponent(buildFinalPrompt())}` },
+                { label: 'Claude',  color: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100', getUrl: () => 'https://claude.ai/new' },
+                { label: 'Gemini',  color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',  getUrl: () => `https://gemini.google.com/app?q=${encodeURIComponent(buildFinalPrompt())}` },
+              ].map(({ label, color, getUrl }) => (
+                <a
+                  key={label}
+                  href={getUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => navigator.clipboard.writeText(buildFinalPrompt()).catch(() => {})}
+                  className={`flex-1 text-xs font-medium px-2 py-2 rounded-lg border text-center transition-colors ${color}`}
+                >
+                  {label} ↗
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {compareProps && (
         <CompareModal properties={compareProps} onClose={() => setCompareProps(null)} />
       )}
@@ -3664,66 +4469,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
         />
       )}
       <div className="flex-1 bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden">
-        {/* ヘッダー */}
-        <div className="bg-white border-b border-gray-200 p-4 shrink-0">
-          <p className="text-sm font-medium text-indigo-600 mb-1 flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-            </svg>
-            ③ 「イエカルテ」を入力しよう
-          </p>
-          {onOpenDrawer ? (
-            <div className="flex items-start gap-2">
-              <div className="min-w-0 flex-1">
-                <button
-                  onClick={onOpenDrawer}
-                  className="font-bold text-gray-900 text-base leading-snug text-left hover:text-indigo-700 transition-colors flex items-center gap-1 w-full"
-                >
-                  <span className="truncate">{location.name}</span>
-                  <span className="text-xs text-indigo-400 font-normal shrink-0">🏢</span>
-                </button>
-                {buildingAddress && (
-                  <p className="text-xs text-gray-500 mt-0.5 leading-snug">{buildingAddress}</p>
-                )}
-              </div>
-              <a
-                href={`https://www.google.com/maps/search/${encodeURIComponent(location.name + (buildingAddress ? ' ' + buildingAddress : ''))}/@${location.lat},${location.lng},17z`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
-                title="Googleマップで開く（ストリートビュー）"
-              >
-                🗺 地図
-              </a>
-            </div>
-          ) : (
-            <p className="font-bold text-gray-900 text-base leading-snug">{location.name}</p>
-          )}
-          {buildingName && !onOpenDrawer && (
-            <p className="text-xs text-indigo-600 font-medium mt-0.5">🏢 {buildingName}</p>
-          )}
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center gap-2">
-              <Stars score={total} />
-              <span className="text-sm text-gray-500">総合 {total}/10</span>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowReport(true)}
-                className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
-              >
-                📄 レポート
-              </button>
-              <button
-                onClick={handleSave}
-                className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* タブ */}
         <div className="flex border-b border-gray-200 bg-white shrink-0">
           {[
@@ -3747,6 +4492,37 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
         {/* コンテンツ */}
         <div className="flex-1 overflow-y-auto">
           <div className={`flex flex-col gap-3 p-4 ${activeTab !== 'main' ? 'hidden' : ''}`}>
+              {/* 物件名・住所 */}
+              <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-gray-900 text-sm leading-snug truncate flex-1">
+                    {buildingName || location.name}
+                  </p>
+                  {location.featureType === 'address' && (
+                    <a
+                      href={`https://www.google.com/maps/search/${encodeURIComponent((buildingName || location.name) + (buildingAddress ? ' ' + buildingAddress : ''))}/@${location.lat},${location.lng},17z`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Googleマップで開く"
+                      className="shrink-0 text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 whitespace-nowrap"
+                    >
+                      🗺 gmap
+                    </a>
+                  )}
+                </div>
+                {buildingAddress && (
+                  <p className="text-xs text-gray-500 mt-0.5">{buildingAddress}</p>
+                )}
+                {buildingsLoading && (
+                  <div className="flex items-center gap-1.5 text-xs text-indigo-500 mt-1.5">
+                    <svg className="animate-spin h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
+                      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    マンション検索中...
+                  </div>
+                )}
+              </div>
               {/* ローンシミュレーター（最上部） */}
               <LoanSimulator
                 propertyType={propertyType}
@@ -3755,7 +4531,8 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 condos={propertyType === 'condo' ? txData?.condos : null}
                 houses={propertyType === 'house' ? txData?.houses : null}
                 onHouseAdjustChange={propertyType === 'house' ? setHouseAdjustRate : undefined}
-                homesUrl={buildingName ? (() => {
+                homesUrl={location.featureType === 'address' ? (() => {
+                  const nameKw = buildingName || location.name;
                   const cityWard = buildingAddress
                     ? (() => {
                         const noKen = buildingAddress.replace(/^.+?[都道府県]/, '');
@@ -3765,20 +4542,33 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         return m2 ? m2[0] : noKen;
                       })()
                     : '';
-                  const kw = cityWard ? `${location.name} ${cityWard}` : location.name;
+                  const kw = cityWard ? `${nameKw} ${cityWard}` : nameKw;
                   return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
                 })() : null}
-                googleUrl={buildingName ? (() => {
+                googleUrl={location.featureType === 'address' ? (() => {
+                  const nameKw = buildingName || location.name;
                   const stripped = buildingAddress
                     ? buildingAddress
                         .replace(/^.+?[都道府県]/, '')
                         .replace(/[0-9０-９一二三四五六七八九十百千]+丁目.*/, '')
                     : '';
-                  const kw = stripped ? `${buildingName} ${stripped}` : buildingName;
-                  return `https://www.bing.com/search?q=${encodeURIComponent(kw + ' site:homes.co.jp/archive')}`;
+                  const kw = stripped ? `${nameKw} ${stripped}` : nameKw;
+                  return `https://www.google.com/search?q=${encodeURIComponent(kw + ' 築年月')}`;
                 })() : null}
                 onScoreChange={handleLoanScoreChange}
+                address={buildingAddress || location.name}
+                nearestStationM={convData?.nearestStationM ?? null}
               />
+
+              {/* AIに質問ボタン（2個目：ローン入力後） */}
+              <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
+                <button
+                  onClick={handleOpenAIModal}
+                  className="w-full py-2 text-sm font-medium bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
+                >
+                  🤖 この物件を自分のAIに質問する
+                </button>
+              </div>
 
               {/* イエスコアカード — 選択タイプのみ表示 */}
               {propertyType === 'condo' && (
@@ -3815,14 +4605,32 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
               >
                 {convData?.stations?.length ? (
-                  <div className="space-y-0.5">
+                  <div className="space-y-1.5">
                     {convData.stations.slice(0, 4).map((s, i) => {
                       const label = operatorLabel(s.operator);
+                      const clickable = !!(s.lat && s.lng && onHighlightPOI);
+                      const isActive = stationHighlightIdx === i;
                       return (
-                        <p key={i} className="text-sm text-gray-600">
-                          {s.name}駅まで徒歩{s.walkMin}分
-                          {label && <span className="ml-1 text-xs text-gray-400">（{label}）</span>}
-                        </p>
+                        <div key={i}>
+                          <p
+                            className={`text-sm rounded px-1 -mx-1 transition-colors ${clickable ? 'cursor-pointer hover:bg-blue-50' : ''} ${isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600'}`}
+                            onClick={() => {
+                              if (!clickable) return;
+                              if (!activeLayers.station) onToggleLayer('station');
+                              if (isActive) {
+                                setStationHighlightIdx(null);
+                                onHighlightPOI(null, null, null);
+                              } else {
+                                setStationHighlightIdx(i);
+                                onHighlightPOI(s.lat, s.lng, 'station');
+                              }
+                            }}
+                          >
+                            {clickable && <span className="mr-1 opacity-40">📍</span>}
+                            {s.name}駅まで徒歩{s.walkMin}分
+                            {label && <span className="ml-1 text-xs text-gray-400">（{label}）</span>}
+                          </p>
+                        </div>
                       );
                     })}
                   </div>
@@ -3836,36 +4644,51 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               <ConvSubCard icon="🚌" label="バス停" layerId="busstop"
                 score={calcBusStopScore(convData?.busStops)} loading={convLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
+                list={convData?.busStopList} onHighlightItem={onHighlightPOI}
               >
-                <p className="text-sm text-gray-600">{convData?.busStops ?? 0}件（500m圏）</p>
+                <p className="text-sm text-gray-600">200m圏 {convData?.busStops200 ?? 0}件　／　500m圏 {convData?.busStops ?? 0}件</p>
               </ConvSubCard>
 
               <ConvSubCard icon="🛒" label="スーパー" layerId="supermarket"
                 score={calcSupermarketScore(convData?.supermarkets500, convData?.supermarkets)} loading={convLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
+                list={convData?.supermarketList} onHighlightItem={onHighlightPOI}
               >
                 <p className="text-sm text-gray-600">
                   500m圏 {convData?.supermarkets500 ?? 0}件　／　1km圏 {convData?.supermarkets ?? 0}件
                 </p>
               </ConvSubCard>
 
+              <ConvSubCard icon="🏪" label="コンビニ" layerId="konbini"
+                score={calcKonbiniScore(convData?.konbinis500, convData?.konbinis)} loading={convLoading}
+                activeLayers={activeLayers} onToggleLayer={onToggleLayer}
+                list={convData?.konbiniList} onHighlightItem={onHighlightPOI}
+              >
+                <p className="text-sm text-gray-600">
+                  500m圏 {convData?.konbinis500 ?? 0}件　／　1km圏 {convData?.konbinis ?? 0}件
+                </p>
+              </ConvSubCard>
+
               <ConvSubCard icon="🏥" label="医療機関" layerId="medical"
                 score={calcMedicalScore(convData?.hospitals)} loading={convLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
+                list={convData?.hospitalList} onHighlightItem={onHighlightPOI}
               >
-                <p className="text-sm text-gray-600">病院・クリニック {convData?.hospitals ?? 0}件（1km圏）</p>
+                <p className="text-sm text-gray-600">500m圏 {convData?.hospitals500 ?? 0}件　／　1km圏 {convData?.hospitals ?? 0}件</p>
               </ConvSubCard>
 
               <ConvSubCard icon="🎒" label="保育園・幼稚園" layerId="kindergarten"
                 score={calcKindergartenScore(convData?.kindergartens)} loading={convLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
+                list={convData?.kindergartenList} onHighlightItem={onHighlightPOI}
               >
-                <p className="text-sm text-gray-600">{convData?.kindergartens ?? 0}件（1km圏）</p>
+                <p className="text-sm text-gray-600">500m圏 {convData?.kindergartens500 ?? 0}件　／　1km圏 {convData?.kindergartens ?? 0}件</p>
               </ConvSubCard>
 
               <ConvSubCard icon="🏫" label="小中学校" layerId="school"
                 score={calcSchoolScore(convData?.schools)} loading={convLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
+                list={convData?.schoolList} onHighlightItem={onHighlightPOI}
               >
                 <p className="text-sm text-gray-600">{convData?.schools ?? 0}件（1.5km圏）</p>
               </ConvSubCard>
@@ -3882,21 +4705,24 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 activeLayers={activeLayers}
                 onToggleLayer={onToggleLayer}
               />
-              <HightideScoreCard
-                hazardData={hazardData}
-                hazardLoading={hazardLoading}
-                activeLayers={activeLayers}
-                onToggleLayer={onToggleLayer}
-              />
               <TsunamiScoreCard
                 hazardData={hazardData}
                 hazardLoading={hazardLoading}
                 activeLayers={activeLayers}
                 onToggleLayer={onToggleLayer}
               />
+              <HightideScoreCard
+                hazardData={hazardData}
+                hazardLoading={hazardLoading}
+                activeLayers={activeLayers}
+                onToggleLayer={onToggleLayer}
+                location={location}
+              />
               <GroundScoreCard groundData={groundData} groundLoading={groundLoading} />
               <ZoningCard zoningData={zoningData} zoningLoading={zoningLoading} />
               <NuisanceCard nuisanceData={nuisanceData} nuisanceLoading={nuisanceLoading} />
+
+              <NoiseScoreCard noiseData={noiseData} activeLayers={activeLayers} onToggleLayer={onToggleLayer} />
 
               {/* リフォーム会社 */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -3927,7 +4753,9 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                     <span className="text-base">📈</span>
                     <span className="text-sm font-semibold text-indigo-800">アドバンスド（資産価値分析）</span>
                   </div>
-                  <span className="text-indigo-500 text-xs">{showAdvanced ? '▲ 閉じる' : '▼ 開く'}</span>
+                  <span className={`text-indigo-500 text-xs font-medium ${!showAdvanced ? 'advanced-hint' : ''}`}>
+                    {showAdvanced ? '▲ 閉じる' : '▼ 開く'}
+                  </span>
                 </button>
                 {showAdvanced && (
                   <div className="flex flex-col gap-3 p-3 bg-white">
@@ -3946,9 +4774,20 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                       />
                     )}
                     <PopulationScoreCard popData={popData} loading={popLoading} />
-                    <AdvancedZoningCard zoningData={zoningData} zoningLoading={zoningLoading} />
+                    <FutureScoreCard zoningData={zoningData} urbanData={urbanData} passengerData={passengerData} zoningLoading={zoningLoading} urbanLoading={urbanLoading} />
+                    <StationPassengerCard passengerData={passengerData} passengerLoading={passengerLoading} convStations={convData?.stations ?? []} />
                   </div>
                 )}
+              </div>
+
+              {/* AIに質問ボタン（チェックリスト直上） */}
+              <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
+                <button
+                  onClick={handleOpenAIModal}
+                  className="w-full py-2 text-sm font-medium bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
+                >
+                  🤖 この物件を自分のAIに質問する
+                </button>
               </div>
 
               {/* セパレーター */}
@@ -4027,32 +4866,46 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                       const labelCls = isChecked ? 'text-blue-800' : isDimmed ? 'text-gray-500' : isWarning ? 'text-orange-800' : 'text-gray-800';
                       const checkboxCls = `mt-0.5 shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-colors ${isChecked ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300'}`;
 
-                      // linkType アイテム: 外部リンクボタン付きカード
+                      // linkType アイテム: カード全体がリンク
                       if (item.linkType) {
                         const linkUrl = getChecklistUrl(item.linkType, location?.name, buildingAddress);
-                        return (
-                          <div key={item.id} className={`rounded-xl p-3 border shadow-sm ${baseCls}`}>
-                            <div className="flex items-start gap-2">
-                              <button onClick={() => toggleCheck(item.id)} className={checkboxCls}>
-                                {isChecked && '✓'}
-                              </button>
-                              <div className="flex-1 min-w-0">
-                                <p className={`text-sm font-medium leading-snug ${labelCls}`}>{item.label}</p>
-                                <p className="text-xs text-gray-500 mt-0.5 leading-tight">{item.note}</p>
-                              </div>
-                              {linkUrl && (
-                                <a
-                                  href={linkUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={() => { if (!isChecked) toggleCheck(item.id); }}
-                                  className={`shrink-0 text-xs px-2 py-1.5 rounded-lg font-semibold border whitespace-nowrap transition-colors ${item.linkCls}`}
-                                >
-                                  {item.linkLabel} →
-                                </a>
-                              )}
+                        const linkCard = (
+                          <a href={linkUrl ?? '#'} target="_blank" rel="noopener noreferrer" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
+                            <p className="text-sm font-medium text-gray-800 leading-snug">{item.label}</p>
+                            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{item.note}</p>
+                            <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${item.linkCls}`}>{item.linkLabel} →</span>
+                          </a>
+                        );
+                        if (item.id === 'kazukuri') return (
+                          <div key={item.id} className="flex flex-col gap-2">
+                            {linkCard}
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" rel="nofollow noopener noreferrer" target="_blank">
+                                <img width={300} height={250} alt="家づくり相談所" src="https://www24.a8.net/svt/bgt?aid=260504444934&wid=001&eno=01&mid=s00000026497001003000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                              </a>
+                              <img width={1} height={1} src="https://www12.a8.net/0.gif?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" alt="" style={{ display: 'none' }} />
                             </div>
                           </div>
+                        );
+                        if (item.id === 'kufuieta') return (
+                          <div key={item.id} className="flex flex-col gap-2">
+                            {linkCard}
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5Z6WX" rel="nofollow noopener noreferrer" target="_blank">
+                                <img width={300} height={250} alt="くふうイエタテカウンター" src="https://www29.a8.net/svt/bgt?aid=260504445000&wid=001&eno=01&mid=s00000026422001004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                              </a>
+                              <img width={1} height={1} src="https://www18.a8.net/0.gif?a8mat=4B3IIL+S2+5NVG+5Z6WX" alt="" style={{ display: 'none' }} />
+                            </div>
+                          </div>
+                        );
+                        return (
+                          <a key={item.id} href={linkUrl ?? '#'} target="_blank" rel="noopener noreferrer" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
+                            <p className="text-sm font-medium text-gray-800 leading-snug">{item.label}</p>
+                            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{item.note}</p>
+                            <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${item.linkCls}`}>{item.linkLabel} →</span>
+                          </a>
                         );
                       }
 
@@ -4084,6 +4937,90 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                     })}
                   </div>
 
+                  {/* インズウェブ アフィリエイト */}
+                  {category === '火災保険を比較する' && (
+                    <div className="mt-3 text-center">
+                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIK+FFHG6Q+2PS+2BDJK1" rel="nofollow noopener noreferrer" target="_blank">
+                        <img width={300} height={250} alt="インズウェブ 火災保険一括見積もり" src="https://www20.a8.net/svt/bgt?aid=260504444933&wid=001&eno=01&mid=s00000000352014004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                      </a>
+                      <img width={1} height={1} src="https://www10.a8.net/0.gif?a8mat=4B3IIK+FFHG6Q+2PS+2BDJK1" alt="" style={{ display: 'none' }} />
+                    </div>
+                  )}
+
+
+                  {/* ヌリカエ アフィリエイト */}
+                  {category === '外壁・屋根塗装を比較する' && (
+                    <div className="mt-3 text-center">
+                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5ZMCH" rel="nofollow noopener noreferrer" target="_blank">
+                        <img width={300} height={250} alt="ヌリカエ 外壁塗装" src="https://www27.a8.net/svt/bgt?aid=260504445001&wid=001&eno=01&mid=s00000018795001006000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                      </a>
+                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3IIL+LGDU+410U+5ZMCH" alt="" style={{ display: 'none' }} />
+                    </div>
+                  )}
+
+                  {/* 宅配ボックス名品館 アフィリエイト */}
+                  {category === '宅配ボックスを設置する' && (
+                    <div className="mt-3 text-center">
+                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX" rel="nofollow noopener noreferrer" target="_blank">
+                        <img width={300} height={250} alt="宅配ボックス名品館" src="https://www29.a8.net/svt/bgt?aid=260511511375&wid=001&eno=01&mid=s00000027207001004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                      </a>
+                      <img width={1} height={1} src="https://www15.a8.net/0.gif?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX" alt="" style={{ display: 'none' }} />
+                    </div>
+                  )}
+
+                  {/* リフォーム比較プロ・タカラスタンダード アフィリエイト */}
+                  {category === 'リフォームを検討する' && (
+                    <div className="mt-3 space-y-3">
+                      {/* リフォーム比較プロ バナー */}
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                        <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+1SBLE+46CI+609HT" rel="nofollow noopener noreferrer" target="_blank">
+                          <img width={350} height={160} alt="リフォーム比較プロ" src="https://www20.a8.net/svt/bgt?aid=260504445003&wid=001&eno=01&mid=s00000019485001009000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                        </a>
+                        <img width={1} height={1} src="https://www13.a8.net/0.gif?a8mat=4B3IIL+1SBLE+46CI+609HT" alt="" style={{ display: 'none' }} />
+                      </div>
+                      {/* タカラスタンダード チェック項目風カード */}
+                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+16VZM+4S2Q+60H7L" rel="nofollow noopener noreferrer" target="_blank" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
+                        <p className="text-sm font-medium text-gray-800 leading-snug">タカラスタンダードのショールームで実物を確認した</p>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-snug">ホーローキッチン・浴室を実際に見て触れて比較。全国200ヵ所以上のショールームで無料体験</p>
+                        <span className="inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">タカラスタンダード →</span>
+                      </a>
+                      {/* タカラスタンダード バナー */}
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                        <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+16VZM+4S2Q+60H7L" rel="nofollow noopener noreferrer" target="_blank">
+                          <img width={300} height={250} alt="タカラスタンダード ホーローキッチン" src="https://www20.a8.net/svt/bgt?aid=260504445002&wid=001&eno=01&mid=s00000022301001010000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                        </a>
+                        <img width={1} height={1} src="https://www14.a8.net/0.gif?a8mat=4B3IIL+16VZM+4S2Q+60H7L" alt="" style={{ display: 'none' }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ノムコム アフィリエイト */}
+                  {category === '住み替えを検討する' && (
+                    <div className="mt-3 text-center">
+                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+N7XDE+5M76+BXB8X" rel="nofollow noopener noreferrer" target="_blank">
+                        <img width={300} height={250} alt="ノムコム 不動産売却査定" src="https://www28.a8.net/svt/bgt?aid=260511512039&wid=001&eno=01&mid=s00000026205002003000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                      </a>
+                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3NYW+N7XDE+5M76+BXB8X" alt="" style={{ display: 'none' }} />
+                    </div>
+                  )}
+
+                  {/* GMO光アクセス アフィリエイト */}
+                  {category === 'インターネット回線を見直す' && (
+                    <div className="mt-3 text-center">
+                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" rel="nofollow noopener noreferrer" target="_blank">
+                        <img width={300} height={250} alt="GMO光アクセス 光回線" src="https://www28.a8.net/svt/bgt?aid=260511512040&wid=001&eno=01&mid=s00000000018040038000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                      </a>
+                      <img width={1} height={1} src="https://www11.a8.net/0.gif?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" alt="" style={{ display: 'none' }} />
+                    </div>
+                  )}
+
                 </div>
                 );
               })}
@@ -4094,9 +5031,25 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               >
                 この物件を保存
               </button>
-              <p className="text-xs text-gray-500 text-center pb-4">
+              <button
+                onClick={() => setShowReport(true)}
+                className="w-full py-2.5 bg-white border border-gray-400 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50"
+              >
+                📄 PDFレポートとして出力
+              </button>
+              <p className="text-xs text-gray-500 text-center">
                 ※ 価格は国交省REINFOLIB。人口は国勢調査（e-Stat）。チェックはページを閉じるとリセットされます
               </p>
+              <a
+                href="https://note.com/iescore"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 mb-4 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: '#41C9B4' }}
+              >
+                <Image src="https://note.com/favicon.ico" alt="note" width={16} height={16} className="rounded-sm" />
+                <span>マイホーム購入の基礎知識をnoteで読む</span>
+              </a>
           </div>
 
           <div className={activeTab !== 'saved' ? 'hidden' : ''}>
@@ -4106,6 +5059,17 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               onDelete={handleDelete}
               onCompare={setCompareProps}
             />
+          </div>
+
+          {/* データソースフッター */}
+          <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 mt-2">
+            <p className="text-[10px] text-gray-400 leading-relaxed">
+              データソース：国土数値情報（医療機関・学校）国土交通省 /
+              不動産情報ライブラリ（REINFOLIB）国土交通省 /
+              国土地理院 / 防災科研J-SHIS /
+              <a href="https://express.heartrails.com/" target="_blank" rel="noopener" className="underline">HeartRails Express</a> /
+              © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" className="underline">OpenStreetMap</a> contributors
+            </p>
           </div>
         </div>
       </div>

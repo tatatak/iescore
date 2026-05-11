@@ -12,6 +12,12 @@ const SITE_NAME = 'イエスコア';
 const TITLE = 'イエスコア | マイホーム購入前の無料エリア診断';
 const DESCRIPTION = '住所・駅名・エリアを入力するだけで、不動産成約価格・地盤・ハザードリスク・利便性を10点満点でスコア表示。住宅ローンシミュレーターと購入コスト診断も無料で使えるマイホーム購入サポートサービスです。';
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
@@ -58,6 +64,81 @@ export const metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: DESCRIPTION,
+      inLanguage: 'ja',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      legalName: 'アクアオーブ株式会社',
+      url: SITE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/logo.png`,
+        width: 1396,
+        height: 684,
+      },
+      sameAs: [],
+    },
+    {
+      '@type': 'HowTo',
+      '@id': `${SITE_URL}/#howto`,
+      name: 'イエスコアの使い方',
+      description: '購入予定エリアの不動産スコアを3分で診断する手順',
+      totalTime: 'PT3M',
+      step: [
+        {
+          '@type': 'HowToStep',
+          position: 1,
+          name: '物件タイプを選ぶ',
+          text: '画面上部の「マンション」または「戸建て」ボタンをタップします。それぞれに最適化された診断が行われます。',
+        },
+        {
+          '@type': 'HowToStep',
+          position: 2,
+          name: 'エリアを検索する',
+          text: '検索フォームに調べたい住所・駅名・エリア名を入力して選択します。マンションの場合はマンション名でも検索できます。',
+        },
+        {
+          '@type': 'HowToStep',
+          position: 3,
+          name: 'スコアを確認する',
+          text: '成約価格・地盤・ハザード・利便性の各スコアと総合スコアが10点満点で表示されます。点数の根拠となるデータも一緒に確認できます。',
+        },
+        {
+          '@type': 'HowToStep',
+          position: 4,
+          name: '地図レイヤーで視覚確認する',
+          text: '洪水・土砂崩れ・津波・騒音などのリスクレイヤーをボタンで切り替えながら、地図上で視覚的にリスクを確認します。',
+        },
+        {
+          '@type': 'HowToStep',
+          position: 5,
+          name: '住宅ローンをシミュレーションする',
+          text: '物件価格・頭金・金利・返済年数を入力して毎月の返済額と総支払額を試算します。エリアの成約相場との比較診断も自動で行われます。',
+        },
+        {
+          '@type': 'HowToStep',
+          position: 6,
+          name: 'AIに詳細診断を依頼する',
+          text: '「この物件を自分のAIに質問する」ボタンからスコアデータをまとめたプロンプトをコピーして、ChatGPT・Claudeなどに貼り付けることで詳細なアドバイスを受けられます。',
+        },
+      ],
+    },
     {
       '@type': 'WebApplication',
       '@id': `${SITE_URL}/#webapp`,

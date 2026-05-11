@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 const REINFOLIB_API_KEY = process.env.REINFOLIB_API_KEY;
 
 async function fetchLandPriceYear(prefCode, cityCode, year) {
-  const url = `https://www.reinfolib.mlit.go.jp/ex-api/external/XCT001?year=${year}&area=${prefCode}&city=${cityCode}&division=00&Language=ja`;
+  const url = `https://www.reinfolib.mlit.go.jp/ex-api/external/XCT001?year=${year}&area=${prefCode}&city=${cityCode}&division=00&Language=ja`; // cityCodeは3桁
   try {
     const res = await fetch(url, {
       headers: { 'Ocp-Apim-Subscription-Key': REINFOLIB_API_KEY },
@@ -23,19 +23,22 @@ export async function GET(request) {
   if (!muniCode) return NextResponse.json({ error: 'muniCode required' }, { status: 400 });
 
   const prefCode = muniCode.slice(0, 2);
+  const cityCode = muniCode.slice(prefCode.length); // 5桁→3桁文字列（例: "104"）
   const currentYear = new Date().getFullYear();
   // 直近5年（パフォーマンス確保のため）。キャッシュ後は高速。
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
 
   try {
     const results = await Promise.all(
-      years.map(year => fetchLandPriceYear(prefCode, muniCode, year))
+      years.map(year => fetchLandPriceYear(prefCode, cityCode, year))
     );
 
     const yearData = years.map((year, i) => {
       const data = results[i];
       const residential = data.filter(d =>
-        d['標準地番号 用途区分'] === '住宅地' && d['1㎡当たりの価格']
+        d['標準地番号 用途区分'] === '住宅地' &&
+        d['1㎡当たりの価格'] &&
+        d['標準地番号 市区町村コード 市区町村コード'] === cityCode
       );
       if (residential.length === 0) return null;
 

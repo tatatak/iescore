@@ -64,6 +64,25 @@ body {
   50%       { transform: scale(1.8); opacity: 0.05; }
 }
 
+@keyframes advanced-hint {
+  0%, 25%  { opacity: 0.6; color: rgb(99,102,241);  filter: none; }
+  45%, 55% { opacity: 1;   color: rgb(220,38,38);   filter: drop-shadow(0 0 6px rgba(220,38,38,0.7)); }
+  75%, 100% { opacity: 0.6; color: rgb(99,102,241); filter: none; }
+}
+.advanced-hint {
+  animation: advanced-hint 3s ease-in-out infinite;
+}
+
+@keyframes map-tab-glow {
+  0%   { background-color: rgba(239,68,68,0);    box-shadow: none; }
+  25%  { background-color: rgba(239,68,68,0.18); box-shadow: 0 0 14px rgba(239,68,68,0.45); }
+  65%  { background-color: rgba(239,68,68,0.18); box-shadow: 0 0 14px rgba(239,68,68,0.45); }
+  100% { background-color: rgba(239,68,68,0);    box-shadow: none; }
+}
+.map-tab-glow {
+  animation: map-tab-glow 1.8s ease-in-out forwards;
+}
+
 /* iOS Safari 自動ズーム防止: font-size < 16px の input にフォーカスするとズームする */
 @media (max-width: 767px) {
   input, select, textarea {
