@@ -3420,7 +3420,7 @@ const CHECKLIST = [
     icon: '📡',
     items: [
       { id: 'gmohikari', label: 'GMO光アクセスの料金プランを確認した', note: '全国対応の高速光回線。工事費実質無料・最大2ヶ月無料キャンペーンあり', linkType: 'gmohikari', linkLabel: 'GMO光アクセス', linkCls: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
-      { id: 'nurokari', label: 'NURO 光のキャッシュバック特典を確認した', note: '最大75,000円キャッシュバック！オプション不要。ソニーグループの高速光回線', linkType: 'nurokari', linkLabel: 'NURO 光', linkCls: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' },
+      { id: 'nurokari', label: 'NURO 光の料金プランを確認した', note: '最大75,000円キャッシュバック！オプション不要。ソニーグループの高速光回線', linkType: 'nurokari', linkLabel: 'NURO 光', linkCls: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' },
     ],
   },
 ];
@@ -4907,6 +4907,30 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                             </div>
                           </div>
                         );
+                        if (item.id === 'gmohikari') return (
+                          <div key={item.id} className="flex flex-col gap-2">
+                            {linkCard}
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" rel="nofollow noopener noreferrer" target="_blank">
+                                <img width={300} height={250} alt="GMO光アクセス 光回線" src="https://www28.a8.net/svt/bgt?aid=260511512040&wid=001&eno=01&mid=s00000000018040038000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                              </a>
+                              <img width={1} height={1} src="https://www11.a8.net/0.gif?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" alt="" style={{ display: 'none' }} />
+                            </div>
+                          </div>
+                        );
+                        if (item.id === 'nurokari') return (
+                          <div key={item.id} className="flex flex-col gap-2">
+                            {linkCard}
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+YJ5V6+2VMU+656YP" rel="nofollow noopener noreferrer" target="_blank">
+                                <img width={300} height={250} alt="NURO光 最大75,000円キャッシュバック" src="https://www26.a8.net/svt/bgt?aid=260511512058&wid=001&eno=01&mid=s00000013431001032000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                              </a>
+                              <img width={1} height={1} src="https://www16.a8.net/0.gif?a8mat=4B3NYW+YJ5V6+2VMU+656YP" alt="" style={{ display: 'none' }} />
+                            </div>
+                          </div>
+                        );
                         return (
                           <a key={item.id} href={linkUrl ?? '#'} target="_blank" rel="noopener noreferrer" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
                             <p className="text-sm font-medium text-gray-800 leading-snug">{item.label}</p>
@@ -5017,27 +5041,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                     </div>
                   )}
 
-                  {/* GMO光アクセス アフィリエイト */}
-                  {category === 'インターネット回線を見直す' && (
-                    <div className="mt-3 text-center">
-                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" rel="nofollow noopener noreferrer" target="_blank">
-                        <img width={300} height={250} alt="GMO光アクセス 光回線" src="https://www28.a8.net/svt/bgt?aid=260511512040&wid=001&eno=01&mid=s00000000018040038000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
-                      </a>
-                      <img width={1} height={1} src="https://www11.a8.net/0.gif?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" alt="" style={{ display: 'none' }} />
-                    </div>
-                  )}
-
-                  {/* NURO光 アフィリエイト */}
-                  {category === 'インターネット回線を見直す' && (
-                    <div className="mt-3 text-center">
-                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+YJ5V6+2VMU+656YP" rel="nofollow noopener noreferrer" target="_blank">
-                        <img width={300} height={250} alt="NURO光 最大75,000円キャッシュバック" src="https://www26.a8.net/svt/bgt?aid=260511512058&wid=001&eno=01&mid=s00000013431001032000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
-                      </a>
-                      <img width={1} height={1} src="https://www16.a8.net/0.gif?a8mat=4B3NYW+YJ5V6+2VMU+656YP" alt="" style={{ display: 'none' }} />
-                    </div>
-                  )}
 
                 </div>
                 );
