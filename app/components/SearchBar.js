@@ -47,7 +47,7 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
     if (justSelectedRef.current) return;
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
     const prox = proximity ? `&proximity=${proximity.lng},${proximity.lat}` : '';
-    const mapboxUrl = `https://api.mapbox.com/search/searchbox/v1/forward?q=${encodeURIComponent(q)}&access_token=${token}&language=ja&country=jp&limit=6${prox}`;
+    const mapboxUrl = `https://api.mapbox.com/search/searchbox/v1/forward?q=${encodeURIComponent(q)}&access_token=${token}&language=ja&country=jp&limit=6&types=address,place,locality,neighborhood,district${prox}`;
     const gsiUrl = `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`;
 
     try {
