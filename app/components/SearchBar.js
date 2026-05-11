@@ -82,7 +82,9 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
 
   const handleSelect = async (prediction) => {
     const mainText = prediction.structured_formatting?.main_text || prediction.description;
-    const displayName = (prediction.description || mainText).replace(/,?\s*日本$/, '');
+    const displayName = (prediction.description || mainText)
+      .replace(/^日本[、,]\s*/, '')
+      .replace(/[、,]\s*日本$/, '');
     const placeId = prediction.place_id;
     const sessionToken = sessionTokenRef.current;
     sessionTokenRef.current = null;
@@ -203,7 +205,9 @@ export default function SearchBar({ onSelect, externalQuery, proximity }) {
                 {p.structured_formatting?.main_text || p.description}
               </p>
               {p.structured_formatting?.secondary_text && (
-                <p className="text-xs text-gray-400">{p.structured_formatting.secondary_text}</p>
+                <p className="text-xs text-gray-400">
+                  {p.structured_formatting.secondary_text.replace(/^日本[、,]\s*/, '').replace(/[、,]\s*日本$/, '')}
+                </p>
               )}
             </li>
           ))}
