@@ -2012,7 +2012,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         <div className="flex-1 border-t border-gray-200" />
       </div>
       <div className="mb-3">
-        <p className="text-xs text-gray-700 font-medium mb-1">頭金（万円）</p>
+        <p className="text-xs text-gray-700 font-medium mb-1">物件の頭金（万円）</p>
         <input type="text" inputMode="numeric" value={down} onChange={e => setDown(toHalfInt(e.target.value))} className={inputCls} />
         {p > 0 && (
           <div className="mt-2 mb-2 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
@@ -2066,7 +2066,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         )}
         {p > 0 && (
           <div className="mt-2 bg-blue-50 rounded-lg px-3 py-2 border border-blue-100 text-xs">
-            <div className="text-gray-700 font-medium">頭金 ＋ 諸費用（目安）</div>
+            <div className="text-gray-700 font-medium">物件の頭金 ＋ 諸費用（目安）</div>
             <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t border-blue-200">
               <span className="text-xs font-bold text-gray-600">手元現金の合計</span>
               <span className="text-base font-bold text-blue-700">約{Math.round(d + totalMisc).toLocaleString()}万円</span>
