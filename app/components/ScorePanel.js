@@ -1747,7 +1747,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p className="text-sm font-semibold text-gray-700 mb-3">🩺 物件コストシミュレーター</p>
+      <p className="text-sm font-bold text-gray-700 mb-3">🩺 物件コストシミュレーター</p>
 
       {/* エリア比較（戸建て） */}
       {propertyType === 'house' && houseBase && (
@@ -2006,7 +2006,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
       </div>
 
       {/* 頭金 + 手元現金サマリー */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mt-5 mb-3">
         <div className="flex-1 border-t border-gray-200" />
         <span className="text-sm font-bold text-gray-600 shrink-0">購入時に必要なコスト</span>
         <div className="flex-1 border-t border-gray-200" />
@@ -2078,7 +2078,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
       {/* 諸費用の概算（インプット直後） */}
       {(monthlyVar || monthlyFix) && (
         <>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mt-5 mb-3">
             <div className="flex-1 border-t border-gray-200" />
             <span className="text-sm font-bold text-gray-600 shrink-0">毎月のコスト</span>
             <div className="flex-1 border-t border-gray-200" />
