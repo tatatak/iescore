@@ -2286,7 +2286,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             const diffM = Math.round((loanMonthlyM - estimatedMonthlyRentM) * 10) / 10;
             return (
               <div className="mb-3 bg-violet-50 rounded-xl px-3 py-2.5 border border-violet-100">
-                <p className="text-xs font-bold text-violet-700 mb-2">🏘 資産性チェック（もし貸したら？）</p>
+                <p className="text-sm font-bold text-violet-700 mb-2">🏘 資産性チェック（もし貸したら？）</p>
                 <div className="flex flex-col gap-1 text-xs">
                   <div className="flex justify-between items-baseline">
                     <span className="text-gray-700 font-medium">想定月額賃料（P50×利回り{rentYield}%）</span>
@@ -2297,7 +2297,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                     <span className="font-bold text-sm text-gray-700">{loanMonthlyM}万円/月</span>
                   </div>
                   <div className={`flex justify-between items-baseline pt-1.5 mt-0.5 border-t border-violet-200 ${diffM > 0 ? 'text-orange-700' : 'text-green-700'}`}>
-                    <span className="font-semibold">返済 − 賃料</span>
+                    <span className="text-sm font-semibold">返済 − 賃料</span>
                     <span className="font-bold text-sm">
                       {diffM > 0 ? `+${diffM}万円/月（賃料を超過）` : `${diffM}万円/月（賃料が上回る）`}
                     </span>
