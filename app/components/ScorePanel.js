@@ -4563,6 +4563,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               <div className="flex items-center gap-2 mt-4 mb-2">
                 <div className="flex-1 border-t border-gray-200" />
                 <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入エリア診断</span>
+                {areaScore != null && <Stars score={areaScore} />}
                 <div className="flex-1 border-t border-gray-200" />
               </div>
               <p className="text-xs text-gray-700 font-medium leading-relaxed px-1">住宅の購入を検討しているエリアの利便性、浸水/土砂などの災害・地盤・騒音などのリスクから、エリアの良し悪しを10点満点で評価します。</p>
@@ -4720,6 +4721,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               <div className="flex items-center gap-2 mt-4 mb-2">
                 <div className="flex-1 border-t border-gray-200" />
                 <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入コスト診断</span>
+                {loanScore != null && <Stars score={loanScore} />}
                 <div className="flex-1 border-t border-gray-200" />
               </div>
               <p className="text-xs text-gray-700 font-medium leading-relaxed px-1">購入を予定している住宅の築年数、価格、面積を入力することで、エリア相場との比較やコストの適正度を診断します。</p>
