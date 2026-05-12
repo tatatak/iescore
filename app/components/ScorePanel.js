@@ -2319,7 +2319,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             const fixAnnual35 = totalFix ? Math.ceil(totalFix * 12 / 0.35 / 10000) : null;
             return (
               <div className="bg-amber-50 rounded-lg px-3 py-2.5 border border-amber-100 text-xs">
-                <p className="font-bold text-gray-700 mb-2">銀行審査の目安年収<span className="font-normal opacity-60 ml-1">（年収の35%基準）</span></p>
+                <p className="text-sm font-bold text-gray-700 mb-2">銀行審査の目安年収<span className="font-normal opacity-60 ml-1">（年収の35%基準）</span></p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-center">
                     <p className="text-blue-500 font-medium mb-0.5">変動</p>
