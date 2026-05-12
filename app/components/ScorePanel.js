@@ -63,7 +63,7 @@ function ScoreCard({ icon, label, score, value, note }) {
         <Stars score={score} />
       </div>
       <p className="text-sm text-gray-600">{value}</p>
-      {note && <p className="text-xs text-gray-500 mt-1">{note}</p>}
+      {note && <p className="text-xs text-gray-700 font-medium mt-1">{note}</p>}
     </div>
   );
 }
@@ -110,33 +110,33 @@ function GroundScoreCard({ groundData, groundLoading }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-xl">🪨</span>
-          <span className="text-sm font-semibold text-gray-700">地盤</span>
+          <span className="text-sm font-semibold text-gray-700">地盤リスク</span>
         </div>
         <Stars score={score} />
       </div>
 
       {groundLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : !avs ? (
-        <p className="text-sm text-gray-500">データなし</p>
+        <p className="text-sm text-gray-700 font-medium">データなし</p>
       ) : (
         <>
           <div className="space-y-1 mb-2">
             {jname && (
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-20 shrink-0">地形</span>
+                <span className="text-gray-700 font-medium w-20 shrink-0">地形</span>
                 <span className="text-gray-700 font-medium">{jname}</span>
               </div>
             )}
             {arvLabel && (
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-20 shrink-0">揺れの大きさ</span>
+                <span className="text-gray-700 font-medium w-20 shrink-0">揺れの大きさ</span>
                 <span className={`font-medium ${arvLabel.color}`}>{arvLabel.text}</span>
               </div>
             )}
             {liq && (
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-20 shrink-0">液状化リスク</span>
+                <span className="text-gray-700 font-medium w-20 shrink-0">液状化リスク</span>
                 <span className={`font-semibold px-1.5 py-0.5 rounded ${liq.textCls} ${liq.bgCls}`}>{liq.level}</span>
               </div>
             )}
@@ -146,13 +146,13 @@ function GroundScoreCard({ groundData, groundLoading }) {
             <div className={`rounded-lg px-3 py-2 border text-xs ${diag.bg}`}>
               <p className={`font-semibold mb-0.5 ${diag.color}`}>{diag.title}</p>
               <p className="text-gray-600 leading-relaxed">{diag.text}</p>
-              {liq && <p className="text-gray-500 mt-1 leading-relaxed">{liq.note}</p>}
+              {liq && <p className="text-gray-700 font-medium mt-1 leading-relaxed">{liq.note}</p>}
             </div>
           )}
         </>
       )}
 
-      <p className="text-xs text-gray-500 mt-2">出典: 防災科研J-SHIS（表層地盤データ）</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">出典: 防災科研J-SHIS（表層地盤データ）</p>
     </div>
   );
 }
@@ -188,7 +188,7 @@ function ConvSubCard({ icon, label, score, layerId, loading, activeLayers, onTog
         </div>
       </div>
       {loading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : children}
       {showList && list && list.length > 0 && (
         <ul className="mt-2 max-h-36 overflow-y-auto border-t border-gray-100 pt-1.5 space-y-0.5">
@@ -369,7 +369,7 @@ function FloodScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLayer
         <Stars score={score} />
       </div>
       {hazardLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : (
         <>
           <p className="text-sm text-gray-600">{valueText}</p>
@@ -381,7 +381,7 @@ function FloodScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLayer
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">★多=リスク低。国交省 L2洪水浸水想定区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 L2洪水浸水想定区域データ使用</p>
       <button
         onClick={() => onToggleLayer('flood')}
         className={`mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -412,7 +412,7 @@ function LandslideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleL
         <Stars score={score} />
       </div>
       {hazardLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : (
         <>
           <p className="text-sm text-gray-600">{valueText}</p>
@@ -424,7 +424,7 @@ function LandslideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleL
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">★多=リスク低。国交省 土砂災害警戒区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 土砂災害警戒区域データ使用</p>
       <button
         onClick={() => onToggleLayer('landslide')}
         className={`mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -455,7 +455,7 @@ function HightideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLa
         <Stars score={score} />
       </div>
       {hazardLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : (
         <>
           <p className="text-sm text-gray-600">{valueText}</p>
@@ -467,7 +467,7 @@ function HightideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLa
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">★多=リスク低。国交省 高潮浸水想定区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 高潮浸水想定区域データ使用</p>
       {location && (
         <a
           href={`https://disaportal.gsi.go.jp/maps/?ll=${location.lat},${location.lng}&z=15&base=pale`}
@@ -498,7 +498,7 @@ function TsunamiScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLay
         <Stars score={score} />
       </div>
       {hazardLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : (
         <>
           <p className="text-sm text-gray-600">{valueText}</p>
@@ -510,7 +510,7 @@ function TsunamiScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLay
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">★多=リスク低。国交省 津波浸水想定区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 津波浸水想定区域データ使用</p>
       <button
         onClick={() => onToggleLayer('tsunami')}
         className={`mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -554,9 +554,9 @@ function ZoningCard({ zoningData, zoningLoading }) {
         {!zoningLoading && <Stars score={calcZoningScore(zoningData)} />}
       </div>
       {zoningLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : !zoningData?.useDistrict ? (
-        <p className="text-sm text-gray-500">データなし</p>
+        <p className="text-sm text-gray-700 font-medium">データなし</p>
       ) : (() => {
         const cfg = RISK[zoningData.risk] || RISK.low;
         return (
@@ -569,7 +569,7 @@ function ZoningCard({ zoningData, zoningLoading }) {
           </>
         );
       })()}
-      <p className="text-xs text-gray-500 mt-2">出典: 国交省REINFOLIB 成約データから推定（エリア近傍の最頻値）</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">出典: 国交省REINFOLIB 成約データから推定（エリア近傍の最頻値）</p>
     </div>
   );
 }
@@ -581,12 +581,12 @@ function NuisanceCard({ nuisanceData, nuisanceLoading }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-xl">🏭</span>
-          <span className="text-sm font-semibold text-gray-700">嫌悪施設</span>
+          <span className="text-sm font-semibold text-gray-700">施設リスク</span>
         </div>
         {!nuisanceLoading && <Stars score={calcNuisanceScore(nuisanceData)} />}
       </div>
       {nuisanceLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : facilities.length === 0 ? (
         <>
           <p className="text-sm text-gray-600">500m圏内に検出なし</p>
@@ -602,17 +602,17 @@ function NuisanceCard({ nuisanceData, nuisanceLoading }) {
               <div key={i} className="flex items-center gap-2 text-xs bg-red-50 rounded-lg px-3 py-2">
                 <span>{f.icon}</span>
                 <span className="font-medium text-red-700 flex-1">{f.label}</span>
-                <span className="text-gray-500 shrink-0">{f.distanceM}m先</span>
+                <span className="text-gray-700 font-medium shrink-0">{f.distanceM}m先</span>
               </div>
             ))}
           </div>
           <div className="rounded-lg px-3 py-2 border text-xs bg-amber-50 border-amber-100">
-            <p className="font-semibold text-amber-700">周辺に嫌悪施設あり</p>
+            <p className="font-semibold text-amber-700">周辺に施設リスクあり</p>
             <p className="text-gray-600 leading-relaxed mt-0.5">現地で確認し、物件価格の妥当性も併せて検討してください。</p>
           </div>
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">出典: OpenStreetMap（登録漏れあり・参考値）</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">出典: OpenStreetMap（登録漏れあり・参考値）</p>
     </div>
   );
 }
@@ -706,12 +706,12 @@ function NoiseScoreCard({ noiseData, activeLayers, onToggleLayer }) {
         {score != null && <Stars score={score} />}
       </div>
       {noiseData == null ? (
-        <p className="text-sm text-gray-500">解析中…</p>
+        <p className="text-sm text-gray-700 font-medium">解析中…</p>
       ) : (
         <>
           <div className="flex flex-col gap-1.5 text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">🚃 最寄り線路{noiseData.railName ? `（${noiseData.railName}）` : ''}</span>
+              <span className="text-gray-700 font-medium">🚃 最寄り線路{noiseData.railName ? `（${noiseData.railName}）` : ''}</span>
               {noiseData.railM != null ? (
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold">{noiseData.railM < 1000 ? `${noiseData.railM}m` : `${(noiseData.railM/1000).toFixed(1)}km`}</span>
@@ -720,7 +720,7 @@ function NoiseScoreCard({ noiseData, activeLayers, onToggleLayer }) {
               ) : <span className="text-gray-400">範囲外</span>}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">🚗 最寄り{ROAD_LABEL[noiseData.roadClass] ?? '幹線道路'}</span>
+              <span className="text-gray-700 font-medium">🚗 最寄り{ROAD_LABEL[noiseData.roadClass] ?? '幹線道路'}</span>
               {noiseData.roadM != null ? (
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold">{noiseData.roadM < 1000 ? `${noiseData.roadM}m` : `${(noiseData.roadM/1000).toFixed(1)}km`}</span>
@@ -735,7 +735,7 @@ function NoiseScoreCard({ noiseData, activeLayers, onToggleLayer }) {
               <p className="text-gray-600 leading-relaxed">{diagnosis.text}</p>
             </div>
           )}
-          <p className="text-xs text-gray-500 mt-2">★多=リスク低。地図タイルデータから算出</p>
+          <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。地図タイルデータから算出</p>
         </>
       )}
       <button
@@ -750,7 +750,7 @@ function NoiseScoreCard({ noiseData, activeLayers, onToggleLayer }) {
   );
 }
 
-// 嫌悪施設スコア 1-10（距離と件数で判定）
+// 施設リスクスコア 1-10（距離と件数で判定）
 function calcNuisanceScore(nuisanceData) {
   const facilities = nuisanceData?.facilities || [];
   if (facilities.length === 0) return 10;
@@ -920,9 +920,9 @@ function StationPassengerCard({ passengerData, passengerLoading, convStations = 
       </div>
 
       {passengerLoading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : stations.length === 0 ? (
-        <p className="text-sm text-gray-500">データなし</p>
+        <p className="text-sm text-gray-700 font-medium">データなし</p>
       ) : (
         <div className="space-y-3">
           {stations.map((s, i) => {
@@ -969,7 +969,7 @@ function StationPassengerCard({ passengerData, passengerLoading, convStations = 
           })}
         </div>
       )}
-      <p className="text-xs text-gray-500 mt-2">出典: 国土交通省 国土数値情報（REINFOLIB）</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">出典: 国土交通省 国土数値情報（REINFOLIB）</p>
     </div>
   );
 }
@@ -996,25 +996,25 @@ function FutureScoreCard({ zoningData, urbanData, passengerData, zoningLoading, 
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-500">読み込み中…</p>
+        <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
       ) : !d ? (
-        <p className="text-sm text-gray-500">データなし</p>
+        <p className="text-sm text-gray-700 font-medium">データなし</p>
       ) : (
         <>
           <div className="space-y-1 mb-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-gray-500 w-20 shrink-0">用途地域</span>
+              <span className="text-gray-700 font-medium w-20 shrink-0">用途地域</span>
               <span className="text-gray-700 font-medium">{d}</span>
             </div>
             {urbanData?.isKoudo && (
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-20 shrink-0">都市計画指定</span>
+                <span className="text-gray-700 font-medium w-20 shrink-0">都市計画指定</span>
                 <span className="text-green-700 font-medium bg-green-50 px-1.5 py-0.5 rounded">🏗️ 高度利用地区</span>
               </div>
             )}
             {urbanData?.isToshi && (
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-20 shrink-0">立地適正化</span>
+                <span className="text-gray-700 font-medium w-20 shrink-0">立地適正化</span>
                 <span className="text-blue-700 font-medium bg-blue-50 px-1.5 py-0.5 rounded">📍 都市機能誘導区域</span>
               </div>
             )}
@@ -1027,7 +1027,7 @@ function FutureScoreCard({ zoningData, urbanData, passengerData, zoningLoading, 
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">出典: 国土交通省 都市計画決定GIS（REINFOLIB）</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">出典: 国土交通省 都市計画決定GIS（REINFOLIB）</p>
     </div>
   );
 }
@@ -1171,14 +1171,14 @@ function TransactionDrawer({ tx, onClose }) {
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
           <h2 className="font-bold text-gray-900 text-sm">成約事例 詳細</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 text-xl leading-none">✕</button>
+          <button onClick={onClose} className="text-gray-700 font-medium hover:text-gray-600 text-xl leading-none">✕</button>
         </div>
 
         {tx && (
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
             {/* 価格ハイライト */}
             <div className={`rounded-xl p-4 ${tx.type === 'house' ? 'bg-green-50' : 'bg-blue-50'}`}>
-              <p className="text-xs text-gray-500 mb-0.5">
+              <p className="text-xs text-gray-700 font-medium mb-0.5">
                 {tx.type === 'house' ? '🏡 戸建て' : '🏢 マンション'} · {tx.district} · {formatPeriod(tx.period)}
               </p>
               <p className={`text-2xl font-bold ${tx.type === 'house' ? 'text-green-700' : 'text-blue-700'}`}>
@@ -1200,7 +1200,7 @@ function TransactionDrawer({ tx, onClose }) {
 
             {/* 基本情報 */}
             <section>
-              <p className="text-xs font-bold text-gray-500 mb-2">基本情報</p>
+              <p className="text-xs font-bold text-gray-700 font-medium mb-2">基本情報</p>
               <div className="flex flex-col gap-1.5">
                 <DrawerRow label="間取り" value={tx.floorPlan} />
                 <DrawerRow label="築年" value={tx.buildingYear ? `${tx.buildingYear}年` : ''} />
@@ -1214,7 +1214,7 @@ function TransactionDrawer({ tx, onClose }) {
             {/* 立地 */}
             {(tx.nearestStation || tx.timeToStation) && (
               <section>
-                <p className="text-xs font-bold text-gray-500 mb-2">立地</p>
+                <p className="text-xs font-bold text-gray-700 font-medium mb-2">立地</p>
                 <div className="flex flex-col gap-1.5">
                   <DrawerRow label="最寄り駅" value={tx.nearestStation} />
                   <DrawerRow label="駅徒歩" value={tx.timeToStation ? `${tx.timeToStation}分` : ''} />
@@ -1225,7 +1225,7 @@ function TransactionDrawer({ tx, onClose }) {
             {/* 法令・規制 */}
             {(tx.cityPlanning || tx.coverageRatio || tx.floorAreaRatio) && (
               <section>
-                <p className="text-xs font-bold text-gray-500 mb-2">法令・規制</p>
+                <p className="text-xs font-bold text-gray-700 font-medium mb-2">法令・規制</p>
                 <div className="flex flex-col gap-1.5">
                   <DrawerRow label="都市計画" value={tx.cityPlanning} />
                   <DrawerRow label="建ぺい率" value={tx.coverageRatio ? `${tx.coverageRatio}%` : ''} />
@@ -1237,12 +1237,12 @@ function TransactionDrawer({ tx, onClose }) {
             {/* 取引事情 */}
             {tx.remarks && (
               <section>
-                <p className="text-xs font-bold text-gray-500 mb-2">取引の事情等</p>
+                <p className="text-xs font-bold text-gray-700 font-medium mb-2">取引の事情等</p>
                 <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 leading-relaxed">{tx.remarks}</p>
               </section>
             )}
 
-            <p className="text-xs text-gray-500 text-center pb-2">出典: 国土交通省 不動産情報ライブラリ（REINFOLIB）</p>
+            <p className="text-xs text-gray-700 font-medium text-center pb-2">出典: 国土交通省 不動産情報ライブラリ（REINFOLIB）</p>
           </div>
         )}
       </div>
@@ -1286,7 +1286,7 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
 
   return (
     <div className="border-t border-gray-100 pt-3 mt-1">
-      <p className="text-xs font-bold text-gray-500 mb-2">📊 エリア成約相場（中古マンション）</p>
+      <p className="text-xs font-bold text-gray-700 font-medium mb-2">📊 エリア成約相場（中古マンション）</p>
 
       {/* 年代タブ */}
       <div className="flex gap-1 mb-2 flex-wrap">
@@ -1314,23 +1314,23 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
       {eraData?.avgUnitPrice ? (
         <>
           <div className="bg-blue-50 rounded-lg px-3 py-2 mb-2">
-            <p className="text-xs text-gray-500 mb-0.5">{eraData.label}</p>
+            <p className="text-xs text-gray-700 font-medium mb-0.5">{eraData.label}</p>
             {hasP ? (
               <>
-                <p className="text-lg font-bold text-blue-700">{eraData.p50}万円/㎡ <span className="text-xs font-normal text-gray-500">（中央値）</span></p>
-                <p className="text-xs text-gray-500 mt-0.5">適正レンジ（P25〜P75）: {eraData.p25}〜{eraData.p75}万円/㎡</p>
+                <p className="text-lg font-bold text-blue-700">{eraData.p50}万円/㎡ <span className="text-xs font-normal text-gray-700 font-medium">（中央値）</span></p>
+                <p className="text-xs text-gray-700 font-medium mt-0.5">適正レンジ（P25〜P75）: {eraData.p25}〜{eraData.p75}万円/㎡</p>
               </>
             ) : (
               <p className="text-lg font-bold text-blue-700">{eraData.avgUnitPrice}万円/㎡</p>
             )}
-            <div className="flex flex-wrap gap-x-3 text-xs text-gray-500 mt-0.5">
+            <div className="flex flex-wrap gap-x-3 text-xs text-gray-700 font-medium mt-0.5">
               {eraData.avgPrice && <span>平均成約価格 約{eraData.avgPrice.toLocaleString()}万円</span>}
               {eraData.avgArea  && <span>平均面積 約{eraData.avgArea}㎡</span>}
               <span>{eraData.count}件</span>
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 mb-1">希望の広さ</p>
+          <p className="text-xs text-gray-700 font-medium mb-1">希望の広さ</p>
           <div className="flex items-center gap-2 mb-2">
             <input
               type="text"
@@ -1339,31 +1339,31 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
               onChange={e => setArea(toHalfInt(e.target.value))}
               className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
             />
-            <span className="text-xs text-gray-500">㎡</span>
+            <span className="text-xs text-gray-700 font-medium">㎡</span>
           </div>
           {estimate && (
             <div className="bg-white rounded-lg px-3 py-2 border border-blue-200">
               {hasP && simRangeMin && simRangeMax ? (
                 <>
-                  <p className="text-xs text-gray-500">適正レンジ（P25〜P75）</p>
+                  <p className="text-xs text-gray-700 font-medium">適正レンジ（P25〜P75）</p>
                   <p className="text-lg font-bold text-blue-700">約{simRangeMin.toLocaleString()}万〜{simRangeMax.toLocaleString()}万円</p>
-                  <p className="text-xs text-gray-500">中央値 {eraData.p50}万円/㎡ × {area}㎡ ≒ 約{estimate.toLocaleString()}万円</p>
+                  <p className="text-xs text-gray-700 font-medium">中央値 {eraData.p50}万円/㎡ × {area}㎡ ≒ 約{estimate.toLocaleString()}万円</p>
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-gray-500">このエリアの目安</p>
+                  <p className="text-xs text-gray-700 font-medium">このエリアの目安</p>
                   <p className="text-lg font-bold text-blue-700">約{estimate.toLocaleString()}万円</p>
-                  <p className="text-xs text-gray-500">{eraData.avgUnitPrice}万円/㎡ × {area}㎡</p>
+                  <p className="text-xs text-gray-700 font-medium">{eraData.avgUnitPrice}万円/㎡ × {area}㎡</p>
                 </>
               )}
             </div>
           )}
         </>
       ) : (
-        <p className="text-xs text-gray-500 text-center py-2">この年代のデータなし</p>
+        <p className="text-xs text-gray-700 font-medium text-center py-2">この年代のデータなし</p>
       )}
 
-      <p className="text-xs text-gray-500 mt-2">※ 国交省REINFOLIB 中古成約価格</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">※ 国交省REINFOLIB 中古成約価格</p>
     </div>
   );
 }
@@ -1396,8 +1396,8 @@ function HousePriceSimulator({ records, landAreaProp, avgPerSqmAll, totalCount, 
 
   return (
     <div className="border-t border-gray-100 pt-3 mt-1">
-      <p className="text-xs font-bold text-gray-500 mb-2">💡 価格シミュレーター</p>
-      <p className="text-xs text-gray-500 mb-1.5">希望の土地面積</p>
+      <p className="text-xs font-bold text-gray-700 font-medium mb-2">💡 価格シミュレーター</p>
+      <p className="text-xs text-gray-700 font-medium mb-1.5">希望の土地面積</p>
       <div className="flex items-center gap-2">
         <input
           type="text"
@@ -1407,29 +1407,29 @@ function HousePriceSimulator({ records, landAreaProp, avgPerSqmAll, totalCount, 
           placeholder="例: 150"
           className="w-24 px-2 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-green-400"
         />
-        <span className="text-xs text-gray-500">㎡</span>
+        <span className="text-xs text-gray-700 font-medium">㎡</span>
       </div>
 
       {estimate && (
         <div className={`mt-2 rounded-lg px-3 py-2 ${hasAdjustment ? 'bg-amber-50' : 'bg-green-50'}`}>
-          <p className="text-xs text-gray-500">このエリアの目安（土地＋建物込み）</p>
+          <p className="text-xs text-gray-700 font-medium">このエリアの目安（土地＋建物込み）</p>
           <p className={`text-lg font-bold ${hasAdjustment ? 'text-amber-700' : 'text-green-700'}`}>
             約 {estimate.toLocaleString()}万円
           </p>
           {hasAdjustment ? (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-700 font-medium">
               基準 {baseEstimate?.toLocaleString()}万円
               {adjustmentRate > 0 ? ` ＋${Math.round(adjustmentRate * 100)}%` : ` ${Math.round(adjustmentRate * 100)}%`}
               補正（コスト診断の土地条件に連動）
             </p>
           ) : (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-700 font-medium">
               成約{count}件の平均 {Math.round(avgPerSqm * 10) / 10}万円/㎡（土地） × {landArea}㎡
             </p>
           )}
         </div>
       )}
-      <p className="text-xs text-gray-500 mt-2">※ 中古成約価格を元にした参考値です</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">※ 中古成約価格を元にした参考値です</p>
     </div>
   );
 }
@@ -1675,6 +1675,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
   const totalMisc      = brokerage + registration + loanFee + acquisitionTax + fireInsurance;
 
   const [openHint, setOpenHint] = useState(null);
+  const [showMiscBreakdown, setShowMiscBreakdown] = useState(false);
 
   // 戸建て比較: 土地面積入力済みなら「平米単価×面積」の試算値と比較、未入力ならエリア平均にフォールバック
   // 全件ベースの avgPerSqm を優先（top-10 バイアス排除）
@@ -1746,7 +1747,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p className="text-sm font-semibold text-gray-700 mb-3">🩺 マイホーム購入コスト診断</p>
+      <p className="text-sm font-semibold text-gray-700 mb-3">🩺 物件コストシミュレーター</p>
 
       {/* エリア比較（戸建て） */}
       {propertyType === 'house' && houseBase && (
@@ -1760,11 +1761,11 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                 </div>
                 <p className={`text-xs font-medium ${hFeedback.color}`}>{hFeedback.sub}</p>
               </div>
-              <div className="flex gap-3 text-xs text-gray-500">
+              <div className="flex gap-3 text-xs text-gray-700 font-medium">
                 <span>入力: {p.toLocaleString()}万円</span>
                 <span>エリアの目安: {houseBase.toLocaleString()}万円</span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-700 font-medium mt-0.5">
                 {houseEstimate
                   ? `※ ${houses?.count ?? houseValidRecords.length}件の成約より算出した平米単価（${Math.round(houseAvgPerSqm * 10) / 10}万円/㎡）× 土地${landAreaNum}㎡で試算${houses?.filtered ? '（直近20年以内築）' : ''}${houseAdjustRate !== 0 ? `・土地条件補正${houseAdjustRate > 0 ? '+' : ''}${Math.round(houseAdjustRate * 100)}%適用` : ''}`
                   : `※ ${houses?.count}件の成約事例の平均（土地・建物込み）との比較。土地面積を入力するとより精度が上がります${houses?.filtered ? '（直近20年以内築）' : ''}${houseAdjustRate !== 0 ? `・土地条件補正${houseAdjustRate > 0 ? '+' : ''}${Math.round(houseAdjustRate * 100)}%適用` : ''}`}
@@ -1772,13 +1773,13 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             </div>
           ) : (
             <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-              <p className="text-xs text-gray-500">物件価格を入力するとエリアの目安と比較します</p>
+              <p className="text-xs text-gray-700 font-medium">物件価格を入力するとエリアの目安と比較します</p>
               <p className="text-sm font-bold text-green-700 mt-0.5">
                 {houseEstimate
                   ? `エリアの目安: 約${houseBase.toLocaleString()}万円（土地${landAreaNum}㎡で試算）`
                   : `エリア平均: 約${houseBase.toLocaleString()}万円（土地・建物込み）`}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-700 font-medium">
                 {houseEstimate
                   ? `平米単価 ${Math.round(houseAvgPerSqm * 10) / 10}万円/㎡ × ${landAreaNum}㎡ ／ ${houseValidRecords.length}件の成約より`
                   : `${houses?.count}件の成約事例より ／ 土地面積を入力するとより精度が上がります`}
@@ -1789,109 +1790,68 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
       )}
 
 
-      <div className="mb-3">
-        {/* 1行目: 物件価格 ＋ 専有面積・所在階（マンション）or 建物構造（戸建て） */}
-        <div className={`grid gap-2 mb-2 ${propertyType === 'condo' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <div>
-            <p className="text-xs text-gray-500 mb-1">物件価格（万円）</p>
-            <input type="text" inputMode="numeric" value={price} onChange={e => setPrice(toHalfInt(e.target.value))} className={inputCls} />
-          </div>
-          {propertyType === 'condo' ? (
-            <>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">専有面積（㎡）</p>
-                <input type="text" inputMode="numeric" value={area} onChange={e => setArea(toHalfInt(e.target.value))} className={inputCls} />
+      {/* エリア比較（マンション：物件価格の上） */}
+      {condos?.avgUnitPrice && (
+        <div className="mb-3">
+          {autoEra && builtYear && (
+            <p className="text-xs text-gray-700 font-medium mb-1.5">
+              築年 {builtYear} → <span className="font-medium text-blue-600">{eraLabel}</span> の成約分布と比較（{eraData?.count ?? condos?.count}件）
+            </p>
+          )}
+          {!builtYear ? (
+            <div className="rounded-lg px-3 py-2.5 border bg-amber-50 border-amber-200">
+              <p className="text-sm font-bold text-amber-700">築年を入力してください</p>
+              <p className="text-xs text-amber-600 mt-0.5">年代別の正確な相場と比較するために築年（西暦）の入力が必要です。</p>
+            </div>
+          ) : feedback ? (
+            <div className={`rounded-lg px-3 py-2.5 border ${feedback.bg}`}>
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-2">
+                  <p className={`text-base font-bold ${feedback.color}`}>{feedback.label}</p>
+                  {loanScoreVal != null && <Stars score={loanScoreVal} />}
+                </div>
+                <p className={`text-xs font-medium ${feedback.color}`}>{feedback.sub}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">所在階（任意）</p>
-                <input type="text" inputMode="numeric" value={floor} onChange={e => setFloor(toHalfInt(e.target.value))} placeholder="例: 5" className={inputCls} />
+              <div className="flex gap-3 text-xs text-gray-700 font-medium">
+                <span>入力: {Math.round(actualUnitPrice * 10) / 10}万/㎡</span>
+                {hasPercentiles
+                  ? <span>中央値(P50): {p50}万/㎡</span>
+                  : <span>{eraLabel}: {unitPrice}万/㎡</span>}
               </div>
-            </>
+              {hasPercentiles && rangeMin && rangeMax ? (
+                <p className="text-xs text-gray-700 font-medium mt-0.5">適正レンジ（P25〜P75）: 約{rangeMin.toLocaleString()}万〜{rangeMax.toLocaleString()}万円</p>
+              ) : estimate ? (
+                <p className="text-xs text-gray-700 font-medium mt-0.5">エリア目安（平均）: 約{estimate.toLocaleString()}万円</p>
+              ) : null}
+              {floorAdjPct !== 0 && (estimate || (rangeMin && rangeMax)) && (
+                <p className="text-[10px] text-gray-400 mt-0.5">※ {floorNum}階補正 {floorAdjPct > 0 ? '+' : ''}{floorAdjPct}%を適用（文献値ベースの目安）</p>
+              )}
+            </div>
           ) : (
-            <div>
-              <p className="text-xs text-gray-500 mb-1">建物構造</p>
-              <select value={structure} onChange={e => setStructure(e.target.value)}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white">
-                <option>木造</option>
-                <option>軽量鉄骨</option>
-                <option>重量鉄骨</option>
-                <option>RC（鉄筋コンクリート）</option>
-              </select>
+            <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+              <p className="text-xs text-gray-700 font-medium">物件価格・広さを入力するとエリアの成約分布と比較します</p>
+              {hasPercentiles && areaNum > 0 ? (
+                <p className="text-sm font-bold text-blue-700 mt-0.5">
+                  適正レンジ（P25〜P75）: 約{rangeMin?.toLocaleString()}万〜{rangeMax?.toLocaleString()}万円
+                </p>
+              ) : estimate ? (
+                <p className="text-sm font-bold text-blue-700 mt-0.5">
+                  {eraLabel}の目安: 約{estimate.toLocaleString()}万円
+                </p>
+              ) : null}
+              {floorAdjPct !== 0 && (estimate || (rangeMin && rangeMax)) && (
+                <p className="text-[10px] text-gray-400 mt-0.5">※ {floorNum}階補正 {floorAdjPct > 0 ? '+' : ''}{floorAdjPct}%を適用（文献値ベースの目安）</p>
+              )}
             </div>
           )}
         </div>
+      )}
 
-        {/* 戸建て: 土地・建物価格の内訳（常時表示） */}
-        {propertyType === 'house' && (
-          <div className="mb-2">
-            <div className="grid grid-cols-2 gap-2 mb-1.5">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">土地価格（万円）</p>
-                <input type="text" inputMode="numeric" value={landPrice} placeholder="任意"
-                  onChange={e => setLandPrice(toHalfInt(e.target.value))} className={inputCls} />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">建物価格（万円）</p>
-                <input type="text" inputMode="numeric" value={buildingPrice} placeholder="任意"
-                  onChange={e => setBuildingPrice(toHalfInt(e.target.value))} className={inputCls} />
-              </div>
-            </div>
-            {breakdownSum > 0 && (
-              <div className={`text-xs rounded-lg px-2 py-1.5 flex justify-between ${breakdownMismatch ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
-                <span>土地 + 建物の合計</span>
-                <span className="font-bold">{breakdownSum.toLocaleString()}万円{breakdownMismatch ? `（物件価格 ${p.toLocaleString()}万円 と不一致）` : ' ✓'}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 戸建て: 土地面積・建物面積 */}
-        {propertyType === 'house' && (
-          <>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">土地面積（㎡）</p>
-                <input type="text" inputMode="numeric" value={landArea} onChange={e => setLandArea(toHalfInt(e.target.value))} className={inputCls} />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">建物面積（㎡）</p>
-                <input type="text" inputMode="numeric" value={buildingArea} onChange={e => setBuildingArea(toHalfInt(e.target.value))} className={inputCls} />
-              </div>
-            </div>
-            {/* 土地の条件 */}
-            <div className="mb-2">
-              <p className="text-xs text-gray-500 mb-1.5">土地の条件（任意）</p>
-              <div className="flex flex-wrap gap-1.5">
-                {LAND_FEATURES.map(f => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => toggleLandFeature(f.id)}
-                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                      landFeatures[f.id]
-                        ? f.minus
-                          ? 'bg-red-100 border-red-300 text-red-700 font-medium'
-                          : 'bg-blue-100 border-blue-300 text-blue-700 font-medium'
-                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
-                    }`}
-                  >
-                    {landFeatures[f.id] ? (f.minus ? '▼ ' : '▲ ') : ''}{f.label}
-                    <span className="ml-1 opacity-60">{f.rate > 0 ? `+${Math.round(f.rate * 100)}%` : `${Math.round(f.rate * 100)}%`}</span>
-                  </button>
-                ))}
-              </div>
-              {houseAdjustRate !== 0 && (
-                <p className="text-xs mt-1.5 font-medium" style={{ color: houseAdjustRate < 0 ? '#b91c1c' : '#1d4ed8' }}>
-                  補正率: {houseAdjustRate > 0 ? '+' : ''}{Math.round(houseAdjustRate * 100)}%（成約価格目安に反映済み）
-                </p>
-              )}
-            </div>
-          </>
-        )}
+      <div className="mb-3">
         {showBuiltYear && (
-          <div>
+          <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-gray-500">築年（西暦）</p>
+              <p className="text-xs text-gray-700 font-medium">築年（西暦）</p>
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -1945,141 +1905,189 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             })()}
           </div>
         )}
-      </div>
-
-      {/* エリア比較（築年入力の直下） */}
-      {condos?.avgUnitPrice && (
-        <div className="mb-3">
-          {autoEra && builtYear && (
-            <p className="text-xs text-gray-500 mb-1.5">
-              築年 {builtYear} → <span className="font-medium text-blue-600">{eraLabel}</span> の成約分布と比較（{eraData?.count ?? condos?.count}件）
-            </p>
-          )}
-          {!builtYear ? (
-            <div className="rounded-lg px-3 py-2.5 border bg-amber-50 border-amber-200">
-              <p className="text-sm font-bold text-amber-700">築年を入力してください</p>
-              <p className="text-xs text-amber-600 mt-0.5">年代別の正確な相場と比較するために築年（西暦）の入力が必要です。</p>
-            </div>
-          ) : feedback ? (
-            <div className={`rounded-lg px-3 py-2.5 border ${feedback.bg}`}>
-              <div className="flex items-center justify-between mb-0.5">
-                <div className="flex items-center gap-2">
-                  <p className={`text-base font-bold ${feedback.color}`}>{feedback.label}</p>
-                  {loanScoreVal != null && <Stars score={loanScoreVal} />}
-                </div>
-                <p className={`text-xs font-medium ${feedback.color}`}>{feedback.sub}</p>
+        {/* 1行目: 物件価格 ＋ 専有面積・所在階（マンション）or 建物構造（戸建て） */}
+        <div className={`grid gap-2 mb-2 ${propertyType === 'condo' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <div>
+            <p className="text-xs text-gray-700 font-medium mb-1">物件価格（万円）</p>
+            <input type="text" inputMode="numeric" value={price} onChange={e => setPrice(toHalfInt(e.target.value))} className={inputCls} />
+          </div>
+          {propertyType === 'condo' ? (
+            <>
+              <div>
+                <p className="text-xs text-gray-700 font-medium mb-1">専有面積（㎡）</p>
+                <input type="text" inputMode="numeric" value={area} onChange={e => setArea(toHalfInt(e.target.value))} className={inputCls} />
               </div>
-              <div className="flex gap-3 text-xs text-gray-500">
-                <span>入力: {Math.round(actualUnitPrice * 10) / 10}万/㎡</span>
-                {hasPercentiles
-                  ? <span>中央値(P50): {p50}万/㎡</span>
-                  : <span>{eraLabel}: {unitPrice}万/㎡</span>}
+              <div>
+                <p className="text-xs text-gray-700 font-medium mb-1">所在階（任意）</p>
+                <input type="text" inputMode="numeric" value={floor} onChange={e => setFloor(toHalfInt(e.target.value))} placeholder="例: 5" className={inputCls} />
               </div>
-              {hasPercentiles && rangeMin && rangeMax ? (
-                <p className="text-xs text-gray-500 mt-0.5">適正レンジ（P25〜P75）: 約{rangeMin.toLocaleString()}万〜{rangeMax.toLocaleString()}万円</p>
-              ) : estimate ? (
-                <p className="text-xs text-gray-500 mt-0.5">エリア目安（平均）: 約{estimate.toLocaleString()}万円</p>
-              ) : null}
-              {floorAdjPct !== 0 && (estimate || (rangeMin && rangeMax)) && (
-                <p className="text-[10px] text-gray-400 mt-0.5">※ {floorNum}階補正 {floorAdjPct > 0 ? '+' : ''}{floorAdjPct}%を適用（文献値ベースの目安）</p>
-              )}
-            </div>
+            </>
           ) : (
-            <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-              <p className="text-xs text-gray-500">物件価格・広さを入力するとエリアの成約分布と比較します</p>
-              {hasPercentiles && areaNum > 0 ? (
-                <p className="text-sm font-bold text-blue-700 mt-0.5">
-                  適正レンジ（P25〜P75）: 約{rangeMin?.toLocaleString()}万〜{rangeMax?.toLocaleString()}万円
-                </p>
-              ) : estimate ? (
-                <p className="text-sm font-bold text-blue-700 mt-0.5">
-                  {eraLabel}の目安: 約{estimate.toLocaleString()}万円
-                </p>
-              ) : null}
-              {floorAdjPct !== 0 && (estimate || (rangeMin && rangeMax)) && (
-                <p className="text-[10px] text-gray-400 mt-0.5">※ {floorNum}階補正 {floorAdjPct > 0 ? '+' : ''}{floorAdjPct}%を適用（文献値ベースの目安）</p>
-              )}
+            <div>
+              <p className="text-xs text-gray-700 font-medium mb-1">建物構造</p>
+              <select value={structure} onChange={e => setStructure(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white">
+                <option>木造</option>
+                <option>軽量鉄骨</option>
+                <option>重量鉄骨</option>
+                <option>RC（鉄筋コンクリート）</option>
+              </select>
             </div>
           )}
         </div>
-      )}
+
+        {/* 戸建て: 土地・建物価格の内訳（常時表示） */}
+        {propertyType === 'house' && (
+          <div className="mb-2">
+            <div className="grid grid-cols-2 gap-2 mb-1.5">
+              <div>
+                <p className="text-xs text-gray-700 font-medium mb-1">土地価格（万円）</p>
+                <input type="text" inputMode="numeric" value={landPrice} placeholder="任意"
+                  onChange={e => setLandPrice(toHalfInt(e.target.value))} className={inputCls} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-700 font-medium mb-1">建物価格（万円）</p>
+                <input type="text" inputMode="numeric" value={buildingPrice} placeholder="任意"
+                  onChange={e => setBuildingPrice(toHalfInt(e.target.value))} className={inputCls} />
+              </div>
+            </div>
+            {breakdownSum > 0 && (
+              <div className={`text-xs rounded-lg px-2 py-1.5 flex justify-between ${breakdownMismatch ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                <span>土地 + 建物の合計</span>
+                <span className="font-bold">{breakdownSum.toLocaleString()}万円{breakdownMismatch ? `（物件価格 ${p.toLocaleString()}万円 と不一致）` : ' ✓'}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 戸建て: 土地面積・建物面積 */}
+        {propertyType === 'house' && (
+          <>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <p className="text-xs text-gray-700 font-medium mb-1">土地面積（㎡）</p>
+                <input type="text" inputMode="numeric" value={landArea} onChange={e => setLandArea(toHalfInt(e.target.value))} className={inputCls} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-700 font-medium mb-1">建物面積（㎡）</p>
+                <input type="text" inputMode="numeric" value={buildingArea} onChange={e => setBuildingArea(toHalfInt(e.target.value))} className={inputCls} />
+              </div>
+            </div>
+            {/* 土地の条件 */}
+            <div className="mb-2">
+              <p className="text-xs text-gray-700 font-medium mb-1.5">土地の条件（任意）</p>
+              <div className="flex flex-wrap gap-1.5">
+                {LAND_FEATURES.map(f => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => toggleLandFeature(f.id)}
+                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                      landFeatures[f.id]
+                        ? f.minus
+                          ? 'bg-red-100 border-red-300 text-red-700 font-medium'
+                          : 'bg-blue-100 border-blue-300 text-blue-700 font-medium'
+                        : 'bg-gray-50 border-gray-200 text-gray-700 font-medium hover:bg-gray-100'
+                    }`}
+                  >
+                    {landFeatures[f.id] ? (f.minus ? '▼ ' : '▲ ') : ''}{f.label}
+                    <span className="ml-1 opacity-60">{f.rate > 0 ? `+${Math.round(f.rate * 100)}%` : `${Math.round(f.rate * 100)}%`}</span>
+                  </button>
+                ))}
+              </div>
+              {houseAdjustRate !== 0 && (
+                <p className="text-xs mt-1.5 font-medium" style={{ color: houseAdjustRate < 0 ? '#b91c1c' : '#1d4ed8' }}>
+                  補正率: {houseAdjustRate > 0 ? '+' : ''}{Math.round(houseAdjustRate * 100)}%（成約価格目安に反映済み）
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* 頭金 + 手元現金サマリー */}
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1 border-t border-gray-200" />
+        <span className="text-sm font-bold text-gray-600 shrink-0">購入時に必要なコスト</span>
+        <div className="flex-1 border-t border-gray-200" />
+      </div>
       <div className="mb-3">
-        <p className="text-xs text-gray-500 mb-1">頭金（万円）</p>
+        <p className="text-xs text-gray-700 font-medium mb-1">頭金（万円）</p>
         <input type="text" inputMode="numeric" value={down} onChange={e => setDown(toHalfInt(e.target.value))} className={inputCls} />
         {p > 0 && (
+          <div className="mt-2 mb-2 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
+            <div className="flex justify-between items-baseline mb-1">
+              <button
+                onClick={() => setShowMiscBreakdown(v => !v)}
+                className="flex items-center gap-1 text-sm font-bold text-gray-600 hover:text-gray-800"
+              >
+                <span>🧾 諸費用の概算（初期費用）</span>
+                <span className="text-gray-400">{showMiscBreakdown ? '▲' : '▼'}</span>
+              </button>
+              <span className="text-base font-bold text-orange-600">約{totalMisc.toLocaleString()}万円</span>
+            </div>
+            {showMiscBreakdown && (
+              <>
+                <div className="flex flex-col gap-1 text-xs mb-2 mt-2">
+                  {[
+                    { label: '仲介手数料（上限・税込）',   value: brokerage },
+                    { label: '登記・印紙・司法書士',       value: registration },
+                    { label: '融資手数料（2.2%目安）',     value: loanFee },
+                    { label: '不動産取得税（軽減後目安）', value: acquisitionTax, hintKey: 'acquisitionTax',
+                      hint: '購入の翌年に都道府県から納税通知書が届きます（引渡しが年末に近い場合は翌々年になることも）。払い忘れに注意。中古住宅で床面積50㎡以上・1982年以降築などの要件を満たすと税額から最大45万円が控除されます（この概算はその軽減後の値です）。' },
+                    { label: `火災保険（5年一括・${propertyType === 'house' ? '木造戸建て' : 'マンション'}目安）`, value: fireInsurance, hintKey: 'fireInsurance',
+                      hint: '構造・延床面積・補償内容によって大きく異なります。木造戸建ては保険料が高め（5年で10〜30万円）、マンション（RC・SRC）は安め（5年で3〜8万円）。複数社を一括比較して最安値を探すのがおすすめです。地震保険（任意）を追加する場合はさらに同額程度が目安です。' },
+                  ].map(({ label, value, hintKey, hint }) => (
+                    <div key={label} className="px-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700 font-medium">{label}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {hintKey && (
+                            <button
+                              onClick={() => setOpenHint(openHint === hintKey ? null : hintKey)}
+                              className="text-blue-400 underline opacity-70"
+                            >
+                              {openHint === hintKey ? '閉じる' : '解説'}
+                            </button>
+                          )}
+                          <span className="font-medium text-gray-600">約{value.toLocaleString()}万円</span>
+                        </div>
+                      </div>
+                      {hintKey && openHint === hintKey && (
+                        <p className="text-gray-600 bg-white rounded-lg p-2 mt-1 leading-relaxed border border-gray-100">{hint}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            <p className="text-xs text-gray-700 font-medium mt-1">※ 新築・仲介なし・金融機関によって大きく異なります</p>
+          </div>
+        )}
+        {p > 0 && (
           <div className="mt-2 bg-blue-50 rounded-lg px-3 py-2 border border-blue-100 text-xs">
-            <div className="flex justify-between">
-              <span className="text-gray-500">頭金</span>
-              <span className="font-medium text-gray-700">{d.toLocaleString()}万円</span>
-            </div>
-            <div className="flex justify-between mt-0.5">
-              <span className="text-gray-500">＋ 諸費用（目安）</span>
-              <span className="font-medium text-gray-700">約{totalMisc.toLocaleString()}万円</span>
-            </div>
+            <div className="text-gray-700 font-medium">頭金 ＋ 諸費用（目安）</div>
             <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t border-blue-200">
               <span className="text-xs font-bold text-gray-600">手元現金の合計</span>
               <span className="text-base font-bold text-blue-700">約{Math.round(d + totalMisc).toLocaleString()}万円</span>
-            </div>
-            <div className="flex justify-between items-baseline mt-1 pt-1 border-t border-blue-100">
-              <span className="text-xs text-gray-500">ローン借入額</span>
-              <span className="text-base font-semibold text-gray-700">{Math.max(0, p - d).toLocaleString()}万円</span>
             </div>
           </div>
         )}
       </div>
 
       {/* 諸費用の概算（インプット直後） */}
-      {p > 0 && (
-        <div className="mb-3 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
-          <p className="text-xs font-bold text-gray-500 mb-2">🧾 諸費用の概算（初期費用）</p>
-          <div className="flex flex-col gap-1 text-xs mb-2">
-            {[
-              { label: '仲介手数料（上限・税込）',   value: brokerage },
-              { label: '登記・印紙・司法書士',       value: registration },
-              { label: '融資手数料（2.2%目安）',     value: loanFee },
-              { label: '不動産取得税（軽減後目安）', value: acquisitionTax, hintKey: 'acquisitionTax',
-                hint: '購入の翌年に都道府県から納税通知書が届きます（引渡しが年末に近い場合は翌々年になることも）。払い忘れに注意。中古住宅で床面積50㎡以上・1982年以降築などの要件を満たすと税額から最大45万円が控除されます（この概算はその軽減後の値です）。' },
-              { label: `火災保険（5年一括・${propertyType === 'house' ? '木造戸建て' : 'マンション'}目安）`, value: fireInsurance, hintKey: 'fireInsurance',
-                hint: '構造・延床面積・補償内容によって大きく異なります。木造戸建ては保険料が高め（5年で10〜30万円）、マンション（RC・SRC）は安め（5年で3〜8万円）。複数社を一括比較して最安値を探すのがおすすめです。地震保険（任意）を追加する場合はさらに同額程度が目安です。' },
-            ].map(({ label, value, hintKey, hint }) => (
-              <div key={label} className="px-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">{label}</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {hintKey && (
-                      <button
-                        onClick={() => setOpenHint(openHint === hintKey ? null : hintKey)}
-                        className="text-blue-400 underline opacity-70"
-                      >
-                        {openHint === hintKey ? '閉じる' : '解説'}
-                      </button>
-                    )}
-                    <span className="font-medium text-gray-600">約{value.toLocaleString()}万円</span>
-                  </div>
-                </div>
-                {hintKey && openHint === hintKey && (
-                  <p className="text-gray-600 bg-white rounded-lg p-2 mt-1 leading-relaxed border border-gray-100">{hint}</p>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between items-baseline px-1 py-1.5 border-t border-gray-100 mb-1">
-            <span className="text-xs font-bold text-gray-600">諸費用の合計（目安）</span>
-            <span className="text-base font-bold text-orange-600">約{totalMisc.toLocaleString()}万円</span>
-          </div>
-          <p className="text-xs text-gray-500">※ 新築・仲介なし・金融機関によって大きく異なります</p>
-        </div>
-      )}
-
       {(monthlyVar || monthlyFix) && (
         <>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1 border-t border-gray-200" />
+            <span className="text-sm font-bold text-gray-600 shrink-0">毎月のコスト</span>
+            <div className="flex-1 border-t border-gray-200" />
+          </div>
           {showMgmt && (
             <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-500">管理費（月・円）</p>
+                  <p className="text-xs text-gray-700 font-medium">管理費（月・円）</p>
                   {mgmtManual && (
                     <button onClick={() => { setMgmtManual(false); const a = parseFloat(area)||0; if(a>0) setMgmt(String(Math.round(a*200/500)*500)); }} className="text-[10px] text-blue-500 hover:underline">↩ 自動</button>
                   )}
@@ -2100,7 +2108,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-500">修繕積立金（月・円）</p>
+                  <p className="text-xs text-gray-700 font-medium">修繕積立金（月・円）</p>
                   {reserveManual && (
                     <button onClick={() => { setReserveManual(false); const a = parseFloat(area)||0; if(a>0) setReserve(String(Math.round(a*200/500)*500)); }} className="text-[10px] text-blue-500 hover:underline">↩ 自動</button>
                   )}
@@ -2125,21 +2133,29 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
           {/* 管理費・積立金の相場ヒント（マンション・面積入力済み時） */}
           {showMgmt && areaNum > 0 && (
             <div className="bg-gray-50 rounded-lg px-3 py-2.5 mb-3 border border-gray-100">
-              <p className="text-xs font-bold text-gray-500 mb-1.5">管理費・修繕積立金の相場感</p>
-              <div className="flex flex-col gap-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">修繕積立金の適正目安</span>
-                  <span className="font-medium text-gray-700">
-                    {reserveMin?.toLocaleString()}〜{reserveMax?.toLocaleString()}円/月
-                  </span>
+              <button
+                onClick={() => setOpenHint(openHint === 'mgmtHint' ? null : 'mgmtHint')}
+                className="flex items-center justify-between w-full"
+              >
+                <span className="text-sm font-bold text-gray-700">管理費・修繕積立金の相場感</span>
+                <span className="text-gray-400 text-xs">{openHint === 'mgmtHint' ? '▲' : '▼'}</span>
+              </button>
+              {openHint === 'mgmtHint' && (
+                <div className="flex flex-col gap-1 text-xs mt-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700 font-medium">修繕積立金の適正目安</span>
+                    <span className="font-medium text-gray-700">
+                      {reserveMin?.toLocaleString()}〜{reserveMax?.toLocaleString()}円/月
+                    </span>
+                  </div>
+                  <p className="text-gray-700 font-medium text-xs leading-tight">㎡ × 200〜500円（国交省長期修繕計画ガイドライン）</p>
+                  <div className="flex justify-between mt-0.5">
+                    <span className="text-gray-700 font-medium">管理費の全国平均</span>
+                    <span className="font-medium text-gray-700">約13,000〜16,000円/月</span>
+                  </div>
+                  <p className="text-gray-700 font-medium text-xs leading-tight">国交省「令和3年度マンション総合調査」</p>
                 </div>
-                <p className="text-gray-500 text-xs leading-tight">㎡ × 200〜500円（国交省長期修繕計画ガイドライン）</p>
-                <div className="flex justify-between mt-0.5">
-                  <span className="text-gray-500">管理費の全国平均</span>
-                  <span className="font-medium text-gray-700">約13,000〜16,000円/月</span>
-                </div>
-                <p className="text-gray-500 text-xs leading-tight">国交省「令和3年度マンション総合調査」</p>
-              </div>
+              )}
             </div>
           )}
 
@@ -2147,7 +2163,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
           <div className="grid grid-cols-2 gap-2 mb-3">
             {/* 1行目: 変動金利 | 固定金利 */}
             <div>
-              <p className="text-xs text-gray-500 mb-1">変動金利（年率%）</p>
+              <p className="text-xs text-gray-700 font-medium mb-1">変動金利（年率%）</p>
               <input type="text" inputMode="decimal" value={varRate} onChange={e => setVarRate(toHalfDec(e.target.value))} className={inputCls} />
               {varRateStatus && (
                 <button
@@ -2163,7 +2179,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               )}
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">固定金利（年率%）</p>
+              <p className="text-xs text-gray-700 font-medium mb-1">固定金利（年率%）</p>
               <input type="text" inputMode="decimal" value={fixRate} onChange={e => setFixRate(toHalfDec(e.target.value))} className={inputCls} />
               {fixRateStatus && (
                 <button
@@ -2180,11 +2196,11 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             </div>
             {/* 2行目: 変動返済期間 | 固定返済期間 */}
             <div>
-              <p className="text-xs text-gray-500 mb-1">変動・返済期間（年）</p>
+              <p className="text-xs text-gray-700 font-medium mb-1">変動・返済期間（年）</p>
               <input type="text" inputMode="numeric" value={varYears} onChange={e => setVarYears(toHalfInt(e.target.value))} className={inputCls} />
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">固定・返済期間（年）</p>
+              <p className="text-xs text-gray-700 font-medium mb-1">固定・返済期間（年）</p>
               <input type="text" inputMode="numeric" value={fixYears} onChange={e => setFixYears(toHalfInt(e.target.value))} className={inputCls} />
             </div>
           </div>
@@ -2198,7 +2214,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             const diffTotal   = totalPaymentVar && totalPaymentFix ? Math.abs(totalPaymentFix - totalPaymentVar) : null;
             return (
               <>
-                <p className="text-xs text-gray-500 mb-1.5">{showMgmt ? '毎月の支払い合計' : '月々の返済額'}</p>
+                <p className="text-xs text-gray-700 font-medium mb-1.5">{showMgmt ? '毎月の支払い合計' : '月々の返済額'}</p>
                 <div className="grid grid-cols-2 gap-2 mb-1.5">
                   <div className="bg-blue-50 rounded-lg px-3 py-2.5">
                     <p className="text-xs text-blue-400 mb-0.5">変動 {varRate}% / {varYears}年</p>
@@ -2238,10 +2254,10 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                   </div>
                 </div>
                 {diffMonthly != null && (
-                  <p className="text-xs text-gray-500 text-center mb-2">
+                  <p className="text-xs text-gray-700 font-medium text-center mb-2">
                     変動vs固定の差: 月<span className="font-semibold text-gray-600">{diffMonthly.toLocaleString()}円</span>
                     {diffTotal != null && varYears === fixYears && <> / {varYears}年で約<span className="font-semibold text-gray-600">{Math.round(diffTotal / 10000).toLocaleString()}万円</span></>}
-                    {varYears !== fixYears && <span className="text-gray-500">（返済期間が異なるため総額比較は参考値）</span>}
+                    {varYears !== fixYears && <span className="text-gray-700 font-medium">（返済期間が異なるため総額比較は参考値）</span>}
                   </p>
                 )}
               </>
@@ -2256,7 +2272,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               { label: `利息(固定)`,   val: totalInterestFix, cls: 'text-orange-600'  },
             ].map(({ label, val, cls }) => val ? (
               <div key={label} className="bg-gray-50 rounded-lg px-2.5 py-2">
-                <p className="text-gray-500">{label}</p>
+                <p className="text-gray-700 font-medium">{label}</p>
                 <p className={`font-semibold ${cls}`}>{Math.round(val / 10000).toLocaleString()}万円</p>
               </div>
             ) : null)}
@@ -2271,11 +2287,11 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                 <p className="text-xs font-bold text-violet-700 mb-2">🏘 資産性チェック（もし貸したら？）</p>
                 <div className="flex flex-col gap-1 text-xs">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-gray-500">想定月額賃料（P50×利回り{rentYield}%）</span>
+                    <span className="text-gray-700 font-medium">想定月額賃料（P50×利回り{rentYield}%）</span>
                     <span className="font-bold text-sm text-violet-700">約{estimatedMonthlyRentM}万円/月</span>
                   </div>
                   <div className="flex justify-between items-baseline">
-                    <span className="text-gray-500">月額ローン返済{monthlyVar ? '（変動）' : '（固定）'}</span>
+                    <span className="text-gray-700 font-medium">月額ローン返済{monthlyVar ? '（変動）' : '（固定）'}</span>
                     <span className="font-bold text-sm text-gray-700">{loanMonthlyM}万円/月</span>
                   </div>
                   <div className={`flex justify-between items-baseline pt-1.5 mt-0.5 border-t border-violet-200 ${diffM > 0 ? 'text-orange-700' : 'text-green-700'}`}>
@@ -2304,17 +2320,17 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             const fixAnnual35 = totalFix ? Math.ceil(totalFix * 12 / 0.35 / 10000) : null;
             return (
               <div className="bg-amber-50 rounded-lg px-3 py-2.5 border border-amber-100 text-xs">
-                <p className="font-bold text-gray-500 mb-2">必要収入の目安（{showMgmt ? '管理費込み合計' : 'ローン返済分'}）</p>
+                <p className="font-bold text-gray-700 font-medium mb-2">必要収入の目安（{showMgmt ? '管理費込み合計' : 'ローン返済分'}）</p>
                 <div className="grid grid-cols-3 gap-x-2 gap-y-1.5">
                   <div />
                   <div className="text-center font-medium text-blue-500">変動</div>
                   <div className="text-center font-medium text-indigo-500">固定</div>
 
-                  <div className="text-gray-500 leading-tight">手取り月収<br/><span className="opacity-60">25%目安</span></div>
+                  <div className="text-gray-700 font-medium leading-tight">手取り月収<br/><span className="opacity-60">25%目安</span></div>
                   <div className="text-center text-sm font-semibold text-gray-700">{varMonth25 != null ? `${varMonth25}万円~` : '―'}</div>
                   <div className="text-center text-sm font-semibold text-gray-700">{fixMonth25 != null ? `${fixMonth25}万円~` : '―'}</div>
 
-                  <div className="text-gray-500 leading-tight">年収目安<br/><span className="opacity-60">審査35%基準</span></div>
+                  <div className="text-gray-700 font-medium leading-tight">年収目安<br/><span className="opacity-60">審査35%基準</span></div>
                   <div className="text-center text-sm font-semibold text-gray-700">{varAnnual35 != null ? `約${varAnnual35}万円~` : '―'}</div>
                   <div className="text-center text-sm font-semibold text-gray-700">{fixAnnual35 != null ? `約${fixAnnual35}万円~` : '―'}</div>
                 </div>
@@ -2331,7 +2347,7 @@ function DrawerRow({ label, value }) {
   if (!value) return null;
   return (
     <div className="flex justify-between text-xs">
-      <span className="text-gray-500 shrink-0 w-20">{label}</span>
+      <span className="text-gray-700 font-medium shrink-0 w-20">{label}</span>
       <span className="text-gray-800 font-medium text-right">{value}</span>
     </div>
   );
@@ -2376,23 +2392,23 @@ function HouseRecordList({ records }) {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="font-bold text-gray-800">{r.price.toLocaleString()}万円</span>
-                    {r.landArea && <span className="text-gray-500">土地{r.landArea}㎡</span>}
-                    {r.totalFloorArea && <span className="text-gray-500">延床{r.totalFloorArea}㎡</span>}
+                    {r.landArea && <span className="text-gray-700 font-medium">土地{r.landArea}㎡</span>}
+                    {r.totalFloorArea && <span className="text-gray-700 font-medium">延床{r.totalFloorArea}㎡</span>}
                   </div>
-                  <p className="text-gray-500 mt-0.5">{r.buildingYear}年築 {formatPeriod(r.period)}</p>
+                  <p className="text-gray-700 font-medium mt-0.5">{r.buildingYear}年築 {formatPeriod(r.period)}</p>
                 </button>
                 {isOpen && (
                   <div className="px-2 pb-2 pt-1.5 border-t border-gray-100 bg-gray-50 flex flex-col gap-0.5">
                     {details.map(({ label, value }) => (
                       <div key={label} className="flex justify-between">
-                        <span className="text-gray-500 shrink-0 w-16">{label}</span>
+                        <span className="text-gray-700 font-medium shrink-0 w-16">{label}</span>
                         <span className="text-gray-600 text-right">{value}</span>
                       </div>
                     ))}
                     {r.remarks && (
-                      <p className="text-gray-500 bg-white rounded p-1.5 mt-1 leading-relaxed border border-gray-100">{r.remarks}</p>
+                      <p className="text-gray-700 font-medium bg-white rounded p-1.5 mt-1 leading-relaxed border border-gray-100">{r.remarks}</p>
                     )}
-                    <p className="text-gray-500 text-right mt-0.5">出典: 国交省 REINFOLIB</p>
+                    <p className="text-gray-700 font-medium text-right mt-0.5">出典: 国交省 REINFOLIB</p>
                   </div>
                 )}
               </div>
@@ -2419,7 +2435,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
       >
         <div className="flex items-center gap-2">
           <span className="text-lg">🏢</span>
-          <span className="text-sm font-medium text-gray-500">この地域のマンション成約価格（参考）</span>
+          <span className="text-sm font-medium text-gray-700 font-medium">この地域のマンション成約価格（参考）</span>
         </div>
         <span className="text-xs text-blue-400 font-medium">表示する ▼</span>
       </button>
@@ -2433,7 +2449,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
           <span className="text-xl">🏢</span>
           <span className="text-sm font-semibold text-gray-700">この地域のマンション成約価格（参考）</span>
         </div>
-        <p className="text-xs text-gray-500 text-center py-3">読み込み中…</p>
+        <p className="text-xs text-gray-700 font-medium text-center py-3">読み込み中…</p>
       </div>
     );
   }
@@ -2448,7 +2464,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
       </div>
 
       {!hasCondo ? (
-        <p className="text-xs text-gray-500 text-center py-1">データなし</p>
+        <p className="text-xs text-gray-700 font-medium text-center py-1">データなし</p>
       ) : (
         <>
           <CondoPriceSimulator condos={txData.condos} syncEra={syncEra} syncArea={syncArea} />
@@ -2486,23 +2502,23 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="font-bold text-gray-800">{r.price.toLocaleString()}万円</span>
-                            <span className="text-gray-500">{r.area}㎡</span>
+                            <span className="text-gray-700 font-medium">{r.area}㎡</span>
                             <span className="text-blue-600 font-semibold">{r.unitPrice}万/㎡</span>
                           </div>
-                          <p className="text-gray-500 mt-0.5">{r.buildingYear}年築 {r.floorPlan} {formatPeriod(r.period)}</p>
+                          <p className="text-gray-700 font-medium mt-0.5">{r.buildingYear}年築 {r.floorPlan} {formatPeriod(r.period)}</p>
                         </button>
                         {isOpen && (
                           <div className="px-2 pb-2 pt-1.5 border-t border-gray-100 bg-gray-50 flex flex-col gap-0.5">
                             {details.map(({ label, value }) => (
                               <div key={label} className="flex justify-between">
-                                <span className="text-gray-500 shrink-0 w-16">{label}</span>
+                                <span className="text-gray-700 font-medium shrink-0 w-16">{label}</span>
                                 <span className="text-gray-600 text-right">{value}</span>
                               </div>
                             ))}
                             {r.remarks && (
-                              <p className="text-gray-500 bg-white rounded p-1.5 mt-1 leading-relaxed border border-gray-100">{r.remarks}</p>
+                              <p className="text-gray-700 font-medium bg-white rounded p-1.5 mt-1 leading-relaxed border border-gray-100">{r.remarks}</p>
                             )}
-                            <p className="text-gray-500 text-right mt-0.5">出典: 国交省 REINFOLIB</p>
+                            <p className="text-gray-700 font-medium text-right mt-0.5">出典: 国交省 REINFOLIB</p>
                           </div>
                         )}
                       </div>
@@ -2514,7 +2530,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">出典: 国交省REINFOLIB 成約価格情報</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">出典: 国交省REINFOLIB 成約価格情報</p>
     </div>
   );
 }
@@ -2532,7 +2548,7 @@ function HouseCard({ txData, loading, defaultCollapsed = false, landAreaProp, ad
       >
         <div className="flex items-center gap-2">
           <span className="text-lg">🏡</span>
-          <span className="text-sm font-medium text-gray-500">この地域の戸建ての成約価格（参考）</span>
+          <span className="text-sm font-medium text-gray-700 font-medium">この地域の戸建ての成約価格（参考）</span>
         </div>
         <span className="text-xs text-green-400 font-medium">表示する ▼</span>
       </button>
@@ -2546,7 +2562,7 @@ function HouseCard({ txData, loading, defaultCollapsed = false, landAreaProp, ad
           <span className="text-xl">🏡</span>
           <span className="text-sm font-semibold text-gray-700">この地域の戸建ての成約価格（参考）</span>
         </div>
-        <p className="text-xs text-gray-500 text-center py-3">読み込み中…</p>
+        <p className="text-xs text-gray-700 font-medium text-center py-3">読み込み中…</p>
       </div>
     );
   }
@@ -2566,15 +2582,15 @@ function HouseCard({ txData, loading, defaultCollapsed = false, landAreaProp, ad
       </div>
 
       {!hasHouse ? (
-        <p className="text-xs text-gray-500 text-center py-1">データなし</p>
+        <p className="text-xs text-gray-700 font-medium text-center py-1">データなし</p>
       ) : (
         <>
           <HousePriceSimulator records={txData.houses.records} landAreaProp={landAreaProp} avgPerSqmAll={txData.houses.avgPerSqm ?? null} totalCount={txData.houses.count} adjustmentRate={adjustmentRate} />
 
           <div className="bg-green-50 rounded-lg p-2.5 mb-3">
-            <p className="text-xs text-gray-500 mb-0.5">平均成約価格</p>
+            <p className="text-xs text-gray-700 font-medium mb-0.5">平均成約価格</p>
             <p className="text-base font-bold text-green-700">{txData.houses.avgPrice?.toLocaleString()}万円</p>
-            <p className="text-xs text-gray-500">{txData.houses.count}件の成約{txData.houses.filtered ? '（直近20年以内築）' : ''}</p>
+            <p className="text-xs text-gray-700 font-medium">{txData.houses.count}件の成約{txData.houses.filtered ? '（直近20年以内築）' : ''}</p>
           </div>
 
           {txData?.houses?.records?.length > 0 && (
@@ -2582,7 +2598,7 @@ function HouseCard({ txData, loading, defaultCollapsed = false, landAreaProp, ad
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">国交省REINFOLIB 成約価格情報</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">国交省REINFOLIB 成約価格情報</p>
     </div>
   );
 }
@@ -2604,7 +2620,7 @@ function useContainerWidth(fallback = 300) {
 
 function LandPriceChart({ data }) {
   const [containerRef, W] = useContainerWidth();
-  if (!data || data.length === 0) return <p className="text-xs text-gray-500 text-center py-2">データなし</p>;
+  if (!data || data.length === 0) return <p className="text-xs text-gray-700 font-medium text-center py-2">データなし</p>;
 
   const H = 72;
   const PAD = { top: 8, bottom: 18, left: 24, right: 24 };
@@ -2670,7 +2686,7 @@ function LandPriceChart({ data }) {
 
 function PriceTrendChart({ pts, lineColor }) {
   const [containerRef, W] = useContainerWidth();
-  if (!pts || pts.length === 0) return <p className="text-xs text-gray-500 text-center py-2">データなし</p>;
+  if (!pts || pts.length === 0) return <p className="text-xs text-gray-700 font-medium text-center py-2">データなし</p>;
   const H = 80;
   const PAD = { top: 8, bottom: 18, left: 24, right: 24 };
   const chartW = W - PAD.left - PAD.right;
@@ -2717,7 +2733,7 @@ function PriceTrendChart({ pts, lineColor }) {
 function PriceTrendCard({ trendData, loading, propertyType }) {
   if (loading) return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p className="text-sm text-gray-500">読み込み中…</p>
+      <p className="text-sm text-gray-700 font-medium">読み込み中…</p>
     </div>
   );
   if (!trendData) return null;
@@ -2788,11 +2804,11 @@ function PriceTrendCard({ trendData, loading, propertyType }) {
         </div>
         {trendScore != null && <Stars score={trendScore} />}
       </div>
-      <p className="text-xs text-gray-500 mb-2">
+      <p className="text-xs text-gray-700 font-medium mb-2">
         {propertyType === 'house' ? '宅地（土地＋建物）' : '中古マンション'} {unit}（{unitSuffix}）の推移
       </p>
       {pts.length === 0 ? (
-        <p className="text-xs text-gray-500">このエリアの成約データが不足しています</p>
+        <p className="text-xs text-gray-700 font-medium">このエリアの成約データが不足しています</p>
       ) : (
         <>
           <PriceTrendChart pts={pts} lineColor={style.line} />
@@ -2808,7 +2824,7 @@ function PriceTrendCard({ trendData, loading, propertyType }) {
           )}
         </>
       )}
-      <p className="text-xs text-gray-500 mt-2">出典: 国交省 不動産情報ライブラリ（3件未満の年は除外）</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">出典: 国交省 不動産情報ライブラリ（3件未満の年は除外）</p>
     </div>
   );
 }
@@ -2875,9 +2891,9 @@ function LandPriceCard({ data, loading, muniCode }) {
       </div>
 
       {loading ? (
-        <p className="text-xs text-gray-500 text-center py-3">読み込み中…</p>
+        <p className="text-xs text-gray-700 font-medium text-center py-3">読み込み中…</p>
       ) : !data?.years?.length ? (
-        <p className="text-xs text-gray-500 text-center py-3">データなし</p>
+        <p className="text-xs text-gray-700 font-medium text-center py-3">データなし</p>
       ) : (
         <>
           <LandPriceChart data={data.years} />
@@ -2885,7 +2901,7 @@ function LandPriceCard({ data, loading, muniCode }) {
           {latestManEn && (
             <div className="mt-2 flex flex-col gap-1">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-gray-500">公示地価（住宅地・㎡単価）</span>
+                <span className="text-gray-700 font-medium">公示地価（住宅地・㎡単価）</span>
                 <span className="font-bold text-gray-800">{latestManEn}万円</span>
               </div>
               {rosenkaManEn ? (
@@ -2921,7 +2937,7 @@ function LandPriceCard({ data, loading, muniCode }) {
           >
             詳細な路線価は 全国地価マップ で確認 →
           </a>
-          <p className="text-xs text-gray-500 mt-1.5">出典: 国交省REINFOLIB 地価公示（直近5年・住宅地平均）</p>
+          <p className="text-xs text-gray-700 font-medium mt-1.5">出典: 国交省REINFOLIB 地価公示（直近5年・住宅地平均）</p>
         </>
       )}
     </div>
@@ -2991,15 +3007,15 @@ function LandValueCard({ landPriceData, landArea, price, landPriceInput, buildin
       </div>
 
       {/* ── 土地 ─────────────────────────────── */}
-      <p className="text-xs font-bold text-gray-500 mb-1.5">🌏 土地の価値</p>
-      <div className="bg-gray-50 rounded-lg px-3 py-2 mb-2 border border-gray-100 text-xs text-gray-500 leading-relaxed">
+      <p className="text-xs font-bold text-gray-700 font-medium mb-1.5">🌏 土地の価値</p>
+      <div className="bg-gray-50 rounded-lg px-3 py-2 mb-2 border border-gray-100 text-xs text-gray-700 font-medium leading-relaxed">
         <span className="font-medium text-gray-600">公示地価とは？</span>　国が毎年公表する参考値（税・補償の基準）。実際の取引価格（実勢価格）より低く、<span className="font-medium text-gray-700">実勢価格は公示地価の1.1〜1.3倍程度</span>が目安です（都市部ではさらに高い場合があります）。
       </div>
       <div className="flex flex-col gap-1.5 text-xs mb-4">
         {kojiValue && (
           <div className="flex justify-between items-center px-2 py-1.5 border border-gray-100 rounded-lg">
             <span className="text-gray-400">公示地価ベース〈参考下限〉<br />{Math.round(latestPrice / 10000)}万円/㎡ × {landArea}㎡</span>
-            <span className="font-bold text-gray-500 text-sm shrink-0 ml-2">{kojiValue.toLocaleString()}万円</span>
+            <span className="font-bold text-gray-700 font-medium text-sm shrink-0 ml-2">{kojiValue.toLocaleString()}万円</span>
           </div>
         )}
         {jisseiLow && jisseiHigh && (
@@ -3027,13 +3043,13 @@ function LandValueCard({ landPriceData, landArea, price, landPriceInput, buildin
       {/* ── 建物 ─────────────────────────────── */}
       {usefulLife && age != null && (
         <>
-          <p className="text-xs font-bold text-gray-500 mb-1.5">🏠 建物の10年後価値</p>
+          <p className="text-xs font-bold text-gray-700 font-medium mb-1.5">🏠 建物の10年後価値</p>
           <div className="flex flex-col gap-1.5 text-xs mb-3">
             <div className="flex gap-3 flex-wrap px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
-              <span className="text-gray-500">構造: <span className="font-medium text-gray-700">{structure}</span></span>
-              <span className="text-gray-500">法定耐用年数: <span className="font-medium text-gray-700">{usefulLife}年</span></span>
-              <span className="text-gray-500">築: <span className="font-medium text-gray-700">{age}年</span></span>
-              <span className="text-gray-500">残り: <span className={`font-medium ${remainingLife <= 10 ? 'text-red-600' : 'text-gray-700'}`}>{remainingLife != null ? `${Math.max(0, remainingLife)}年` : '—'}</span></span>
+              <span className="text-gray-700 font-medium">構造: <span className="font-medium text-gray-700">{structure}</span></span>
+              <span className="text-gray-700 font-medium">法定耐用年数: <span className="font-medium text-gray-700">{usefulLife}年</span></span>
+              <span className="text-gray-700 font-medium">築: <span className="font-medium text-gray-700">{age}年</span></span>
+              <span className="text-gray-700 font-medium">残り: <span className={`font-medium ${remainingLife <= 10 ? 'text-red-600' : 'text-gray-700'}`}>{remainingLife != null ? `${Math.max(0, remainingLife)}年` : '—'}</span></span>
             </div>
 
             {remainingLife != null && remainingLife <= 0 ? (
@@ -3049,7 +3065,7 @@ function LandValueCard({ landPriceData, landArea, price, landPriceInput, buildin
             ) : buildingBase != null ? (
               <>
                 <div className="px-2 py-1.5 border border-gray-100 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-0.5">10年間の減価（{buildingBaseLabel}）</p>
+                  <p className="text-xs text-gray-700 font-medium mb-0.5">10年間の減価（{buildingBaseLabel}）</p>
                   <p className="text-sm font-medium text-gray-600">
                     {buildingBase.toLocaleString()}万円 ÷ {remainingLife}年 × 10年
                     <span className="ml-1 font-bold text-gray-700">＝ {depreciation10y?.toLocaleString()}万円</span>
@@ -3071,7 +3087,7 @@ function LandValueCard({ landPriceData, landArea, price, landPriceInput, buildin
       {landValue10y != null && (
         <>
           <div className="border-t border-gray-100 my-2" />
-          <p className="text-xs font-bold text-gray-500 mb-1.5">📊 10年後の売却価格の目安</p>
+          <p className="text-xs font-bold text-gray-700 font-medium mb-1.5">📊 10年後の売却価格の目安</p>
           <div className="flex flex-col gap-1.5 text-xs mb-3">
             <div className="flex justify-between items-center px-2 py-1.5 border border-gray-100 rounded-lg">
               <span className="text-gray-400">
@@ -3117,10 +3133,10 @@ function PopulationChart({ data, muniName, loading }) {
   const [containerRef, W] = useContainerWidth();
 
   if (loading) {
-    return <p className="text-xs text-gray-500 text-center py-3">読み込み中…</p>;
+    return <p className="text-xs text-gray-700 font-medium text-center py-3">読み込み中…</p>;
   }
   if (!data || data.length === 0) {
-    return <p className="text-xs text-gray-500 text-center py-3">データなし</p>;
+    return <p className="text-xs text-gray-700 font-medium text-center py-3">データなし</p>;
   }
 
   const H = 72;
@@ -3153,11 +3169,11 @@ function PopulationChart({ data, muniName, loading }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <p className="text-xs text-gray-500">{muniName}の人口推移</p>
+        <p className="text-xs text-gray-700 font-medium">{muniName}の人口推移</p>
         {trend !== null && (
           <p className={`text-xs font-bold ${isUp ? 'text-blue-500' : 'text-red-500'}`}>
             {isUp ? '▲' : '▼'} {Math.abs(trend)}%
-            <span className="text-gray-500 font-normal"> ({data[0].year}→{data[data.length - 1].year})</span>
+            <span className="text-gray-700 font-medium font-normal"> ({data[0].year}→{data[data.length - 1].year})</span>
           </p>
         )}
       </div>
@@ -3457,7 +3473,7 @@ function SavedList({ saved, onSelect, onDelete, onCompare }) {
 
   if (saved.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-gray-500 mt-8">
+      <div className="p-4 text-center text-sm text-gray-700 font-medium mt-8">
         <p className="text-2xl mb-2">📭</p>
         <p>保存済みの物件はありません</p>
         <p className="text-xs mt-1">チェックリストを記入して「保存」してください</p>
@@ -3475,7 +3491,7 @@ function SavedList({ saved, onSelect, onDelete, onCompare }) {
           {compareIds.length}件を比較する
         </button>
       )}
-      <p className="text-xs text-gray-500">最大3件まで比較できます</p>
+      <p className="text-xs text-gray-700 font-medium">最大3件まで比較できます</p>
       {saved.map(prop => (
         <div
           key={prop.id}
@@ -3488,9 +3504,9 @@ function SavedList({ saved, onSelect, onDelete, onCompare }) {
               <p className="text-sm font-semibold text-gray-800 leading-tight">{prop.name}</p>
               <div className="flex items-center gap-1 mt-1">
                 <Stars score={prop.stars} />
-                <span className="text-xs text-gray-500">{prop.checked}/{prop.total ?? ALL_ITEMS.length}項目チェック済み</span>
+                <span className="text-xs text-gray-700 font-medium">{prop.checked}/{prop.total ?? ALL_ITEMS.length}項目チェック済み</span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">{new Date(prop.savedAt).toLocaleDateString('ja-JP')}</p>
+              <p className="text-xs text-gray-700 font-medium mt-0.5">{new Date(prop.savedAt).toLocaleDateString('ja-JP')}</p>
             </button>
             <div className="flex flex-col gap-1 shrink-0">
               <button
@@ -3505,7 +3521,7 @@ function SavedList({ saved, onSelect, onDelete, onCompare }) {
               </button>
               <button
                 onClick={() => onDelete(prop.id)}
-                className="text-xs px-2 py-1 rounded-lg bg-gray-100 text-gray-500 hover:text-red-400"
+                className="text-xs px-2 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium hover:text-red-400"
               >
                 削除
               </button>
@@ -3523,9 +3539,9 @@ function CompareModal({ properties, onClose }) {
     { key: 'landPrice',    label: '公示地価・路線価',   icon: '📈' },
     { key: 'flood',        label: '洪水浸水リスク',     icon: '🌊' },
     { key: 'landslide',    label: '土砂災害リスク',     icon: '⛰️' },
-    { key: 'ground',       label: '地盤',               icon: '🪨' },
+    { key: 'ground',       label: '地盤リスク',           icon: '🪨' },
     { key: 'zoning',       label: '用途地域',           icon: '🏙️' },
-    { key: 'nuisance',     label: '嫌悪施設',           icon: '🏭' },
+    { key: 'nuisance',     label: '施設リスク',           icon: '🏭' },
     { key: 'station',      label: '駅',                 icon: '🚉' },
     { key: 'bus',          label: 'バス停',             icon: '🚌' },
     { key: 'supermarket',  label: 'スーパー',           icon: '🛒' },
@@ -3560,17 +3576,17 @@ function CompareModal({ properties, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="font-bold text-gray-900">イエカルテ比較</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-600 text-xl">✕</button>
+          <button onClick={onClose} className="text-gray-700 font-medium hover:text-gray-600 text-xl">✕</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="text-left p-3 text-gray-500 font-medium w-32">項目</th>
+                <th className="text-left p-3 text-gray-700 font-medium font-medium w-32">項目</th>
                 {properties.map(p => (
                   <th key={p.id} className="p-3 text-center">
                     <p className="font-semibold text-gray-800 text-xs leading-tight">{p.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{new Date(p.savedAt).toLocaleDateString('ja-JP')}</p>
+                    <p className="text-xs text-gray-700 font-medium mt-0.5">{new Date(p.savedAt).toLocaleDateString('ja-JP')}</p>
                   </th>
                 ))}
               </tr>
@@ -3580,7 +3596,7 @@ function CompareModal({ properties, onClose }) {
                 const best = bestKeys[ri];
                 return (
                   <tr key={row.key} className={`border-b border-gray-50 ${row.isSummary ? 'bg-gray-50' : ''}`}>
-                    <td className="p-3 text-xs text-gray-500">
+                    <td className="p-3 text-xs text-gray-700 font-medium">
                       <span className="mr-1">{row.icon}</span>{row.label}
                     </td>
                     {properties.map(p => {
@@ -3612,7 +3628,7 @@ function CompareModal({ properties, onClose }) {
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-gray-500 text-center p-3">▲ は比較中で最も高いスコア</p>
+        <p className="text-xs text-gray-700 font-medium text-center p-3">▲ は比較中で最も高いスコア</p>
       </div>
     </div>
   );
@@ -3819,9 +3835,9 @@ function ReportModal({ onClose, location, propertyType, buildingAddress,
           <ReportRow icon="📈" label="公示地価・路線価" score={s.landPrice}  detail={trendDetail} />
           <ReportRow icon="🌊" label="洪水浸水リスク"   score={s.flood}      detail={scoreToRiskLabel(s.flood)} />
           <ReportRow icon="⛰️" label="土砂災害リスク"   score={s.landslide}  detail={scoreToRiskLabel(s.landslide)} />
-          <ReportRow icon="🪨" label="地盤"             score={s.ground}     detail={groundDetail} />
+          <ReportRow icon="🪨" label="地盤リスク"         score={s.ground}     detail={groundDetail} />
           <ReportRow icon="🏙️" label="用途地域"         score={s.zoning}     detail={zoningData?.useDistrict ?? null} />
-          <ReportRow icon="🏭" label="嫌悪施設"         score={s.nuisance}   detail={nuisanceDetail} />
+          <ReportRow icon="🏭" label="施設リスク"         score={s.nuisance}   detail={nuisanceDetail} />
           <ReportRow icon="👥" label="人口動向"         score={s.pop}        detail={scoreToRiskLabel(s.pop) ? (s.pop >= 5 ? '増加・横ばい傾向' : '減少傾向') : null} />
         </section>
 
@@ -3875,7 +3891,7 @@ function SaveModal({ defaultName, onSave, onCancel }) {
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
         <h2 className="font-bold text-gray-900 mb-1">物件名を入力</h2>
-        <p className="text-xs text-gray-500 mb-4">わかりやすい名前をつけておくと比較しやすくなります</p>
+        <p className="text-xs text-gray-700 font-medium mb-4">わかりやすい名前をつけておくと比較しやすくなります</p>
         <input
           type="text"
           value={name}
@@ -3886,7 +3902,7 @@ function SaveModal({ defaultName, onSave, onCancel }) {
           autoFocus
         />
         <div className="flex gap-2">
-          <button onClick={onCancel} className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50">
+          <button onClick={onCancel} className="flex-1 py-2 text-sm text-gray-700 font-medium border border-gray-200 rounded-xl hover:bg-gray-50">
             キャンセル
           </button>
           <button
@@ -4040,10 +4056,10 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       lines.push(`  ${first.year}〜${last.year}年の変化: ${pct > 0 ? '+' : ''}${pct}%`);
     }
 
-    // 嫌悪施設
+    // 施設リスク
     const facilities = nuisanceData?.facilities || [];
     lines.push('');
-    lines.push('■ 嫌悪施設（周辺500m以内）');
+    lines.push('■ 施設リスク（周辺500m以内）');
     if (facilities.length === 0) {
       lines.push('  該当施設なし');
     } else {
@@ -4171,7 +4187,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .finally(() => setHazardLoading(false));
   }, [location]);
 
-  // 嫌悪施設（Overpass）
+  // 施設リスク（Overpass）
   useEffect(() => {
     if (!location) return;
     fetch(`/api/nuisance?lat=${location.lat}&lng=${location.lng}`)
@@ -4369,7 +4385,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       <div className="flex-1 bg-gray-50 border-l border-gray-200 flex flex-col items-center justify-center p-6 text-center">
         <span className="text-4xl mb-3">🏠</span>
         <p className="text-sm font-semibold text-gray-600">① 住所・駅名・エリアで検索</p>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-700 font-medium mt-2">
           ② マンションを選択（任意）<br />③ イエカルテで詳細を入力しよう
         </p>
         {saved.length > 0 && (
@@ -4394,6 +4410,11 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
      calcTrendScore(trendData, propertyType),
     ].reduce((s, v) => s + v, 0) / 9
   );
+  const areaScoreVals = [hazardScore, groundScore, landPriceScore,
+    calcZoningScore(zoningData), calcNuisanceScore(nuisanceData),
+    calcStationScore(convData), calcPopScore(popData)].filter(v => v != null);
+  const areaScore = areaScoreVals.length
+    ? Math.round(areaScoreVals.reduce((s, v) => s + v, 0) / areaScoreVals.length) : null;
 
   return (
     <>
@@ -4401,13 +4422,13 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
         <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/50 p-4" onClick={() => setAiPromptOpen(false)}>
           <div className="bg-white rounded-2xl w-full md:max-w-lg shadow-2xl flex flex-col gap-3 p-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between shrink-0">
-              <h3 className="font-bold text-gray-900 text-sm">🤖 AIに質問する</h3>
+              <h3 className="font-bold text-gray-900 text-sm">🤖 以下のプロンプトをコピーして使ってください</h3>
               <button onClick={() => setAiPromptOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
             </div>
             <textarea
               readOnly
               value={aiPromptText}
-              className="w-full h-64 text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 resize-none text-gray-500"
+              className="w-full h-64 text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 resize-none text-gray-700 font-medium"
               onFocus={e => e.target.select()}
             />
             <div className="shrink-0">
@@ -4477,23 +4498,35 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       )}
       <div className="flex-1 bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden">
         {/* タブ */}
-        <div className="flex border-b border-gray-200 bg-white shrink-0">
-          {[
-            { id: 'main', label: 'イエカルテ' },
-            { id: 'saved', label: `保存済み${saved.length > 0 ? ` (${saved.length})` : ''}` },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
-                activeTab === tab.id
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex border-b border-gray-200 bg-white shrink-0 items-stretch">
+          {/* イエカルテタブ（広め） */}
+          <button
+            onClick={() => setActiveTab('main')}
+            className={`flex-[2] py-2.5 px-3 transition-colors ${
+              activeTab === 'main'
+                ? 'border-b-2 border-blue-600'
+                : 'hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className={`text-xs font-bold shrink-0 ${activeTab === 'main' ? 'text-blue-600' : 'text-gray-600'}`}>イエカルテ</span>
+              <span className="text-xs font-bold text-gray-700 shrink-0">エリア</span>
+              {areaScore != null ? <Stars score={areaScore} /> : <span className="text-xs text-gray-400">--</span>}
+              <span className="text-xs font-bold text-gray-700 shrink-0">コスト</span>
+              {loanScore != null ? <Stars score={loanScore} /> : <span className="text-xs text-gray-400">--</span>}
+            </div>
+          </button>
+          {/* 保存済みタブ（小さめ） */}
+          <button
+            onClick={() => setActiveTab('saved')}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors border-l border-gray-100 ${
+              activeTab === 'saved'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            保存済み{saved.length > 0 && <span className="ml-0.5">({saved.length})</span>}
+          </button>
         </div>
 
         {/* コンテンツ */}
@@ -4518,7 +4551,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                   )}
                 </div>
                 {buildingAddress && (
-                  <p className="text-xs text-gray-500 mt-0.5">{buildingAddress}</p>
+                  <p className="text-xs text-gray-700 font-medium mt-0.5">{buildingAddress}</p>
                 )}
                 {buildingsLoading && (
                   <div className="flex items-center gap-1.5 text-xs text-indigo-500 mt-1.5">
@@ -4530,71 +4563,20 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                   </div>
                 )}
               </div>
-              {/* ローンシミュレーター（最上部） */}
-              <LoanSimulator
-                propertyType={propertyType}
-                showMgmt={propertyType === 'condo'}
-                showBuiltYear={true}
-                condos={propertyType === 'condo' ? txData?.condos : null}
-                houses={propertyType === 'house' ? txData?.houses : null}
-                onHouseAdjustChange={propertyType === 'house' ? setHouseAdjustRate : undefined}
-                homesUrl={location.featureType === 'address' ? (() => {
-                  const nameKw = buildingName || location.name;
-                  const cityWard = buildingAddress
-                    ? (() => {
-                        const noKen = buildingAddress.replace(/^.+?[都道府県]/, '');
-                        const m = noKen.match(/^.+?区/);
-                        if (m) return m[0];
-                        const m2 = noKen.match(/^.+?[市町村]/);
-                        return m2 ? m2[0] : noKen;
-                      })()
-                    : '';
-                  const kw = cityWard ? `${nameKw} ${cityWard}` : nameKw;
-                  return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
-                })() : null}
-                googleUrl={location.featureType === 'address' ? (() => {
-                  const nameKw = buildingName || location.name;
-                  const stripped = buildingAddress
-                    ? buildingAddress
-                        .replace(/^.+?[都道府県]/, '')
-                        .replace(/[0-9０-９一二三四五六七八九十百千]+丁目.*/, '')
-                    : '';
-                  const kw = stripped ? `${nameKw} ${stripped}` : nameKw;
-                  return `https://www.google.com/search?q=${encodeURIComponent(kw + ' 築年月')}`;
-                })() : null}
-                onScoreChange={handleLoanScoreChange}
-                address={buildingAddress || location.name}
-                nearestStationM={convData?.nearestStationM ?? null}
-              />
-
-              {/* AIに質問ボタン（2個目：ローン入力後） */}
-              <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-                <button
-                  onClick={handleOpenAIModal}
-                  className="w-full py-2 text-sm font-medium bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
-                >
-                  🤖 この物件を自分のAIに質問する
-                </button>
+              {/* エリア診断セクションタイトル */}
+              <div className="flex items-center gap-2 pt-1">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入エリア診断</span>
+                <div className="flex-1 border-t border-gray-200" />
               </div>
 
-              {/* イエスコアカード — 選択タイプのみ表示 */}
-              {propertyType === 'condo' && (
-                <CondoCard txData={txData} loading={txLoading}
-                  syncEra={loanData?.builtYear ? yearToEra(loanData.builtYear) : null}
-                  syncArea={loanData?.area ?? null}
-                />
-              )}
-              {propertyType === 'house' && (
-                <HouseCard txData={txData} loading={txLoading} landAreaProp={loanData?.landArea ?? null} adjustmentRate={houseAdjustRate} />
-              )}
-              {/* 利便性 6カード */}
               {/* 徒歩圏シミュレーター */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xl">🗺</span>
                   <span className="text-sm font-semibold text-gray-700">徒歩圏シミュレーター</span>
                 </div>
-                <p className="text-xs text-gray-500 mb-3">このエリアから徒歩5・10・15分で到達できる範囲を地図に表示します</p>
+                <p className="text-xs text-gray-700 font-medium mb-3">このエリアから徒歩5・10・15分で到達できる範囲を地図に表示します</p>
                 <button
                   onClick={() => onToggleLayer('isochrone')}
                   className={`w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -4644,7 +4626,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 ) : convData?.nearestStation ? (
                   <p className="text-sm text-gray-600">{convData.nearestStation}駅まで徒歩{Math.round(convData.nearestStationM * 1.3 / 80)}分</p>
                 ) : (
-                  <p className="text-sm text-gray-500">2km圏内に駅なし</p>
+                  <p className="text-sm text-gray-700 font-medium">2km圏内に駅なし</p>
                 )}
               </ConvSubCard>
 
@@ -4700,6 +4682,14 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <p className="text-sm text-gray-600">{convData?.schools ?? 0}件（1.5km圏）</p>
               </ConvSubCard>
 
+              <ZoningCard zoningData={zoningData} zoningLoading={zoningLoading} />
+
+              <div className="flex items-center gap-2 pt-1">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="text-xs text-gray-600 font-bold shrink-0">（リスク関連）</span>
+                <div className="flex-1 border-t border-gray-200" />
+              </div>
+
               <FloodScoreCard
                 hazardData={hazardData}
                 hazardLoading={hazardLoading}
@@ -4726,29 +4716,62 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 location={location}
               />
               <GroundScoreCard groundData={groundData} groundLoading={groundLoading} />
-              <ZoningCard zoningData={zoningData} zoningLoading={zoningLoading} />
+              <NoiseScoreCard noiseData={noiseData} activeLayers={activeLayers} onToggleLayer={onToggleLayer} />
               <NuisanceCard nuisanceData={nuisanceData} nuisanceLoading={nuisanceLoading} />
 
-              <NoiseScoreCard noiseData={noiseData} activeLayers={activeLayers} onToggleLayer={onToggleLayer} />
-
-              {/* リフォーム会社 */}
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl">🔨</span>
-                  <span className="text-sm font-semibold text-gray-700">リフォーム会社</span>
-                </div>
-                <p className="text-xs text-gray-500 mb-3">周辺のリフォーム・建築会社を地図に表示します（東京・神奈川・千葉・埼玉・大阪・福岡対応）</p>
-                <button
-                  onClick={() => onToggleLayer('reform')}
-                  className={`w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    activeLayers.reform
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  🔨 地図に表示
-                </button>
+              {/* マイホーム購入コスト診断セクションタイトル */}
+              <div className="flex items-center gap-2 pt-1">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入コスト診断</span>
+                <div className="flex-1 border-t border-gray-200" />
               </div>
+
+              <LoanSimulator
+                propertyType={propertyType}
+                showMgmt={propertyType === 'condo'}
+                showBuiltYear={true}
+                condos={propertyType === 'condo' ? txData?.condos : null}
+                houses={propertyType === 'house' ? txData?.houses : null}
+                onHouseAdjustChange={propertyType === 'house' ? setHouseAdjustRate : undefined}
+                homesUrl={location.featureType === 'address' ? (() => {
+                  const nameKw = buildingName || location.name;
+                  const cityWard = buildingAddress
+                    ? (() => {
+                        const noKen = buildingAddress.replace(/^.+?[都道府県]/, '');
+                        const m = noKen.match(/^.+?区/);
+                        if (m) return m[0];
+                        const m2 = noKen.match(/^.+?[市町村]/);
+                        return m2 ? m2[0] : noKen;
+                      })()
+                    : '';
+                  const kw = cityWard ? `${nameKw} ${cityWard}` : nameKw;
+                  return `https://www.homes.co.jp/archive/list/search/?keyword=${encodeURIComponent(kw)}`;
+                })() : null}
+                googleUrl={location.featureType === 'address' ? (() => {
+                  const nameKw = buildingName || location.name;
+                  const stripped = buildingAddress
+                    ? buildingAddress
+                        .replace(/^.+?[都道府県]/, '')
+                        .replace(/[0-9０-９一二三四五六七八九十百千]+丁目.*/, '')
+                    : '';
+                  const kw = stripped ? `${nameKw} ${stripped}` : nameKw;
+                  return `https://www.google.com/search?q=${encodeURIComponent(kw + ' 築年月')}`;
+                })() : null}
+                onScoreChange={handleLoanScoreChange}
+                address={buildingAddress || location.name}
+                nearestStationM={convData?.nearestStationM ?? null}
+              />
+
+              {/* イエスコアカード — 選択タイプのみ表示 */}
+              {propertyType === 'condo' && (
+                <CondoCard txData={txData} loading={txLoading}
+                  syncEra={loanData?.builtYear ? yearToEra(loanData.builtYear) : null}
+                  syncArea={loanData?.area ?? null}
+                />
+              )}
+              {propertyType === 'house' && (
+                <HouseCard txData={txData} loading={txLoading} landAreaProp={loanData?.landArea ?? null} adjustmentRate={houseAdjustRate} />
+              )}
 
               {/* アドバンスドセクション */}
               <div className="rounded-xl border border-indigo-100 overflow-hidden">
@@ -4766,7 +4789,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 </button>
                 {showAdvanced && (
                   <div className="flex flex-col gap-3 p-3 bg-white">
-                    <p className="text-xs text-gray-500 px-1">資産価値を重視する方向けの詳細分析です。</p>
+                    <p className="text-xs text-gray-700 font-medium px-1">資産価値を重視する方向けの詳細分析です。</p>
                     <PriceTrendCard trendData={trendData} loading={trendLoading} propertyType={propertyType} />
                     <LandPriceCard data={landPriceData} loading={landPriceLoading} muniCode={popData?.muniCode} />
                     {propertyType === 'house' && (
@@ -4800,13 +4823,13 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               {/* セパレーター */}
               <div className="flex items-center gap-2 pt-1">
                 <div className="flex-1 border-t border-gray-200" />
-                <span className="text-xs text-gray-500 font-medium shrink-0">確認チェックリスト</span>
+                <span className="text-xs text-gray-700 font-medium font-medium shrink-0">確認チェックリスト</span>
                 <div className="flex-1 border-t border-gray-200" />
               </div>
 
               {/* プログレスバー */}
               <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-                <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                <div className="flex justify-between text-xs text-gray-700 font-medium mb-1.5">
                   <span>確認済み</span>
                   <div className="flex items-center gap-2">
                     <button
@@ -4844,7 +4867,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 return (<div key={category}>
                   <div className="flex items-center gap-1.5 mb-2 px-1">
                     <span>{icon}</span>
-                    <span className="text-xs font-bold text-gray-500">{category}</span>
+                    <span className="text-xs font-bold text-gray-700 font-medium">{category}</span>
                     {tag && (
                       <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                         tag === 'マンション向け' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
@@ -4870,7 +4893,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         : item.note;
 
                       const baseCls = isChecked ? 'bg-blue-50 border-blue-200' : isDimmed ? 'bg-gray-50 border-gray-100 opacity-60' : isWarning ? 'bg-orange-50 border-orange-200 hover:border-orange-300' : 'bg-white border-gray-100 hover:border-gray-200';
-                      const labelCls = isChecked ? 'text-blue-800' : isDimmed ? 'text-gray-500' : isWarning ? 'text-orange-800' : 'text-gray-800';
+                      const labelCls = isChecked ? 'text-blue-800' : isDimmed ? 'text-gray-700 font-medium' : isWarning ? 'text-orange-800' : 'text-gray-800';
                       const checkboxCls = `mt-0.5 shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold transition-colors ${isChecked ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300'}`;
 
                       // linkType アイテム: カード全体がリンク
@@ -4879,7 +4902,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         const linkCard = (
                           <a href={linkUrl ?? '#'} target="_blank" rel="noopener noreferrer" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
                             <p className="text-sm font-medium text-gray-800 leading-snug">{item.label}</p>
-                            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{item.note}</p>
+                            <p className="text-xs text-gray-700 font-medium mt-0.5 leading-snug">{item.note}</p>
                             <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${item.linkCls}`}>{item.linkLabel} →</span>
                           </a>
                         );
@@ -4934,7 +4957,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         return (
                           <a key={item.id} href={linkUrl ?? '#'} target="_blank" rel="noopener noreferrer" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
                             <p className="text-sm font-medium text-gray-800 leading-snug">{item.label}</p>
-                            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{item.note}</p>
+                            <p className="text-xs text-gray-700 font-medium mt-0.5 leading-snug">{item.note}</p>
                             <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${item.linkCls}`}>{item.linkLabel} →</span>
                           </a>
                         );
@@ -4950,7 +4973,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                             <div className={checkboxCls}>{isChecked && '✓'}</div>
                             <div>
                               <p className={`text-sm font-medium leading-snug ${labelCls}`}>{item.label}</p>
-                              <p className="text-xs text-gray-500 mt-0.5 leading-tight">{dynamicNote}</p>
+                              <p className="text-xs text-gray-700 font-medium mt-0.5 leading-tight">{dynamicNote}</p>
                               {convHint && (
                                 <p className={`text-xs mt-1.5 font-semibold ${convHint.good ? 'text-blue-700' : 'text-red-500'}`}>
                                   {convHint.mark} {convHint.text}
@@ -5016,7 +5039,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                       {/* タカラスタンダード チェック項目風カード */}
                       <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+16VZM+4S2Q+60H7L" rel="nofollow noopener noreferrer" target="_blank" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
                         <p className="text-sm font-medium text-gray-800 leading-snug">タカラスタンダードのショールームで実物を確認した</p>
-                        <p className="text-xs text-gray-500 mt-0.5 leading-snug">ホーローキッチン・浴室を実際に見て触れて比較。全国200ヵ所以上のショールームで無料体験</p>
+                        <p className="text-xs text-gray-700 font-medium mt-0.5 leading-snug">ホーローキッチン・浴室を実際に見て触れて比較。全国200ヵ所以上のショールームで無料体験</p>
                         <span className="inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">タカラスタンダード →</span>
                       </a>
                       {/* タカラスタンダード バナー */}
@@ -5058,7 +5081,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               >
                 📄 PDFレポートとして出力
               </button>
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-gray-700 font-medium text-center">
                 ※ 価格は国交省REINFOLIB。人口は国勢調査（e-Stat）。チェックはページを閉じるとリセットされます
               </p>
               <a
