@@ -2315,27 +2315,20 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             const reserveN = showMgmt ? (parseInt(reserve) || 0) : 0;
             const totalVar = (monthlyVar ?? 0) + mgmtN + reserveN;
             const totalFix = (monthlyFix ?? 0) + mgmtN + reserveN;
-            const needed = (monthly, pct) =>
-              monthly ? Math.ceil(monthly / pct / 10000) : null;
-            const varMonth25  = needed(totalVar, 0.25);
-            const fixMonth25  = needed(totalFix, 0.25);
             const varAnnual35 = totalVar ? Math.ceil(totalVar * 12 / 0.35 / 10000) : null;
             const fixAnnual35 = totalFix ? Math.ceil(totalFix * 12 / 0.35 / 10000) : null;
             return (
               <div className="bg-amber-50 rounded-lg px-3 py-2.5 border border-amber-100 text-xs">
-                <p className="font-bold text-gray-700 font-medium mb-2">必要収入の目安（{showMgmt ? '管理費込み合計' : 'ローン返済分'}）</p>
-                <div className="grid grid-cols-3 gap-x-2 gap-y-1.5">
-                  <div />
-                  <div className="text-center font-medium text-blue-500">変動</div>
-                  <div className="text-center font-medium text-indigo-500">固定</div>
-
-                  <div className="text-gray-700 font-medium leading-tight">手取り月収<br/><span className="opacity-60">25%目安</span></div>
-                  <div className="text-center text-sm font-semibold text-gray-700">{varMonth25 != null ? `${varMonth25}万円~` : '―'}</div>
-                  <div className="text-center text-sm font-semibold text-gray-700">{fixMonth25 != null ? `${fixMonth25}万円~` : '―'}</div>
-
-                  <div className="text-gray-700 font-medium leading-tight">年収目安<br/><span className="opacity-60">審査35%基準</span></div>
-                  <div className="text-center text-sm font-semibold text-gray-700">{varAnnual35 != null ? `約${varAnnual35}万円~` : '―'}</div>
-                  <div className="text-center text-sm font-semibold text-gray-700">{fixAnnual35 != null ? `約${fixAnnual35}万円~` : '―'}</div>
+                <p className="font-bold text-gray-700 mb-2">銀行審査の目安年収<span className="font-normal opacity-60 ml-1">（年収の35%基準）</span></p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="text-center">
+                    <p className="text-blue-500 font-medium mb-0.5">変動</p>
+                    <p className="text-sm font-semibold text-gray-700">{varAnnual35 != null ? `約${varAnnual35}万円~` : '―'}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-indigo-500 font-medium mb-0.5">固定</p>
+                    <p className="text-sm font-semibold text-gray-700">{fixAnnual35 != null ? `約${fixAnnual35}万円~` : '―'}</p>
+                  </div>
                 </div>
               </div>
             );
