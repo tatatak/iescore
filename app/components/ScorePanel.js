@@ -2254,7 +2254,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                   </div>
                 </div>
                 {diffMonthly != null && (
-                  <p className="text-xs text-gray-700 font-medium text-center mb-2">
+                  <p className="text-sm text-gray-700 font-medium text-center mb-2">
                     変動vs固定の差: 月<span className="font-semibold text-gray-600">{diffMonthly.toLocaleString()}円</span>
                     {diffTotal != null && varYears === fixYears && <> / {varYears}年で約<span className="font-semibold text-gray-600">{Math.round(diffTotal / 10000).toLocaleString()}万円</span></>}
                     {varYears !== fixYears && <span className="text-gray-700 font-medium">（返済期間が異なるため総額比較は参考値）</span>}
@@ -2264,7 +2264,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             );
           })()}
 
-          <div className="grid grid-cols-2 gap-1.5 text-xs mb-3">
+          <div className="grid grid-cols-2 gap-1.5 text-sm mb-3">
             {[
               { label: `総返済(変動)`, val: totalPaymentVar,  cls: 'text-gray-700'    },
               { label: `総返済(固定)`, val: totalPaymentFix,  cls: 'text-gray-700'    },
