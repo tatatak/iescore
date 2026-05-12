@@ -2255,9 +2255,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                 </div>
                 {diffMonthly != null && (
                   <p className="text-sm text-gray-700 font-medium text-center mb-2">
-                    変動vs固定の差: 月<span className="font-semibold text-gray-600">{diffMonthly.toLocaleString()}円</span>
-                    {diffTotal != null && varYears === fixYears && <> / {varYears}年で約<span className="font-semibold text-gray-600">{Math.round(diffTotal / 10000).toLocaleString()}万円</span></>}
-                    {varYears !== fixYears && <span className="text-gray-700 font-medium">（返済期間が異なるため総額比較は参考値）</span>}
+                    差: 月<span className="font-semibold text-gray-600">{diffMonthly.toLocaleString()}円</span>
                   </p>
                 )}
               </>
@@ -2266,14 +2264,18 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
 
           <div className="grid grid-cols-2 gap-1.5 text-sm mb-3">
             {[
-              { label: `総返済(変動)`, val: totalPaymentVar,  cls: 'text-gray-700'    },
-              { label: `総返済(固定)`, val: totalPaymentFix,  cls: 'text-gray-700'    },
-              { label: `利息(変動)`,   val: totalInterestVar, cls: 'text-orange-500'  },
-              { label: `利息(固定)`,   val: totalInterestFix, cls: 'text-orange-600'  },
-            ].map(({ label, val, cls }) => val ? (
+              { label: `総返済(変動)`, val: totalPaymentVar,  cls: 'text-gray-700'   },
+              { label: `総返済(固定)`, val: totalPaymentFix,  cls: 'text-gray-700'   },
+              { label: `利息(変動)`,   val: totalInterestVar, cls: 'text-orange-500',
+                extra: (totalPaymentVar && totalPaymentFix && varYears === fixYears)
+                  ? `差: ${varYears}年で約${Math.round(Math.abs(totalPaymentFix - totalPaymentVar) / 10000).toLocaleString()}万円`
+                  : null },
+              { label: `利息(固定)`,   val: totalInterestFix, cls: 'text-orange-600' },
+            ].map(({ label, val, cls, extra }) => val ? (
               <div key={label} className="bg-gray-50 rounded-lg px-2.5 py-2">
                 <p className="text-gray-700 font-medium">{label}</p>
                 <p className={`font-semibold ${cls}`}>{Math.round(val / 10000).toLocaleString()}万円</p>
+                {extra && <p className="text-xs text-gray-500 mt-0.5">{extra}</p>}
               </div>
             ) : null)}
           </div>
