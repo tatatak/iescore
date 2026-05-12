@@ -1905,24 +1905,25 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             })()}
           </div>
         )}
-        {/* 1行目: 物件価格 ＋ 専有面積・所在階（マンション）or 建物構造（戸建て） */}
-        <div className={`grid gap-2 mb-2 ${propertyType === 'condo' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <div>
-            <p className="text-sm text-gray-700 font-medium mb-1">物件価格（万円）</p>
-            <input type="text" inputMode="numeric" value={price} onChange={e => setPrice(toHalfInt(e.target.value))} className={inputCls} />
+        {/* 物件価格（1行目・常に全幅） */}
+        <div className="mb-2">
+          <p className="text-sm text-gray-700 font-medium mb-1">物件価格（万円）</p>
+          <input type="text" inputMode="numeric" value={price} onChange={e => setPrice(toHalfInt(e.target.value))} className={inputCls} />
+        </div>
+        {/* 2行目: マンション→専有面積・所在階、戸建て→建物構造 */}
+        {propertyType === 'condo' ? (
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <p className="text-sm text-gray-700 font-medium mb-1">専有面積（㎡）</p>
+              <input type="text" inputMode="numeric" value={area} onChange={e => setArea(toHalfInt(e.target.value))} className={inputCls} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-700 font-medium mb-1">所在階（任意）</p>
+              <input type="text" inputMode="numeric" value={floor} onChange={e => setFloor(toHalfInt(e.target.value))} placeholder="例: 5" className={inputCls} />
+            </div>
           </div>
-          {propertyType === 'condo' ? (
-            <>
-              <div>
-                <p className="text-sm text-gray-700 font-medium mb-1">専有面積（㎡）</p>
-                <input type="text" inputMode="numeric" value={area} onChange={e => setArea(toHalfInt(e.target.value))} className={inputCls} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-700 font-medium mb-1">所在階（任意）</p>
-                <input type="text" inputMode="numeric" value={floor} onChange={e => setFloor(toHalfInt(e.target.value))} placeholder="例: 5" className={inputCls} />
-              </div>
-            </>
-          ) : (
+        ) : (
+          <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
               <p className="text-sm text-gray-700 font-medium mb-1">建物構造</p>
               <select value={structure} onChange={e => setStructure(e.target.value)}
@@ -1933,8 +1934,8 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                 <option>RC（鉄筋コンクリート）</option>
               </select>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* 戸建て: 土地・建物価格の内訳（常時表示） */}
         {propertyType === 'house' && (
