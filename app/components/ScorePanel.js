@@ -4569,6 +4569,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入エリア診断</span>
                 <div className="flex-1 border-t border-gray-200" />
               </div>
+              <p className="text-xs text-gray-700 font-medium leading-relaxed px-1">マイホームの購入を検討しているエリアの利便性、浸水/土砂などの災害・地盤・騒音などのリスクから、エリアの良し悪しを10点満点で評価します。</p>
 
               {/* 徒歩圏シミュレーター */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -4725,6 +4726,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入コスト診断</span>
                 <div className="flex-1 border-t border-gray-200" />
               </div>
+              <p className="text-xs text-gray-700 font-medium leading-relaxed px-1">物件の築年数、価格、面積を入力することで、エリア相場との比較やコストの適正度を診断します。</p>
 
               <LoanSimulator
                 propertyType={propertyType}
