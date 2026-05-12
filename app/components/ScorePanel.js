@@ -4564,7 +4564,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 )}
               </div>
               {/* エリア診断セクションタイトル */}
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 mt-4 mb-2">
                 <div className="flex-1 border-t border-gray-200" />
                 <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入エリア診断</span>
                 <div className="flex-1 border-t border-gray-200" />
@@ -4721,7 +4721,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               <NuisanceCard nuisanceData={nuisanceData} nuisanceLoading={nuisanceLoading} />
 
               {/* マイホーム購入コスト診断セクションタイトル */}
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 mt-4 mb-2">
                 <div className="flex-1 border-t border-gray-200" />
                 <span className="text-sm text-gray-800 font-bold shrink-0">マイホーム購入コスト診断</span>
                 <div className="flex-1 border-t border-gray-200" />
