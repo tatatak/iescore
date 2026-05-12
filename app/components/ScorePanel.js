@@ -1363,7 +1363,7 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
         <p className="text-xs text-gray-700 font-medium text-center py-2">この年代のデータなし</p>
       )}
 
-      <p className="text-xs text-gray-700 font-medium mt-2">※ 国交省REINFOLIB 中古成約価格</p>
+      <p className="text-sm text-gray-700 font-medium mt-3">※ 国交省REINFOLIB 中古成約価格</p>
     </div>
   );
 }
@@ -2469,7 +2469,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
             <>
               <button
                 onClick={() => setExpanded(v => !v)}
-                className="flex items-center gap-1 text-xs text-blue-500 font-medium mb-2"
+                className="flex items-center gap-1 text-sm text-blue-500 font-medium mt-3 mb-2"
               >
                 最近の成約事例{expanded ? '▲' : '▼'}
               </button>
