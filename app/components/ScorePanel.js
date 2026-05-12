@@ -1743,7 +1743,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanScoreVal, p, d, areaNum, landAreaNum, buildingAreaNum, structure, landPriceNum, buildingPriceNum, builtYear, monthlyVar, monthlyFix, mgmt, reserve, varRate, fixRate, varYears, fixYears]);
 
-  const inputCls = 'w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400';
+  const inputCls = 'w-full px-2 py-1.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400';
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -1851,7 +1851,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         {showBuiltYear && (
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-gray-700 font-medium">築年（西暦）</p>
+              <p className="text-sm text-gray-700 font-medium">築年（西暦）</p>
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -1870,7 +1870,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               <input type="text" inputMode="numeric" value={builtYear}
                 onChange={e => { setIsNewConstruction(false); setBuiltYear(toHalfInt(e.target.value)); }}
                 placeholder="例: 2005"
-                className={`w-1/2 px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-400 ${isNewConstruction ? 'border-blue-300 bg-blue-50 text-blue-700 font-medium' : 'border-gray-200'}`} />
+                className={`w-1/2 px-2 py-1.5 text-base border rounded-lg focus:outline-none focus:border-blue-400 ${isNewConstruction ? 'border-blue-300 bg-blue-50 text-blue-700 font-medium' : 'border-gray-200'}`} />
               {homesUrl && (
                 <a href={homesUrl} target="_blank" rel="noopener noreferrer"
                   className="text-center text-xs px-2 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg font-medium hover:bg-orange-100 transition-colors whitespace-nowrap">
@@ -1908,25 +1908,25 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         {/* 1行目: 物件価格 ＋ 専有面積・所在階（マンション）or 建物構造（戸建て） */}
         <div className={`grid gap-2 mb-2 ${propertyType === 'condo' ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <div>
-            <p className="text-xs text-gray-700 font-medium mb-1">物件価格（万円）</p>
+            <p className="text-sm text-gray-700 font-medium mb-1">物件価格（万円）</p>
             <input type="text" inputMode="numeric" value={price} onChange={e => setPrice(toHalfInt(e.target.value))} className={inputCls} />
           </div>
           {propertyType === 'condo' ? (
             <>
               <div>
-                <p className="text-xs text-gray-700 font-medium mb-1">専有面積（㎡）</p>
+                <p className="text-sm text-gray-700 font-medium mb-1">専有面積（㎡）</p>
                 <input type="text" inputMode="numeric" value={area} onChange={e => setArea(toHalfInt(e.target.value))} className={inputCls} />
               </div>
               <div>
-                <p className="text-xs text-gray-700 font-medium mb-1">所在階（任意）</p>
+                <p className="text-sm text-gray-700 font-medium mb-1">所在階（任意）</p>
                 <input type="text" inputMode="numeric" value={floor} onChange={e => setFloor(toHalfInt(e.target.value))} placeholder="例: 5" className={inputCls} />
               </div>
             </>
           ) : (
             <div>
-              <p className="text-xs text-gray-700 font-medium mb-1">建物構造</p>
+              <p className="text-sm text-gray-700 font-medium mb-1">建物構造</p>
               <select value={structure} onChange={e => setStructure(e.target.value)}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white">
+                className="w-full px-2 py-1.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white">
                 <option>木造</option>
                 <option>軽量鉄骨</option>
                 <option>重量鉄骨</option>
@@ -1941,12 +1941,12 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
           <div className="mb-2">
             <div className="grid grid-cols-2 gap-2 mb-1.5">
               <div>
-                <p className="text-xs text-gray-700 font-medium mb-1">土地価格（万円）</p>
+                <p className="text-sm text-gray-700 font-medium mb-1">土地価格（万円）</p>
                 <input type="text" inputMode="numeric" value={landPrice} placeholder="任意"
                   onChange={e => setLandPrice(toHalfInt(e.target.value))} className={inputCls} />
               </div>
               <div>
-                <p className="text-xs text-gray-700 font-medium mb-1">建物価格（万円）</p>
+                <p className="text-sm text-gray-700 font-medium mb-1">建物価格（万円）</p>
                 <input type="text" inputMode="numeric" value={buildingPrice} placeholder="任意"
                   onChange={e => setBuildingPrice(toHalfInt(e.target.value))} className={inputCls} />
               </div>
@@ -1965,17 +1965,17 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
           <>
             <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
-                <p className="text-xs text-gray-700 font-medium mb-1">土地面積（㎡）</p>
+                <p className="text-sm text-gray-700 font-medium mb-1">土地面積（㎡）</p>
                 <input type="text" inputMode="numeric" value={landArea} onChange={e => setLandArea(toHalfInt(e.target.value))} className={inputCls} />
               </div>
               <div>
-                <p className="text-xs text-gray-700 font-medium mb-1">建物面積（㎡）</p>
+                <p className="text-sm text-gray-700 font-medium mb-1">建物面積（㎡）</p>
                 <input type="text" inputMode="numeric" value={buildingArea} onChange={e => setBuildingArea(toHalfInt(e.target.value))} className={inputCls} />
               </div>
             </div>
             {/* 土地の条件 */}
             <div className="mb-2">
-              <p className="text-xs text-gray-700 font-medium mb-1.5">土地の条件（任意）</p>
+              <p className="text-sm text-gray-700 font-medium mb-1.5">土地の条件（任意）</p>
               <div className="flex flex-wrap gap-1.5">
                 {LAND_FEATURES.map(f => (
                   <button
@@ -2012,7 +2012,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
         <div className="flex-1 border-t border-gray-200" />
       </div>
       <div className="mb-3">
-        <p className="text-xs text-gray-700 font-medium mb-1">物件の頭金（万円）</p>
+        <p className="text-sm text-gray-700 font-medium mb-1">物件の頭金（万円）</p>
         <input type="text" inputMode="numeric" value={down} onChange={e => setDown(toHalfInt(e.target.value))} className={inputCls} />
         {p > 0 && (
           <div className="mt-2 mb-2 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
@@ -2087,7 +2087,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-700 font-medium">管理費（月・円）</p>
+                  <p className="text-sm text-gray-700 font-medium">管理費（月・円）</p>
                   {mgmtManual && (
                     <button onClick={() => { setMgmtManual(false); const a = parseFloat(area)||0; if(a>0) setMgmt(String(Math.round(a*200/500)*500)); }} className="text-[10px] text-blue-500 hover:underline">↩ 自動</button>
                   )}
@@ -2108,7 +2108,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-700 font-medium">修繕積立金（月・円）</p>
+                  <p className="text-sm text-gray-700 font-medium">修繕積立金（月・円）</p>
                   {reserveManual && (
                     <button onClick={() => { setReserveManual(false); const a = parseFloat(area)||0; if(a>0) setReserve(String(Math.round(a*200/500)*500)); }} className="text-[10px] text-blue-500 hover:underline">↩ 自動</button>
                   )}
@@ -2163,7 +2163,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
           <div className="grid grid-cols-2 gap-2 mb-3">
             {/* 1行目: 変動金利 | 固定金利 */}
             <div>
-              <p className="text-xs text-gray-700 font-medium mb-1">変動金利（年率%）</p>
+              <p className="text-sm text-gray-700 font-medium mb-1">変動金利（年率%）</p>
               <input type="text" inputMode="decimal" value={varRate} onChange={e => setVarRate(toHalfDec(e.target.value))} className={inputCls} />
               {varRateStatus && (
                 <button
@@ -2179,7 +2179,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
               )}
             </div>
             <div>
-              <p className="text-xs text-gray-700 font-medium mb-1">固定金利（年率%）</p>
+              <p className="text-sm text-gray-700 font-medium mb-1">固定金利（年率%）</p>
               <input type="text" inputMode="decimal" value={fixRate} onChange={e => setFixRate(toHalfDec(e.target.value))} className={inputCls} />
               {fixRateStatus && (
                 <button
@@ -2196,11 +2196,11 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             </div>
             {/* 2行目: 変動返済期間 | 固定返済期間 */}
             <div>
-              <p className="text-xs text-gray-700 font-medium mb-1">変動・返済期間（年）</p>
+              <p className="text-sm text-gray-700 font-medium mb-1">変動・返済期間（年）</p>
               <input type="text" inputMode="numeric" value={varYears} onChange={e => setVarYears(toHalfInt(e.target.value))} className={inputCls} />
             </div>
             <div>
-              <p className="text-xs text-gray-700 font-medium mb-1">固定・返済期間（年）</p>
+              <p className="text-sm text-gray-700 font-medium mb-1">固定・返済期間（年）</p>
               <input type="text" inputMode="numeric" value={fixYears} onChange={e => setFixYears(toHalfInt(e.target.value))} className={inputCls} />
             </div>
           </div>
