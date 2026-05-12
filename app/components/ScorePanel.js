@@ -2024,7 +2024,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                 <span>🧾 諸費用の概算（初期費用）</span>
                 <span className="text-gray-400">{showMiscBreakdown ? '▲' : '▼'}</span>
               </button>
-              <span className="text-base font-bold text-orange-600">約{totalMisc.toLocaleString()}万円</span>
+              <span className="text-base font-bold text-orange-600">約{Math.round(totalMisc).toLocaleString()}万円</span>
             </div>
             {showMiscBreakdown && (
               <>
@@ -2050,7 +2050,7 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                               {openHint === hintKey ? '閉じる' : '解説'}
                             </button>
                           )}
-                          <span className="font-medium text-gray-600">約{value.toLocaleString()}万円</span>
+                          <span className="font-medium text-gray-600">約{Math.round(value).toLocaleString()}万円</span>
                         </div>
                       </div>
                       {hintKey && openHint === hintKey && (
