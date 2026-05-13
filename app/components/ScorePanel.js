@@ -4969,6 +4969,18 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                             </div>
                           </div>
                         );
+                        if (item.id === 'renoveru') return (
+                          <div key={item.id} className="flex flex-col gap-2">
+                            {linkCard}
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+XCANM+303O+60WN5" rel="nofollow noopener noreferrer" target="_blank">
+                                <img width={300} height={250} alt="リノベる。中古マンション＋リノベーション" src="https://www20.a8.net/svt/bgt?aid=260511512056&wid=001&eno=01&mid=s00000014010001012000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                              </a>
+                              <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3NYW+XCANM+303O+60WN5" alt="" style={{ display: 'none' }} />
+                            </div>
+                          </div>
+                        );
                         return (
                           <a key={item.id} href={linkUrl ?? '#'} target="_blank" rel="noopener noreferrer" className="block w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors shadow-sm">
                             <p className="text-sm font-medium text-gray-800 leading-snug">{item.label}</p>
