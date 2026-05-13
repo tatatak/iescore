@@ -148,6 +148,35 @@ const url = `https://www.google.com/maps/search/${encodeURIComponent(name + ' ' 
 
 ---
 
+### チェックリスト：バナー広告はアイテムの直下に配置する
+
+**ルール**: バナー画像のあるチェックリストアイテムは、カードのすぐ下にバナーを表示する。カテゴリまとめて末尾に置かない。
+
+**実装パターン**（`ScorePanel.js` の `item.linkType` ブロック内）:
+
+```jsx
+if (item.id === 'xxx') return (
+  <div key={item.id} className="flex flex-col gap-2">
+    {linkCard}
+    <div className="text-center">
+      <p className="text-[10px] text-gray-400 mb-1">PR</p>
+      <a href="https://px.a8.net/..." rel="nofollow noopener noreferrer" target="_blank">
+        <img width={300} height={250} alt="サービス名" src="https://www__.a8.net/svt/bgt?..." style={{ maxWidth: '100%', height: 'auto' }} />
+      </a>
+      <img width={1} height={1} src="https://www__.a8.net/0.gif?..." alt="" style={{ display: 'none' }} />
+    </div>
+  </div>
+);
+```
+
+**現在バナーを持つアイテム**: `kazukuri` / `kufuieta` / `gmohikari` / `nurokari` / `reform_pro`
+
+**バナーなしでカテゴリ末尾に置くもの**: タカラスタンダード（CHECKLIST外のHTMLとして直書き）・インズウェブ・ヌリカエ・宅配ボックス・ノムコム（これらは1カテゴリ1アイテムのため末尾でも同じ位置になる）
+
+**禁止**: バナーありアイテムのバナーをカテゴリ末尾の `{category === 'XXX' && ...}` ブロックに置くこと。
+
+---
+
 ## データソース一覧とライセンス
 
 iescore は商用サービス（アフィリエイト収益モデル）のため、各データの商用利用可否を確認済み。
