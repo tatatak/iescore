@@ -3420,7 +3420,7 @@ const CHECKLIST = [
     icon: '🔨',
     items: [
       { id: 'reform_pro', label: 'リフォーム比較プロで見積もりを比較した', note: '全国の優良リフォーム会社に無料一括見積もり。老舗の比較サイト', linkType: 'reform_pro', linkLabel: 'リフォーム比較プロ', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
-      { id: 'renoveru', label: 'リノベる。で中古マンション＋リノベーションを検討した', note: '物件探しからローン・設計までワンストップ。中古＋リノベの専門サービス', linkType: 'renoveru', linkLabel: 'リノベる。', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
+      { id: 'renoveru', label: 'リノベる。で中古マンション＋リノベーションを検討した', note: '物件探しからローン・設計までワンストップ。中古＋リノベの専門サービス', linkType: 'renoveru', linkLabel: 'リノベる。', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100', condoOnly: true },
     ],
   },
   {
@@ -3446,7 +3446,7 @@ function getVisibleItems(propertyType, excludeIds = []) {
   return CHECKLIST.flatMap(c => {
     if (propertyType === 'condo' && c.tag === '戸建て向け') return [];
     if (propertyType === 'house' && c.tag === 'マンション向け') return [];
-    return c.items.filter(item => !excludeIds.includes(item.id));
+    return c.items.filter(item => !excludeIds.includes(item.id) && !(propertyType === 'house' && item.condoOnly));
   });
 }
 
@@ -4878,7 +4878,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
-                    {items.map((item) => {
+                    {items.filter(item => !(propertyType === 'house' && item.condoOnly)).map((item) => {
                       const isChecked = item.mapLayer ? !!activeLayers[item.mapLayer] : !!checkedItems[item.id];
                       const convHint = isChecked && item.mapLayer ? getConvHint(item.mapLayer, convData) : null;
 
