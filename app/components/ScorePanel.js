@@ -3349,6 +3349,7 @@ function getChecklistUrl(linkType, name, buildingAddress) {
   if (linkType === 'nomcom')      return 'https://px.a8.net/svt/ejp?a8mat=4B3NYW+N7XDE+5M76+BXB8X';
   if (linkType === 'gmohikari')   return 'https://px.a8.net/svt/ejp?a8mat=4B3NYW+NTCZ6+50+6MDJ6P';
   if (linkType === 'nurokari')    return 'https://px.a8.net/svt/ejp?a8mat=4B3NYW+YJ5V6+2VMU+5YJRM';
+  if (linkType === 'renoveru')    return 'https://px.a8.net/svt/ejp?a8mat=4B3NYW+XCANM+303O+5YJRM';
   return null;
 }
 
@@ -3419,6 +3420,7 @@ const CHECKLIST = [
     icon: '🔨',
     items: [
       { id: 'reform_pro', label: 'リフォーム比較プロで見積もりを比較した', note: '全国の優良リフォーム会社に無料一括見積もり。老舗の比較サイト', linkType: 'reform_pro', linkLabel: 'リフォーム比較プロ', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
+      { id: 'renoveru', label: 'リノベる。で中古マンション＋リノベーションを検討した', note: '物件探しからローン・設計までワンストップ。中古＋リノベの専門サービス', linkType: 'renoveru', linkLabel: 'リノベる。', linkCls: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
     ],
   },
   {
