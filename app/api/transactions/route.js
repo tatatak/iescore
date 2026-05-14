@@ -205,17 +205,17 @@ export async function GET(request) {
       }
     }
 
-    // 直近3年 + 10年前3年を並列取得
-    const [data2025, data2024, data2023, data2015, data2014, data2013] = await Promise.all([
+    // 直近3年 + 5年前3年を並列取得
+    const [data2025, data2024, data2023, data2021, data2020, data2019] = await Promise.all([
       fetchReinfolib(prefCode, effectiveCode, 2025),
       fetchReinfolib(prefCode, effectiveCode, 2024),
       fetchReinfolib(prefCode, effectiveCode, 2023),
-      fetchReinfolib(prefCode, effectiveCode, 2015),
-      fetchReinfolib(prefCode, effectiveCode, 2014),
-      fetchReinfolib(prefCode, effectiveCode, 2013),
+      fetchReinfolib(prefCode, effectiveCode, 2021),
+      fetchReinfolib(prefCode, effectiveCode, 2020),
+      fetchReinfolib(prefCode, effectiveCode, 2019),
     ]);
     const allData = [...data2025, ...data2024, ...data2023];
-    const allDataOld = [...data2015, ...data2014, ...data2013];
+    const allDataOld = [...data2021, ...data2020, ...data2019];
 
     if (allData.length === 0) {
       return NextResponse.json({ muniCode, muniName, condos: { count: 0, avgUnitPrice: null }, houses: { count: 0, avgPrice: null }, records: [] });
@@ -244,7 +244,7 @@ export async function GET(request) {
     const historical10y = condosOld.length > 0 ? {
       avgUnitPrice: Math.round(condoOldUnitPrices.reduce((s, v) => s + v, 0) / condoOldUnitPrices.length),
       count: condosOld.length,
-      years: '2013-2015',
+      years: '2019-2021',
     } : null;
 
     // 年代別単価（耐震基準に基づく区分）
