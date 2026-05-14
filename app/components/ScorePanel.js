@@ -2327,11 +2327,11 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                   <p className="text-sm font-bold text-gray-700 mb-1">銀行審査の目安年収<span className="font-normal opacity-60 ml-1">（年収の35%基準）</span></p>
                   <p className="text-gray-500 mb-2">この年収があれば審査に通る目安です。ただし、審査OKと余裕を持って返せるかは別の話です。</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <p className="text-blue-500 font-medium mb-0.5">変動</p>
                       <p className="text-sm font-semibold text-gray-700">{varAnnual35 != null ? `約${varAnnual35}万円~` : '―'}</p>
                     </div>
-                    <div className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <p className="text-indigo-500 font-medium mb-0.5">固定</p>
                       <p className="text-sm font-semibold text-gray-700">{fixAnnual35 != null ? `約${fixAnnual35}万円~` : '―'}</p>
                     </div>
@@ -2341,11 +2341,11 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                   <p className="text-sm font-bold text-gray-700 mb-1">無理なく返せる目安年収<span className="font-normal opacity-60 ml-1">（手取りの25%基準）</span></p>
                   <p className="text-gray-500 mb-2">審査は通っても、生活に余裕を持つにはこれ以上の年収が必要です。</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <p className="text-blue-500 font-medium mb-0.5">変動</p>
                       <p className="text-sm font-semibold text-red-700">{varAnnual25 != null ? `約${varAnnual25}万円~` : '―'}</p>
                     </div>
-                    <div className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <p className="text-indigo-500 font-medium mb-0.5">固定</p>
                       <p className="text-sm font-semibold text-red-700">{fixAnnual25 != null ? `約${fixAnnual25}万円~` : '―'}</p>
                     </div>
@@ -4942,84 +4942,77 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         if (item.id === 'kazukuri') return (
                           <div key={item.id} className="flex flex-col gap-2">
                             {linkCard}
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" rel="nofollow noopener noreferrer" target="_blank">
+                            <div className="flex items-center justify-center gap-1">
+                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" rel="nofollow noopener noreferrer" target="_blank">
                                 <img width={300} height={250} alt="家づくり相談所" src="https://www24.a8.net/svt/bgt?aid=260504444934&wid=001&eno=01&mid=s00000026497001003000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
-                              <img width={1} height={1} src="https://www12.a8.net/0.gif?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" alt="" style={{ display: 'none' }} />
+                              <img width={1} height={1} src="https://www12.a8.net/0.gif?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                             </div>
                           </div>
                         );
                         if (item.id === 'kufuieta') return (
                           <div key={item.id} className="flex flex-col gap-2">
                             {linkCard}
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5Z6WX" rel="nofollow noopener noreferrer" target="_blank">
+                            <div className="flex items-center justify-center gap-1">
+                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5Z6WX" rel="nofollow noopener noreferrer" target="_blank">
                                 <img width={300} height={250} alt="くふうイエタテカウンター" src="https://www29.a8.net/svt/bgt?aid=260504445000&wid=001&eno=01&mid=s00000026422001004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
-                              <img width={1} height={1} src="https://www18.a8.net/0.gif?a8mat=4B3IIL+S2+5NVG+5Z6WX" alt="" style={{ display: 'none' }} />
+                              <img width={1} height={1} src="https://www18.a8.net/0.gif?a8mat=4B3IIL+S2+5NVG+5Z6WX" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                             </div>
                           </div>
                         );
                         if (item.id === 'solarpartners') return (
                           <div key={item.id} className="flex flex-col gap-2">
                             {linkCard}
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYV+5SZ642+3LME+656YP" rel="nofollow noopener noreferrer" target="_blank">
+                            <div className="flex items-center justify-center gap-1">
+                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYV+5SZ642+3LME+656YP" rel="nofollow noopener noreferrer" target="_blank">
                                 <img width={300} height={250} alt="ソーラーパートナーズ 太陽光発電と蓄電池の見積サイト" src="https://www24.a8.net/svt/bgt?aid=260511511351&wid=001&eno=01&mid=s00000016799001032000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
-                              <img width={1} height={1} src="https://www12.a8.net/0.gif?a8mat=4B3NYV+5SZ642+3LME+656YP" alt="" style={{ display: 'none' }} />
+                              <img width={1} height={1} src="https://www12.a8.net/0.gif?a8mat=4B3NYV+5SZ642+3LME+656YP" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                             </div>
                           </div>
                         );
                         if (item.id === 'gmohikari') return (
                           <div key={item.id} className="flex flex-col gap-2">
                             {linkCard}
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" rel="nofollow noopener noreferrer" target="_blank">
+                            <div className="flex items-center justify-center gap-1">
+                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" rel="nofollow noopener noreferrer" target="_blank">
                                 <img width={300} height={250} alt="GMO光アクセス 光回線" src="https://www28.a8.net/svt/bgt?aid=260511512040&wid=001&eno=01&mid=s00000000018040038000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
-                              <img width={1} height={1} src="https://www11.a8.net/0.gif?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" alt="" style={{ display: 'none' }} />
+                              <img width={1} height={1} src="https://www11.a8.net/0.gif?a8mat=4B3NYW+NTCZ6+50+6MDJ6P" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                             </div>
                           </div>
                         );
                         if (item.id === 'nurokari') return (
                           <div key={item.id} className="flex flex-col gap-2">
                             {linkCard}
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+YJ5V6+2VMU+656YP" rel="nofollow noopener noreferrer" target="_blank">
+                            <div className="flex items-center justify-center gap-1">
+                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+YJ5V6+2VMU+656YP" rel="nofollow noopener noreferrer" target="_blank">
                                 <img width={300} height={250} alt="NURO光 最大75,000円キャッシュバック" src="https://www26.a8.net/svt/bgt?aid=260511512058&wid=001&eno=01&mid=s00000013431001032000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
-                              <img width={1} height={1} src="https://www16.a8.net/0.gif?a8mat=4B3NYW+YJ5V6+2VMU+656YP" alt="" style={{ display: 'none' }} />
+                              <img width={1} height={1} src="https://www16.a8.net/0.gif?a8mat=4B3NYW+YJ5V6+2VMU+656YP" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                             </div>
                           </div>
                         );
                         if (item.id === 'reform_pro') return (
                           <div key={item.id} className="flex flex-col gap-2">
                             {linkCard}
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+1SBLE+46CI+609HT" rel="nofollow noopener noreferrer" target="_blank">
+                            <div className="flex items-center justify-center gap-1">
+                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+1SBLE+46CI+609HT" rel="nofollow noopener noreferrer" target="_blank">
                                 <img width={350} height={160} alt="リフォーム比較プロ" src="https://www20.a8.net/svt/bgt?aid=260504445003&wid=001&eno=01&mid=s00000019485001009000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
-                              <img width={1} height={1} src="https://www13.a8.net/0.gif?a8mat=4B3IIL+1SBLE+46CI+609HT" alt="" style={{ display: 'none' }} />
+                              <img width={1} height={1} src="https://www13.a8.net/0.gif?a8mat=4B3IIL+1SBLE+46CI+609HT" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                             </div>
                           </div>
                         );
                         if (item.id === 'renoveru') return (
                           <div key={item.id} className="flex flex-col gap-2">
                             {linkCard}
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+XCANM+303O+60WN5" rel="nofollow noopener noreferrer" target="_blank">
+                            <div className="flex items-center justify-center gap-1">
+                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+XCANM+303O+60WN5" rel="nofollow noopener noreferrer" target="_blank">
                                 <img width={300} height={250} alt="リノベる。中古マンション＋リノベーション" src="https://www20.a8.net/svt/bgt?aid=260511512056&wid=001&eno=01&mid=s00000014010001012000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
-                              <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3NYW+XCANM+303O+60WN5" alt="" style={{ display: 'none' }} />
+                              <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3NYW+XCANM+303O+60WN5" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                             </div>
                           </div>
                         );
@@ -5062,35 +5055,32 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
 
                   {/* インズウェブ アフィリエイト */}
                   {category === '火災保険を比較する' && (
-                    <div className="mt-3 text-center">
-                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIK+FFHG6Q+2PS+2BDJK1" rel="nofollow noopener noreferrer" target="_blank">
+                    <div className="mt-3 flex items-center justify-center gap-1">
+                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIK+FFHG6Q+2PS+2BDJK1" rel="nofollow noopener noreferrer" target="_blank">
                         <img width={300} height={250} alt="インズウェブ 火災保険一括見積もり" src="https://www20.a8.net/svt/bgt?aid=260504444933&wid=001&eno=01&mid=s00000000352014004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                       </a>
-                      <img width={1} height={1} src="https://www10.a8.net/0.gif?a8mat=4B3IIK+FFHG6Q+2PS+2BDJK1" alt="" style={{ display: 'none' }} />
+                      <img width={1} height={1} src="https://www10.a8.net/0.gif?a8mat=4B3IIK+FFHG6Q+2PS+2BDJK1" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                     </div>
                   )}
 
 
                   {/* 宅配ボックス名品館 アフィリエイト */}
                   {category === '宅配ボックスを設置する' && (
-                    <div className="mt-3 text-center">
-                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX" rel="nofollow noopener noreferrer" target="_blank">
+                    <div className="mt-3 flex items-center justify-center gap-1">
+                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX" rel="nofollow noopener noreferrer" target="_blank">
                         <img width={300} height={250} alt="宅配ボックス名品館" src="https://www29.a8.net/svt/bgt?aid=260511511375&wid=001&eno=01&mid=s00000027207001004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                       </a>
-                      <img width={1} height={1} src="https://www15.a8.net/0.gif?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX" alt="" style={{ display: 'none' }} />
+                      <img width={1} height={1} src="https://www15.a8.net/0.gif?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                     </div>
                   )}
 
                   {/* ヌリカエ アフィリエイト */}
                   {category === '外壁・屋根塗装を比較する' && (
-                    <div className="mt-3 text-center">
-                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5ZMCH" rel="nofollow noopener noreferrer" target="_blank">
+                    <div className="mt-3 flex items-center justify-center gap-1">
+                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5ZMCH" rel="nofollow noopener noreferrer" target="_blank">
                         <img width={300} height={250} alt="ヌリカエ 外壁塗装" src="https://www27.a8.net/svt/bgt?aid=260504445001&wid=001&eno=01&mid=s00000018795001006000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                       </a>
-                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3IIL+LGDU+410U+5ZMCH" alt="" style={{ display: 'none' }} />
+                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3IIL+LGDU+410U+5ZMCH" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                     </div>
                   )}
 
@@ -5104,24 +5094,22 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         <span className="inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">タカラスタンダード →</span>
                       </a>
                       {/* タカラスタンダード バナー */}
-                      <div className="text-center">
-                        <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                        <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+16VZM+4S2Q+60H7L" rel="nofollow noopener noreferrer" target="_blank">
+                      <div className="flex items-center justify-center gap-1">
+                                                <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+16VZM+4S2Q+60H7L" rel="nofollow noopener noreferrer" target="_blank">
                           <img width={300} height={250} alt="タカラスタンダード ホーローキッチン" src="https://www20.a8.net/svt/bgt?aid=260504445002&wid=001&eno=01&mid=s00000022301001010000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                         </a>
-                        <img width={1} height={1} src="https://www14.a8.net/0.gif?a8mat=4B3IIL+16VZM+4S2Q+60H7L" alt="" style={{ display: 'none' }} />
+                        <img width={1} height={1} src="https://www14.a8.net/0.gif?a8mat=4B3IIL+16VZM+4S2Q+60H7L" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                       </div>
                     </div>
                   )}
 
                   {/* ノムコム アフィリエイト */}
                   {category === '住み替えを検討する' && (
-                    <div className="mt-3 text-center">
-                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+N7XDE+5M76+BXB8X" rel="nofollow noopener noreferrer" target="_blank">
+                    <div className="mt-3 flex items-center justify-center gap-1">
+                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYW+N7XDE+5M76+BXB8X" rel="nofollow noopener noreferrer" target="_blank">
                         <img width={300} height={250} alt="ノムコム 不動産売却査定" src="https://www28.a8.net/svt/bgt?aid=260511512039&wid=001&eno=01&mid=s00000026205002003000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                       </a>
-                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3NYW+N7XDE+5M76+BXB8X" alt="" style={{ display: 'none' }} />
+                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3NYW+N7XDE+5M76+BXB8X" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: \'vertical-rl\' }}>PR</span>
                     </div>
                   )}
 
