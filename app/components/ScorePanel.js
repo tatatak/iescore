@@ -4382,7 +4382,29 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: fbName, email: fbEmail, message: fbMessage, location: location?.name || location?.address || '' }),
+        body: JSON.stringify({
+          name: fbName,
+          email: fbEmail,
+          message: fbMessage,
+          location: location?.name || location?.address || '',
+          buildingName: buildingName || '',
+          loanData: loanData ? {
+            price:      loanData.price,
+            area:       loanData.area,
+            builtYear:  loanData.builtYear,
+            down:       loanData.down,
+            loanAmount: loanData.loanAmount,
+            totalMisc:  loanData.totalMisc,
+            varRate:    loanData.varRate,
+            varYears:   loanData.varYears,
+            monthlyVar: loanData.monthlyVar,
+            fixRate:    loanData.fixRate,
+            fixYears:   loanData.fixYears,
+            monthlyFix: loanData.monthlyFix,
+            mgmt:       loanData.mgmt,
+            reserve:    loanData.reserve,
+          } : null,
+        }),
       });
       if (!res.ok) throw new Error();
       setFbStatus('sent');
