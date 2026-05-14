@@ -771,17 +771,29 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
           `way["amenity"="school"](around:1500,${centerLat},${centerLng});`,
           ');out center;',
         ].join('');
-        const doFetch = async () => {
-          const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q });
-          if (!res.ok) throw new Error('overpass ' + res.status);
-          return res.json();
+        const ENDPOINTS = [
+          'https://overpass-api.de/api/interpreter',
+          'https://overpass.kumi.systems/api/interpreter',
+          'https://overpass.private.coffee/api/interpreter',
+        ];
+        const doFetch = async (endpoint) => {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 30000);
+          try {
+            const res = await fetch(endpoint, { method: 'POST', body: q, signal: ctrl.signal });
+            if (!res.ok) throw new Error('overpass ' + res.status);
+            return await res.json();
+          } finally {
+            clearTimeout(tid);
+          }
         };
-        try {
-          return await doFetch();
-        } catch {
-          await new Promise(r => setTimeout(r, 2500));
-          return await doFetch();
+        const delays = [0, 2500, 5000];
+        let lastErr;
+        for (let i = 0; i < ENDPOINTS.length; i++) {
+          if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
+          try { return await doFetch(ENDPOINTS[i]); } catch (e) { lastErr = e; }
         }
+        throw lastErr;
       })(),
       fetch(`/api/ksj-poi?lat=${centerLat}&lng=${centerLng}&radius=1000`).then(r => r.json()),
     ]);
