@@ -12,7 +12,7 @@ export async function POST(req) {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_PORT === '465',
+      secure: false,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -24,7 +24,7 @@ export async function POST(req) {
     const emailLine = email ? `返信先: ${email}` : '返信先: （未入力）';
 
     await transporter.sendMail({
-      from: `"イエスコア フィードバック" <${process.env.SMTP_USER}>`,
+      from: `"イエスコア フィードバック" <noreply@iescore.com>`,
       to: 'takuya.kishimoto@iescore.com',
       replyTo: email || undefined,
       subject: `【イエスコア】コメントが届きました${location ? `（${location}）` : ''}`,
