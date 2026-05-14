@@ -205,13 +205,17 @@ export async function GET(request) {
       }
     }
 
-    // 直近3年分を並列取得して結合（年ごとの件数バラつきを吸収）
-    const [data2025, data2024, data2023] = await Promise.all([
+    // 直近3年 + 10年前3年を並列取得
+    const [data2025, data2024, data2023, data2015, data2014, data2013] = await Promise.all([
       fetchReinfolib(prefCode, effectiveCode, 2025),
       fetchReinfolib(prefCode, effectiveCode, 2024),
       fetchReinfolib(prefCode, effectiveCode, 2023),
+      fetchReinfolib(prefCode, effectiveCode, 2015),
+      fetchReinfolib(prefCode, effectiveCode, 2014),
+      fetchReinfolib(prefCode, effectiveCode, 2013),
     ]);
-const allData = [...data2025, ...data2024, ...data2023];
+    const allData = [...data2025, ...data2024, ...data2023];
+    const allDataOld = [...data2015, ...data2014, ...data2013];
 
     if (allData.length === 0) {
       return NextResponse.json({ muniCode, muniName, condos: { count: 0, avgUnitPrice: null }, houses: { count: 0, avgPrice: null }, records: [] });
@@ -233,6 +237,15 @@ const allData = [...data2025, ...data2024, ...data2023];
     const condoP50 = condos.length >= 5 ? Math.round(calcPercentile(condoUnitPrices, 50)) : null;
     const condoP75 = condos.length >= 5 ? Math.round(calcPercentile(condoUnitPrices, 75)) : null;
     const condoP90 = condos.length >= 5 ? Math.round(calcPercentile(condoUnitPrices, 90)) : null;
+
+    // 10年前の中古マンション㎡単価（2013-2015年）
+    const condosOld = allDataOld.filter(d => d.Type === '中古マンション等' && d.TradePrice && parseFloat(d.Area) > 0);
+    const condoOldUnitPrices = condosOld.map(d => parseInt(d.TradePrice) / parseFloat(d.Area) / 10000);
+    const historical10y = condosOld.length > 0 ? {
+      avgUnitPrice: Math.round(condoOldUnitPrices.reduce((s, v) => s + v, 0) / condoOldUnitPrices.length),
+      count: condosOld.length,
+      years: '2013-2015',
+    } : null;
 
     // 年代別単価（耐震基準に基づく区分）
     const eraRanges = [
@@ -333,7 +346,7 @@ const allData = [...data2025, ...data2024, ...data2023];
     return NextResponse.json({
       muniCode,
       muniName,
-      condos: { count: condos.length, avgUnitPrice, avgPrice, avgArea, p25: condoP25, p50: condoP50, p75: condoP75, p90: condoP90, eraStats },
+      condos: { count: condos.length, avgUnitPrice, avgPrice, avgArea, p25: condoP25, p50: condoP50, p75: condoP75, p90: condoP90, eraStats, historical10y },
       houses: { count: housesForStats.length, avgPrice: avgHousePrice, avgPerSqm: avgHousePerSqm, records: houseRecords, filtered: houseFiltered },
       records,
     });

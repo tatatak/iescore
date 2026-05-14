@@ -2963,6 +2963,87 @@ function LandPriceCard({ data, loading, muniCode }) {
 
 const USEFUL_LIFE = { '木造': 22, '軽量鉄骨': 19, '重量鉄骨': 34, 'RC（鉄筋コンクリート）': 47 };
 
+function CondoFutureCard({ condos, price, area }) {
+  const currentUP  = condos?.avgUnitPrice   ?? null; // 万円/㎡（直近3年平均）
+  const hist       = condos?.historical10y  ?? null; // { avgUnitPrice, count, years }
+  const historicalUP = hist?.avgUnitPrice   ?? null; // 万円/㎡（10年前）
+  const histCount  = hist?.count            ?? 0;
+  const currentCount = condos?.count        ?? 0;
+
+  if (!currentUP || !historicalUP) return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xl">📊</span>
+        <span className="text-sm font-semibold text-gray-700">マンションの10年後売却価格の目安</span>
+      </div>
+      <p className="text-xs text-gray-400">このエリアの10年前（2013-2015年）の成約データが不足しているため試算できません。</p>
+    </div>
+  );
+
+  const changeRate = currentUP / historicalUP;
+  const changePct  = Math.round((changeRate - 1) * 100);
+  const future10y  = price ? Math.round(price * changeRate) : null;
+  const isLow      = histCount < 5 || currentCount < 5;
+
+  const rateColor = changePct >= 20 ? 'text-blue-700 bg-blue-50 border-blue-100'
+    : changePct >= 0  ? 'text-green-700 bg-green-50 border-green-100'
+    : 'text-red-700 bg-red-50 border-red-100';
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xl">📊</span>
+        <span className="text-sm font-semibold text-gray-700">マンションの10年後売却価格の目安</span>
+      </div>
+
+      {isLow && (
+        <div className="mb-3 rounded-lg px-3 py-2 bg-amber-50 border border-amber-200 text-xs text-amber-700">
+          ⚠️ データ件数が少ないため（10年前: {histCount}件 / 直近: {currentCount}件）、精度は低くなります。
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5 text-xs mb-3">
+        <div className="flex justify-between items-center px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+          <span className="text-gray-400">10年前の㎡単価（{hist.years}年成約平均・{histCount}件）</span>
+          <span className="font-bold text-gray-600 shrink-0 ml-2">{historicalUP.toLocaleString()}万円/㎡</span>
+        </div>
+        <div className="flex justify-between items-center px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+          <span className="text-gray-400">現在の㎡単価（直近3年平均・{currentCount}件）</span>
+          <span className="font-bold text-gray-600 shrink-0 ml-2">{currentUP.toLocaleString()}万円/㎡</span>
+        </div>
+        <div className={`flex justify-between items-center px-2 py-1.5 rounded-lg border ${rateColor}`}>
+          <span className="font-bold">10年間の変化率</span>
+          <span className="font-bold text-sm shrink-0 ml-2">{changePct >= 0 ? '+' : ''}{changePct}%（{changeRate.toFixed(2)}倍）</span>
+        </div>
+      </div>
+
+      {future10y != null ? (
+        <>
+          <div className="border-t border-gray-100 my-2" />
+          <p className="text-xs font-bold text-gray-700 mb-1.5">入力価格ベースの10年後予測</p>
+          <div className="flex flex-col gap-1.5 text-xs mb-3">
+            <div className="flex justify-between items-center px-2 py-1.5 border border-gray-100 rounded-lg">
+              <span className="text-gray-400">購入価格 × 変化率</span>
+              <span className="text-gray-600 shrink-0 ml-2">{price.toLocaleString()}万円 × {changeRate.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center bg-purple-50 rounded-lg px-2 py-1.5 border border-purple-100">
+              <span className="text-purple-700 font-bold">10年後の売却価格の目安</span>
+              <span className="font-bold text-purple-800 text-sm shrink-0 ml-2">約{future10y.toLocaleString()}万円</span>
+            </div>
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-gray-400 px-1 mb-2">物件価格を入力すると10年後の目安価格を試算します。</p>
+      )}
+
+      <p className="text-xs text-gray-400 leading-relaxed">
+        ※ このエリアの過去10年の㎡単価変化をそのまま将来に延長した試算です。金利・人口動向・建物老朽化・マンション固有の管理状態は反映されません。将来の売却価格を保証するものではありません。
+      </p>
+      <p className="text-xs text-gray-400 mt-1">出典: 国交省REINFOLIB 不動産取引価格情報</p>
+    </div>
+  );
+}
+
 function LandValueCard({ landPriceData, landArea, price, landPriceInput, buildingPriceInput, structure, builtYear }) {
   const latestPrice       = landPriceData?.latestPrice;
   const hasInputBreakdown = landPriceInput > 0;
@@ -4878,6 +4959,13 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         buildingPriceInput={loanData?.buildingPrice ?? null}
                         structure={loanData?.structure ?? null}
                         builtYear={loanData?.builtYear ?? null}
+                      />
+                    )}
+                    {propertyType === 'condo' && (
+                      <CondoFutureCard
+                        condos={txData?.condos ?? null}
+                        price={loanData?.price ?? null}
+                        area={loanData?.area ?? null}
                       />
                     )}
                     <PopulationScoreCard popData={popData} loading={popLoading} />
