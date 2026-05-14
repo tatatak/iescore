@@ -2976,7 +2976,7 @@ function CondoFutureCard({ condos, price }) {
         <span className="text-xl">📊</span>
         <span className="text-sm font-semibold text-gray-700">マンションの将来売却価格の目安</span>
       </div>
-      <p className="text-xs text-gray-400">このエリアの5年前（2019-2021年）の成約データが不足しているため試算できません。</p>
+      <p className="text-xs text-gray-700 font-medium">このエリアの5年前（2019-2021年）の成約データが不足しているため試算できません。</p>
     </div>
   );
 
@@ -3008,11 +3008,11 @@ function CondoFutureCard({ condos, price }) {
       <p className="text-xs font-bold text-gray-700 mb-1.5">過去5年のエリア㎡単価の変化</p>
       <div className="flex flex-col gap-1.5 text-xs mb-3">
         <div className="flex justify-between items-center px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
-          <span className="text-gray-400">5年前の㎡単価（{hist.years}年平均・{histCount}件）</span>
+          <span className="text-gray-700 font-medium">5年前の㎡単価（{hist.years}年平均・{histCount}件）</span>
           <span className="font-bold text-gray-600 shrink-0 ml-2">{historicalUP.toLocaleString()}万円/㎡</span>
         </div>
         <div className="flex justify-between items-center px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
-          <span className="text-gray-400">現在の㎡単価（直近3年平均・{currentCount}件）</span>
+          <span className="text-gray-700 font-medium">現在の㎡単価（直近3年平均・{currentCount}件）</span>
           <span className="font-bold text-gray-600 shrink-0 ml-2">{currentUP.toLocaleString()}万円/㎡</span>
         </div>
         <div className={`flex justify-between items-center px-2 py-1.5 rounded-lg border ${rateColor}`}>
@@ -3036,17 +3036,17 @@ function CondoFutureCard({ condos, price }) {
               <span className="text-purple-700 font-bold">10年後の売却価格の目安</span>
               <span className="font-bold text-purple-800 text-sm shrink-0 ml-2">約{future10y.toLocaleString()}万円</span>
             </div>
-            <p className="text-gray-400 px-1">10年後は過去5年の年率（{(annualRate * 100).toFixed(1)}%）を複利で延長した試算。</p>
+            <p className="text-xs text-gray-700 font-medium px-1">10年後は過去5年の年率（{(annualRate * 100).toFixed(1)}%）を複利で延長した試算。</p>
           </div>
         </>
       ) : (
-        <p className="text-xs text-gray-400 px-1 mb-2">物件価格を入力すると将来の目安価格を試算します。</p>
+        <p className="text-xs text-gray-700 font-medium px-1 mb-2">物件価格を入力すると将来の目安価格を試算します。</p>
       )}
 
-      <p className="text-xs text-gray-400 leading-relaxed">
+      <p className="text-xs text-gray-700 font-medium leading-relaxed">
         ※ 過去5年のエリア㎡単価の変化率を将来に延長した試算です。金利・人口動向・建物老朽化・マンション固有の管理状態は反映されません。将来の売却価格を保証するものではありません。
       </p>
-      <p className="text-xs text-gray-400 mt-1">出典: 国交省REINFOLIB 不動産取引価格情報</p>
+      <p className="text-xs text-gray-700 font-medium mt-1">出典: 国交省REINFOLIB 不動産取引価格情報</p>
     </div>
   );
 }
