@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 export async function POST(req) {
   try {
@@ -9,13 +9,22 @@ export async function POST(req) {
       return NextResponse.json({ error: 'メッセージを入力してください' }, { status: 400 });
     }
 
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_PORT === '465',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
     const locationLine = location ? `\n検索エリア: ${location}` : '';
     const nameLine = name ? `お名前: ${name}` : 'お名前: （未入力）';
     const emailLine = email ? `返信先: ${email}` : '返信先: （未入力）';
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'イエスコア フィードバック <feedback@iescore.com>',
+    await transporter.sendMail({
+      from: `"イエスコア フィードバック" <${process.env.SMTP_USER}>`,
       to: 'takuya.kishimoto@iescore.com',
       replyTo: email || undefined,
       subject: `【イエスコア】コメントが届きました${location ? `（${location}）` : ''}`,
