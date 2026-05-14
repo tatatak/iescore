@@ -2318,20 +2318,39 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
             const totalFix = (monthlyFix ?? 0) + mgmtN + reserveN;
             const varAnnual35 = totalVar ? Math.ceil(totalVar * 12 / 0.35 / 10000) : null;
             const fixAnnual35 = totalFix ? Math.ceil(totalFix * 12 / 0.35 / 10000) : null;
+            // 手取り≒額面×80%として、返済比率25%以内に収まる必要年収
+            const varAnnual25 = totalVar ? Math.ceil(totalVar * 12 / (0.8 * 0.25) / 10000) : null;
+            const fixAnnual25 = totalFix ? Math.ceil(totalFix * 12 / (0.8 * 0.25) / 10000) : null;
             return (
-              <div className="bg-amber-50 rounded-lg px-3 py-2.5 border border-amber-100 text-xs">
-                <p className="text-sm font-bold text-gray-700 mb-2">銀行審査の目安年収<span className="font-normal opacity-60 ml-1">（年収の35%基準）</span></p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-center">
-                    <p className="text-blue-500 font-medium mb-0.5">変動</p>
-                    <p className="text-sm font-semibold text-gray-700">{varAnnual35 != null ? `約${varAnnual35}万円~` : '―'}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-indigo-500 font-medium mb-0.5">固定</p>
-                    <p className="text-sm font-semibold text-gray-700">{fixAnnual35 != null ? `約${fixAnnual35}万円~` : '―'}</p>
+              <>
+                <div className="bg-amber-50 rounded-lg px-3 py-2.5 border border-amber-100 text-xs">
+                  <p className="text-sm font-bold text-gray-700 mb-2">銀行審査の目安年収<span className="font-normal opacity-60 ml-1">（年収の35%基準）</span></p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-center">
+                      <p className="text-blue-500 font-medium mb-0.5">変動</p>
+                      <p className="text-sm font-semibold text-gray-700">{varAnnual35 != null ? `約${varAnnual35}万円~` : '―'}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-indigo-500 font-medium mb-0.5">固定</p>
+                      <p className="text-sm font-semibold text-gray-700">{fixAnnual35 != null ? `約${fixAnnual35}万円~` : '―'}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+                <div className="bg-red-50 rounded-lg px-3 py-2.5 border border-red-100 text-xs">
+                  <p className="text-sm font-bold text-gray-700 mb-1">無理なく返せる目安年収<span className="font-normal opacity-60 ml-1">（手取りの25%基準）</span></p>
+                  <p className="text-gray-500 mb-2">審査は通っても、生活に余裕を持つにはこれ以上の年収が必要です。</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-center">
+                      <p className="text-blue-500 font-medium mb-0.5">変動</p>
+                      <p className="text-sm font-semibold text-red-700">{varAnnual25 != null ? `約${varAnnual25}万円~` : '―'}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-indigo-500 font-medium mb-0.5">固定</p>
+                      <p className="text-sm font-semibold text-red-700">{fixAnnual25 != null ? `約${fixAnnual25}万円~` : '―'}</p>
+                    </div>
+                  </div>
+                </div>
+              </>
             );
           })()}
         </>
