@@ -4245,7 +4245,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
           // API は駅情報のみ返す。POIデータは Overpass から mapConvData 経由で来る
           setConvData(prev => ({ ...(prev || {}), ...d }));
         })
-        .catch(() => setConvData(null))
+        .catch(() => {})
         .finally(() => setConvLoading(false));
     }, 1000);
     return () => clearTimeout(timer);
