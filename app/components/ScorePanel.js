@@ -3422,19 +3422,19 @@ const CHECKLIST = [
     ],
   },
   {
-    category: '外壁・屋根塗装を比較する',
-    icon: '🏚️',
-    tag: '戸建て向け',
-    items: [
-      { id: 'nurikae', label: 'ヌリカエで外壁塗装・屋根塗装の相場を確認した', note: '優良業者を無料紹介。外壁・屋根の塗装相場をまとめて比較できる', linkType: 'nurikae', linkLabel: 'ヌリカエ', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
-    ],
-  },
-  {
     category: '宅配ボックスを設置する',
     icon: '📦',
     tag: '戸建て向け',
     items: [
       { id: 'takuhai', label: '宅配ボックスを設置した（再配達ゼロ・防犯対策）', note: '工事不要・防水・防錆。玄関をすっきり保ちながら再配達をゼロに', linkType: 'takuhai', linkLabel: '宅配ボックス名品館', linkCls: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' },
+    ],
+  },
+  {
+    category: '外壁・屋根塗装を比較する',
+    icon: '🏚️',
+    tag: '戸建て向け',
+    items: [
+      { id: 'nurikae', label: 'ヌリカエで外壁塗装・屋根塗装の相場を確認した', note: '優良業者を無料紹介。外壁・屋根の塗装相場をまとめて比較できる', linkType: 'nurikae', linkLabel: 'ヌリカエ', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
     ],
   },
   {
@@ -5072,17 +5072,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                   )}
 
 
-                  {/* ヌリカエ アフィリエイト */}
-                  {category === '外壁・屋根塗装を比較する' && (
-                    <div className="mt-3 text-center">
-                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
-                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5ZMCH" rel="nofollow noopener noreferrer" target="_blank">
-                        <img width={300} height={250} alt="ヌリカエ 外壁塗装" src="https://www27.a8.net/svt/bgt?aid=260504445001&wid=001&eno=01&mid=s00000018795001006000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
-                      </a>
-                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3IIL+LGDU+410U+5ZMCH" alt="" style={{ display: 'none' }} />
-                    </div>
-                  )}
-
                   {/* 宅配ボックス名品館 アフィリエイト */}
                   {category === '宅配ボックスを設置する' && (
                     <div className="mt-3 text-center">
@@ -5091,6 +5080,17 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                         <img width={300} height={250} alt="宅配ボックス名品館" src="https://www29.a8.net/svt/bgt?aid=260511511375&wid=001&eno=01&mid=s00000027207001004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                       </a>
                       <img width={1} height={1} src="https://www15.a8.net/0.gif?a8mat=4B3NYV+679KMQ+5TXI+5Z6WX" alt="" style={{ display: 'none' }} />
+                    </div>
+                  )}
+
+                  {/* ヌリカエ アフィリエイト */}
+                  {category === '外壁・屋根塗装を比較する' && (
+                    <div className="mt-3 text-center">
+                      <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                      <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5ZMCH" rel="nofollow noopener noreferrer" target="_blank">
+                        <img width={300} height={250} alt="ヌリカエ 外壁塗装" src="https://www27.a8.net/svt/bgt?aid=260504445001&wid=001&eno=01&mid=s00000018795001006000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                      </a>
+                      <img width={1} height={1} src="https://www19.a8.net/0.gif?a8mat=4B3IIL+LGDU+410U+5ZMCH" alt="" style={{ display: 'none' }} />
                     </div>
                   )}
 
