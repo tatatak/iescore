@@ -4240,7 +4240,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     mapConvDataRef.current = mapConvData;
     if (!mapConvData) return;
     setConvData(prev => ({ ...(prev || {}), ...mapConvData }));
-    if (mapConvData.overpassOk) setPoiLoading(false);
+    if (mapConvData.overpassDone) setPoiLoading(false);
   }, [mapConvData]);
 
   // 利便性（HeartRails 駅データ）: 場所確定から1秒後に取得
