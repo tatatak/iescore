@@ -3957,6 +3957,10 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [convLoading, setConvLoading] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
   const mapConvDataRef = useRef(null);
+  const [fbName, setFbName] = useState('');
+  const [fbEmail, setFbEmail] = useState('');
+  const [fbMessage, setFbMessage] = useState('');
+  const [fbStatus, setFbStatus] = useState('idle'); // idle | sending | sent | error
   const [landPriceData, setLandPriceData] = useState(null);
   const [landPriceLoading, setLandPriceLoading] = useState(false);
   const [buildingName, setBuildingName] = useState(null);
@@ -4368,6 +4372,24 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     if (onFlyTo) onFlyTo({ lat: prop.lat, lng: prop.lng, name: prop.name });
     setCheckedItems(prop.checkedItems || {});
     setActiveTab('main');
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!fbMessage.trim()) return;
+    setFbStatus('sending');
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: fbName, email: fbEmail, message: fbMessage, location: location?.name || location?.address || '' }),
+      });
+      if (!res.ok) throw new Error();
+      setFbStatus('sent');
+      setFbName(''); setFbEmail(''); setFbMessage('');
+    } catch {
+      setFbStatus('error');
+    }
   };
 
   useEffect(() => {
@@ -5143,6 +5165,51 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <Image src="https://note.com/favicon.ico" alt="note" width={16} height={16} className="rounded-sm" />
                 <span>マイホーム購入の基礎知識をnoteで読む</span>
               </a>
+
+              {/* コメント・フィードバックフォーム */}
+              <div className="mt-4 mb-2">
+                <p className="text-sm font-semibold text-gray-700 mb-2">ご意見・ご要望</p>
+                {fbStatus === 'sent' ? (
+                  <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-4 text-sm text-green-700 text-center">
+                    送信しました。ありがとうございます！
+                  </div>
+                ) : (
+                  <form onSubmit={handleFeedbackSubmit} className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      placeholder="お名前（任意）"
+                      value={fbName}
+                      onChange={e => setFbName(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-teal-400"
+                    />
+                    <input
+                      type="email"
+                      placeholder="メールアドレス（返信希望の場合）"
+                      value={fbEmail}
+                      onChange={e => setFbEmail(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-teal-400"
+                    />
+                    <textarea
+                      placeholder="ご意見・ご要望・お気づきの点など"
+                      value={fbMessage}
+                      onChange={e => setFbMessage(e.target.value)}
+                      rows={4}
+                      required
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-teal-400 resize-none"
+                    />
+                    {fbStatus === 'error' && (
+                      <p className="text-xs text-red-500">送信に失敗しました。時間をおいて再度お試しください。</p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={fbStatus === 'sending' || !fbMessage.trim()}
+                      className="w-full py-2.5 rounded-xl text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 disabled:opacity-50 transition-colors"
+                    >
+                      {fbStatus === 'sending' ? '送信中…' : '送信する'}
+                    </button>
+                  </form>
+                )}
+              </div>
           </div>
 
           <div className={activeTab !== 'saved' ? 'hidden' : ''}>
