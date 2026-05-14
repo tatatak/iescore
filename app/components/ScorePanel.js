@@ -3360,7 +3360,8 @@ function getChecklistUrl(linkType, name, buildingAddress) {
   if (linkType === 'mogecheck')   return 'https://mogecheck.jp/';
   if (linkType === 'sakura')      return 'https://www.sakurajimusyo.com/inspect/';
   if (linkType === 'kazukuri')    return 'https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YRHE';
-  if (linkType === 'kufuieta')    return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5YJRM';
+  if (linkType === 'kufuieta')      return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5YJRM';
+  if (linkType === 'solarpartners') return 'https://px.a8.net/svt/ejp?a8mat=4B3NYV+5SZ642+3LME+656YP';
   if (linkType === 'nurikae')     return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5YJRM';
   if (linkType === 'reform_pro')  return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+1SBLE+46CI+5YRHE';
   if (linkType === 'takara')      return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+16VZM+4S2Q+60H7L';
@@ -3417,6 +3418,7 @@ const CHECKLIST = [
     items: [
       { id: 'kazukuri', label: '家づくり相談所でハウスメーカー・工務店を相談した', note: '全国1,000社以上から無料でコーディネート。注文住宅・建売・土地探しに', linkType: 'kazukuri', linkLabel: '家づくり相談所', linkCls: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
       { id: 'kufuieta', label: 'くふうイエタテカウンターで家づくりを無料相談した', note: '注文住宅・リフォーム・リノベを一括相談。専任アドバイザーが無料サポート', linkType: 'kufuieta', linkLabel: 'くふうイエタテ', linkCls: 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100' },
+      { id: 'solarpartners', label: 'ソーラーパートナーズで太陽光発電の見積もりをした', note: '地元の評判の良い業者に無料一括見積もり。太陽光・蓄電池の見積サイトNo.1', linkType: 'solarpartners', linkLabel: 'ソーラーパートナーズ', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100', houseOnly: true },
     ],
   },
   {
@@ -3466,7 +3468,7 @@ function getVisibleItems(propertyType, excludeIds = []) {
   return CHECKLIST.flatMap(c => {
     if (propertyType === 'condo' && c.tag === '戸建て向け') return [];
     if (propertyType === 'house' && c.tag === 'マンション向け') return [];
-    return c.items.filter(item => !excludeIds.includes(item.id) && !(propertyType === 'house' && item.condoOnly));
+    return c.items.filter(item => !excludeIds.includes(item.id) && !(propertyType === 'house' && item.condoOnly) && !(propertyType === 'condo' && item.houseOnly));
   });
 }
 
@@ -4906,7 +4908,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
-                    {items.filter(item => !(propertyType === 'house' && item.condoOnly)).map((item) => {
+                    {items.filter(item => !(propertyType === 'house' && item.condoOnly) && !(propertyType === 'condo' && item.houseOnly)).map((item) => {
                       const isChecked = item.mapLayer ? !!activeLayers[item.mapLayer] : !!checkedItems[item.id];
                       const convHint = isChecked && item.mapLayer ? getConvHint(item.mapLayer, convData) : null;
 
@@ -4958,6 +4960,18 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                                 <img width={300} height={250} alt="くふうイエタテカウンター" src="https://www29.a8.net/svt/bgt?aid=260504445000&wid=001&eno=01&mid=s00000026422001004000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
                               </a>
                               <img width={1} height={1} src="https://www18.a8.net/0.gif?a8mat=4B3IIL+S2+5NVG+5Z6WX" alt="" style={{ display: 'none' }} />
+                            </div>
+                          </div>
+                        );
+                        if (item.id === 'solarpartners') return (
+                          <div key={item.id} className="flex flex-col gap-2">
+                            {linkCard}
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 mb-1">PR</p>
+                              <a href="https://px.a8.net/svt/ejp?a8mat=4B3NYV+5SZ642+3LME+656YP" rel="nofollow noopener noreferrer" target="_blank">
+                                <img width={300} height={250} alt="ソーラーパートナーズ 太陽光発電と蓄電池の見積サイト" src="https://www24.a8.net/svt/bgt?aid=260511511351&wid=001&eno=01&mid=s00000016799001032000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
+                              </a>
+                              <img width={1} height={1} src="https://www12.a8.net/0.gif?a8mat=4B3NYV+5SZ642+3LME+656YP" alt="" style={{ display: 'none' }} />
                             </div>
                           </div>
                         );
