@@ -861,13 +861,17 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
         .slice(0, 20);
     }
 
+    // Overpass成功時のみバス停・スーパー等を渡す。失敗時は既存データを上書きしない
     onConvenienceDataRef.current?.({
-      supermarkets, supermarkets500, supermarketList,
-      konbinis, konbinis500, konbiniList,
+      ...(overpassRes.status === 'fulfilled' ? {
+        supermarkets, supermarkets500, supermarketList,
+        konbinis, konbinis500, konbiniList,
+        busStops, busStops200, busStopList,
+        schools, schoolList,
+        overpassOk: true,
+      } : {}),
       hospitals, hospitals500, hospitalList,
       kindergartens, kindergartens500, kindergartenList,
-      busStops, busStops200, busStopList,
-      schools, schoolList,
     });
   };
 

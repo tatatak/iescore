@@ -3953,6 +3953,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [groundLoading, setGroundLoading] = useState(false);
   const [convData, setConvData] = useState(null);
   const [convLoading, setConvLoading] = useState(false);
+  const [poiLoading, setPoiLoading] = useState(false);
   const mapConvDataRef = useRef(null);
   const [landPriceData, setLandPriceData] = useState(null);
   const [landPriceLoading, setLandPriceLoading] = useState(false);
@@ -4228,11 +4229,18 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .finally(() => setGroundLoading(false));
   }, [location]);
 
+  // 場所が変わったら POI ローディングをリセット
+  useEffect(() => {
+    if (!location) return;
+    setPoiLoading(true);
+  }, [location]);
+
   // 地図タイルから届いた POI カウント（mapConvData）を convData にマージ
   useEffect(() => {
     mapConvDataRef.current = mapConvData;
     if (!mapConvData) return;
     setConvData(prev => ({ ...(prev || {}), ...mapConvData }));
+    if (mapConvData.overpassOk) setPoiLoading(false);
   }, [mapConvData]);
 
   // 利便性（HeartRails 駅データ）: 場所確定から1秒後に取得
@@ -4652,7 +4660,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               </ConvSubCard>
 
               <ConvSubCard icon="🚌" label="バス停" layerId="busstop"
-                score={calcBusStopScore(convData?.busStops)} loading={convLoading}
+                score={calcBusStopScore(convData?.busStops)} loading={poiLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
                 list={convData?.busStopList} onHighlightItem={onHighlightPOI}
               >
@@ -4660,7 +4668,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               </ConvSubCard>
 
               <ConvSubCard icon="🛒" label="スーパー" layerId="supermarket"
-                score={calcSupermarketScore(convData?.supermarkets500, convData?.supermarkets)} loading={convLoading}
+                score={calcSupermarketScore(convData?.supermarkets500, convData?.supermarkets)} loading={poiLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
                 list={convData?.supermarketList} onHighlightItem={onHighlightPOI}
               >
@@ -4670,7 +4678,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               </ConvSubCard>
 
               <ConvSubCard icon="🏪" label="コンビニ" layerId="konbini"
-                score={calcKonbiniScore(convData?.konbinis500, convData?.konbinis)} loading={convLoading}
+                score={calcKonbiniScore(convData?.konbinis500, convData?.konbinis)} loading={poiLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
                 list={convData?.konbiniList} onHighlightItem={onHighlightPOI}
               >
