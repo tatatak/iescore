@@ -381,7 +381,7 @@ function FloodScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLayer
           )}
         </>
       )}
-      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 L2洪水浸水想定区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">スコア高=リスク低（10点満点）。国交省 L2洪水浸水想定区域データ使用</p>
       <button
         onClick={() => onToggleLayer('flood')}
         className={`mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -424,7 +424,7 @@ function LandslideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleL
           )}
         </>
       )}
-      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 土砂災害警戒区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">スコア高=リスク低（10点満点）。国交省 土砂災害警戒区域データ使用</p>
       <button
         onClick={() => onToggleLayer('landslide')}
         className={`mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -467,7 +467,7 @@ function HightideScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLa
           )}
         </>
       )}
-      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 高潮浸水想定区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">スコア高=リスク低（10点満点）。国交省 高潮浸水想定区域データ使用</p>
       {location && (
         <a
           href={`https://disaportal.gsi.go.jp/maps/?ll=${location.lat},${location.lng}&z=15&base=pale`}
@@ -510,7 +510,7 @@ function TsunamiScoreCard({ hazardData, hazardLoading, activeLayers, onToggleLay
           )}
         </>
       )}
-      <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。国交省 津波浸水想定区域データ使用</p>
+      <p className="text-xs text-gray-700 font-medium mt-2">スコア高=リスク低（10点満点）。国交省 津波浸水想定区域データ使用</p>
       <button
         onClick={() => onToggleLayer('tsunami')}
         className={`mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -735,7 +735,7 @@ function NoiseScoreCard({ noiseData, activeLayers, onToggleLayer }) {
               <p className="text-gray-600 leading-relaxed">{diagnosis.text}</p>
             </div>
           )}
-          <p className="text-xs text-gray-700 font-medium mt-2">★多=リスク低。地図タイルデータから算出</p>
+          <p className="text-xs text-gray-700 font-medium mt-2">スコア高=リスク低（10点満点）。地図タイルデータから算出</p>
         </>
       )}
       <button
