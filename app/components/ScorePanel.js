@@ -4736,7 +4736,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 {areaScore != null && <Stars score={areaScore} />}
                 <div className="flex-1 border-t border-gray-200" />
               </div>
-              <p className="text-xs text-gray-700 font-medium leading-relaxed px-1">住宅の購入を検討しているエリアの利便性、浸水/土砂などの災害・地盤・騒音などのリスクから、エリアの良し悪しを10点満点で評価します。</p>
+              <p className="text-xs text-gray-700 font-medium leading-relaxed px-1">災害リスク・利便性・地盤をまとめてスコア化。買う前にここで確認しましょう。</p>
 
               {/* 徒歩圏シミュレーター */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -4959,7 +4959,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 </button>
                 {showAdvanced && (
                   <div className="flex flex-col gap-3 p-3 bg-white">
-                    <p className="text-xs text-gray-700 font-medium px-1">資産価値を重視する方向けの詳細分析です。</p>
+                    <p className="text-xs text-gray-700 font-medium px-1">本当にいい買い物か、もう一歩深く確認できます。</p>
                     <PriceTrendCard trendData={trendData} loading={trendLoading} propertyType={propertyType} />
                     <LandPriceCard data={landPriceData} loading={landPriceLoading} muniCode={popData?.muniCode} />
                     {propertyType === 'house' && (
@@ -4998,10 +4998,13 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               </div>
 
               {/* セパレーター */}
-              <div className="flex items-center gap-2 pt-1">
-                <div className="flex-1 border-t border-gray-200" />
-                <span className="text-xs text-gray-700 font-medium font-medium shrink-0">確認チェックリスト</span>
-                <div className="flex-1 border-t border-gray-200" />
+              <div className="flex flex-col gap-1.5 pt-1">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 border-t border-gray-200" />
+                  <span className="text-xs text-gray-700 font-medium shrink-0">確認チェックリスト</span>
+                  <div className="flex-1 border-t border-gray-200" />
+                </div>
+                <p className="text-xs text-gray-700 font-medium text-center">後悔した人の多くは「知らなかった」と言います。契約前に、これだけは確認してください。</p>
               </div>
 
               {/* プログレスバー */}
@@ -5272,7 +5275,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 onClick={() => setShowReport(true)}
                 className="w-full py-2.5 bg-white border border-gray-400 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50"
               >
-                📄 PDFレポートとして出力
+                📄 この診断結果をPDFで保存する
               </button>
               <p className="text-xs text-gray-700 font-medium text-center">
                 ※ 価格は国交省REINFOLIB。人口は国勢調査（e-Stat）。チェックはページを閉じるとリセットされます
@@ -5290,7 +5293,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
 
               {/* コメント・フィードバックフォーム */}
               <div className="mt-4 mb-2">
-                <p className="text-sm font-semibold text-gray-700 mb-2">ご意見・ご要望</p>
+                <p className="text-sm font-semibold text-gray-700 mb-2">改善アイデアや感想、教えてください</p>
                 {fbStatus === 'sent' ? (
                   <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-4 text-sm text-green-700 text-center">
                     送信しました。ありがとうございます！
@@ -5312,7 +5315,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-teal-400"
                     />
                     <textarea
-                      placeholder="ご意見・ご要望・お気づきの点など"
+                      placeholder="「こんな機能がほしい」「ここが使いにくい」など、なんでも。"
                       value={fbMessage}
                       onChange={e => setFbMessage(e.target.value)}
                       rows={4}
