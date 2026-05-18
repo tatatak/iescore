@@ -213,7 +213,7 @@ export default function Home() {
             <div className="absolute inset-0 flex items-center justify-center z-[50] bg-black/40 pointer-events-none">
               <div className="bg-white rounded-2xl shadow-2xl p-8 mx-4 max-w-sm w-full pointer-events-auto text-center flex flex-col items-center gap-4">
                 <Image src="/logo.png" alt="イエスコア" width={1396} height={684} className="h-14 w-auto" priority style={{ width: 'auto' }} />
-                <p className="text-gray-800 font-bold text-xl leading-snug">
+                <p className="text-gray-800 font-bold leading-snug whitespace-nowrap" style={{ fontSize: 'clamp(0.9rem, 5vw, 1.25rem)' }}>
                   「ここに住んで、本当に大丈夫？」
                 </p>
                 <p className="text-blue-600 font-semibold text-base leading-snug -mt-2">
