@@ -4736,7 +4736,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 {areaScore != null && <Stars score={areaScore} />}
                 <div className="flex-1 border-t border-gray-200" />
               </div>
-              <p className="text-xs text-gray-700 font-medium leading-relaxed px-1">災害リスク・利便性・地盤をまとめてスコア化。買う前にここで確認しましょう。</p>
+              <p className="text-sm text-gray-700 font-medium leading-relaxed px-1">災害リスク・利便性・地盤をまとめてスコア化。買う前にここで確認しましょう。</p>
 
               {/* 徒歩圏シミュレーター */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -4959,7 +4959,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 </button>
                 {showAdvanced && (
                   <div className="flex flex-col gap-3 p-3 bg-white">
-                    <p className="text-xs text-gray-700 font-medium px-1">本当にいい買い物か、もう一歩深く確認できます。</p>
+                    <p className="text-sm text-gray-700 font-medium px-1">本当にいい買い物か、もう一歩深く確認できます。</p>
                     <PriceTrendCard trendData={trendData} loading={trendLoading} propertyType={propertyType} />
                     <LandPriceCard data={landPriceData} loading={landPriceLoading} muniCode={popData?.muniCode} />
                     {propertyType === 'house' && (
@@ -5004,7 +5004,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                   <span className="text-xs text-gray-700 font-medium shrink-0">確認チェックリスト</span>
                   <div className="flex-1 border-t border-gray-200" />
                 </div>
-                <p className="text-xs text-gray-700 font-medium text-center">後悔した人の多くは「知らなかった」と言います。契約前に、これだけは確認してください。</p>
+                <p className="text-sm text-gray-700 font-medium text-center">後悔した人の多くは「知らなかった」と言います。契約前に、これだけは確認してください。</p>
               </div>
 
               {/* プログレスバー */}
