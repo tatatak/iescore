@@ -213,8 +213,11 @@ export default function Home() {
             <div className="absolute inset-0 flex items-center justify-center z-[50] bg-black/40 pointer-events-none">
               <div className="bg-white rounded-2xl shadow-2xl p-8 mx-4 max-w-sm w-full pointer-events-auto text-center flex flex-col items-center gap-4">
                 <Image src="/logo.png" alt="イエスコア" width={1396} height={684} className="h-14 w-auto" priority style={{ width: 'auto' }} />
-                <p className="text-blue-600 font-bold text-xl leading-snug">
-                  不動産スコアが<br />10点満点でわかります！
+                <p className="text-gray-800 font-bold text-xl leading-snug">
+                  「ここに住んで、大丈夫？」
+                </p>
+                <p className="text-blue-600 font-semibold text-base leading-snug -mt-2">
+                  その不安、イエスコアが答えます。
                 </p>
                 <div className="flex flex-col gap-1.5 w-full">
                   <p className="text-sm text-gray-600 font-medium text-center mb-0.5">🏢 マンション・🏡 戸建て対応</p>
