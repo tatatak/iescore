@@ -214,7 +214,7 @@ export default function Home() {
               <div className="bg-white rounded-2xl shadow-2xl p-8 mx-4 max-w-sm w-full pointer-events-auto text-center flex flex-col items-center gap-4">
                 <Image src="/logo.png" alt="イエスコア" width={1396} height={684} className="h-14 w-auto" priority style={{ width: 'auto' }} />
                 <p className="text-gray-800 font-bold text-xl leading-snug">
-                  「ここに住んで、大丈夫？」
+                  「ここに住んで、本当に大丈夫？」
                 </p>
                 <p className="text-blue-600 font-semibold text-base leading-snug -mt-2">
                   その不安、イエスコアが答えます。
