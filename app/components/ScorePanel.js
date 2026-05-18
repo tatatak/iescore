@@ -4738,6 +4738,35 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               </div>
               <p className="text-sm text-gray-700 font-medium leading-relaxed px-1">災害リスク・利便性・地盤をまとめてスコア化。買う前にここで確認しましょう。</p>
 
+              <FloodScoreCard
+                hazardData={hazardData}
+                hazardLoading={hazardLoading}
+                activeLayers={activeLayers}
+                onToggleLayer={onToggleLayer}
+              />
+              <LandslideScoreCard
+                hazardData={hazardData}
+                hazardLoading={hazardLoading}
+                activeLayers={activeLayers}
+                onToggleLayer={onToggleLayer}
+              />
+              <TsunamiScoreCard
+                hazardData={hazardData}
+                hazardLoading={hazardLoading}
+                activeLayers={activeLayers}
+                onToggleLayer={onToggleLayer}
+              />
+              <HightideScoreCard
+                hazardData={hazardData}
+                hazardLoading={hazardLoading}
+                activeLayers={activeLayers}
+                onToggleLayer={onToggleLayer}
+                location={location}
+              />
+              <GroundScoreCard groundData={groundData} groundLoading={groundLoading} />
+              <NoiseScoreCard noiseData={noiseData} activeLayers={activeLayers} onToggleLayer={onToggleLayer} />
+              <NuisanceCard nuisanceData={nuisanceData} nuisanceLoading={nuisanceLoading} />
+
               {/* 徒歩圏シミュレーター */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-1">
@@ -4851,41 +4880,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               </ConvSubCard>
 
               <ZoningCard zoningData={zoningData} zoningLoading={zoningLoading} />
-
-              <div className="flex items-center gap-2 pt-1">
-                <div className="flex-1 border-t border-gray-200" />
-                <span className="text-xs text-gray-600 font-bold shrink-0">（リスク関連）</span>
-                <div className="flex-1 border-t border-gray-200" />
-              </div>
-
-              <FloodScoreCard
-                hazardData={hazardData}
-                hazardLoading={hazardLoading}
-                activeLayers={activeLayers}
-                onToggleLayer={onToggleLayer}
-              />
-              <LandslideScoreCard
-                hazardData={hazardData}
-                hazardLoading={hazardLoading}
-                activeLayers={activeLayers}
-                onToggleLayer={onToggleLayer}
-              />
-              <TsunamiScoreCard
-                hazardData={hazardData}
-                hazardLoading={hazardLoading}
-                activeLayers={activeLayers}
-                onToggleLayer={onToggleLayer}
-              />
-              <HightideScoreCard
-                hazardData={hazardData}
-                hazardLoading={hazardLoading}
-                activeLayers={activeLayers}
-                onToggleLayer={onToggleLayer}
-                location={location}
-              />
-              <GroundScoreCard groundData={groundData} groundLoading={groundLoading} />
-              <NoiseScoreCard noiseData={noiseData} activeLayers={activeLayers} onToggleLayer={onToggleLayer} />
-              <NuisanceCard nuisanceData={nuisanceData} nuisanceLoading={nuisanceLoading} />
 
               {/* マイホーム購入コスト診断セクションタイトル */}
               <div className="flex items-center gap-2 mt-4 mb-2">
