@@ -4693,6 +4693,11 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
         {/* コンテンツ */}
         <div className="flex-1 overflow-y-auto">
           <div className={`flex flex-col gap-3 p-4 ${activeTab !== 'main' ? 'hidden' : ''}`}>
+              {/* キャッチコピー */}
+              <div className="px-1 pt-1 pb-0">
+                <p className="text-sm font-bold text-gray-800 leading-relaxed">「この土地、本当に大丈夫？」</p>
+                <p className="text-sm text-gray-600 leading-relaxed">—— その不安、イエスコアが答えます。</p>
+              </div>
               {/* 物件名・住所 */}
               <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2">
