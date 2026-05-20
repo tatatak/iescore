@@ -16,7 +16,7 @@ function parseRSS(xml) {
       const m = block.match(new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`, 'i'));
       return m ? m[1].trim() : '';
     };
-    const thumb = block.match(/<media:thumbnail[^>]+url="([^"]+)"/i)?.[1] ?? '';
+    const thumb = block.match(/<media:thumbnail[^>]*>([^<]+)<\/media:thumbnail>/i)?.[1]?.trim() ?? '';
     const link = block.match(/<link>([^<]+)<\/link>/i)?.[1]?.trim() ?? '';
     const raw = get('description');
     const excerpt = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').replace(/続きをみる/g, '').trim().slice(0, 100);
