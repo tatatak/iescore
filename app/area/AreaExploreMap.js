@@ -218,10 +218,10 @@ export default function AreaExploreMap({ areas, futurePopData }) {
       <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 z-20 shadow-sm">
         <div className="px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-1 self-start">
-            <Link href="/?type=condo" className="px-3 py-1 text-xs rounded-lg font-medium whitespace-nowrap bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
+            <Link href="/map?type=condo" className="px-3 py-1 text-xs rounded-lg font-medium whitespace-nowrap bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
               🏢 マンション
             </Link>
-            <Link href="/?type=house" className="px-3 py-1 text-xs rounded-lg font-medium whitespace-nowrap bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
+            <Link href="/map?type=house" className="px-3 py-1 text-xs rounded-lg font-medium whitespace-nowrap bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
               🏡 戸建て
             </Link>
             <span className="ml-2 px-3 py-1 text-xs rounded-lg font-medium whitespace-nowrap bg-blue-600 text-white">

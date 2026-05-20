@@ -122,7 +122,7 @@ export default async function AreaPage({ params }) {
           <Link href="/">
             <Image src="/logo.png" alt="イエスコア" width={1396} height={684} className="h-10 w-auto" priority style={{ width: 'auto' }} />
           </Link>
-          <Link href="/" className="text-sm text-blue-600 hover:underline">← エリア診断を使う</Link>
+          <Link href="/map" className="text-sm text-blue-600 hover:underline">← エリア診断を使う</Link>
         </div>
       </header>
 

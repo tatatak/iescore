@@ -5,8 +5,14 @@ export default function sitemap() {
     {
       url: 'https://www.iescore.com',
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'daily',
       priority: 1,
+    },
+    {
+      url: 'https://www.iescore.com/map',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
     },
     {
       url: 'https://www.iescore.com/faq',
@@ -28,12 +34,6 @@ export default function sitemap() {
     },
     {
       url: 'https://www.iescore.com/area',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: 'https://www.iescore.com/blog',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,

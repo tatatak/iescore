@@ -158,7 +158,7 @@ export default function FeaturesPage() {
           <p className="text-blue-800 font-bold text-lg mb-1">実際に診断してみましょう</p>
           <p className="text-blue-600 text-sm mb-4">住所・駅名を入力するだけ。完全無料・登録不要です。</p>
           <Link
-            href="/"
+            href="/map"
             className="inline-block bg-blue-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
           >
             無料エリア診断を使う →
