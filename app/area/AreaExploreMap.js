@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Link from 'next/link';
 import Image from 'next/image';
+import popChangeData from './populationChangeData.json';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -142,8 +143,6 @@ export default function AreaExploreMap({ areas, futurePopData }) {
   const [selected, setSelected] = useState(null);
   const [mapReady, setMapReady] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
-  const [popData, setPopData] = useState(null);
-  const [popLoading, setPopLoading] = useState(false);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -200,33 +199,17 @@ export default function AreaExploreMap({ areas, futurePopData }) {
     return () => map.remove();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 人口増減タブ選択時にAPIから取得（初回のみ）
-  useEffect(() => {
-    if (metric !== 'population' || popData !== null || popLoading) return;
-    setPopLoading(true);
-    const muniCodes = areas.map(a => a.muniCode);
-    const CHUNK = 100;
-    const chunks = [];
-    for (let i = 0; i < muniCodes.length; i += CHUNK) chunks.push(muniCodes.slice(i, i + CHUNK));
-    Promise.all(
-      chunks.map(chunk => fetch(`/api/area-population?codes=${chunk.join(',')}`).then(r => r.json()).catch(() => ({})))
-    ).then(results => {
-      setPopData(Object.assign({}, ...results));
-      setPopLoading(false);
-    }).catch(() => setPopLoading(false));
-  }, [metric, areas, popData, popLoading]);
-
   useEffect(() => {
     if (!mapReady) return;
     const src = mapInstanceRef.current?.getSource('areas');
-    if (src) src.setData(buildGeoJSON(areas, metric, popData, futurePopData));
-  }, [metric, mapReady, areas, popData, futurePopData]);
+    if (src) src.setData(buildGeoJSON(areas, metric, popChangeData, futurePopData));
+  }, [metric, mapReady, areas, futurePopData]);
 
   const legend = metric === 'price' ? PRICE_LEGEND : metric === 'trend' ? TREND_LEGEND : POP_LEGEND;
   const prefecture = selected?.muniCode ? PREF_NAMES[selected.muniCode.slice(0, 2)] : null;
-  const panelPopChange = popData?.[selected?.muniCode] ?? null;
+  const panelPopChange = popChangeData?.[selected?.muniCode] ?? null;
   const panelFutureChange = futurePopData?.[selected?.muniCode] ?? null;
-  const isLoading = metric === 'population' && popLoading;
+  const isLoading = false;
 
   return (
     <div ref={mapRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
