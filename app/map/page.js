@@ -218,15 +218,15 @@ export default function Home() {
           {!flyTo && (
             <div className="absolute inset-0 flex items-center justify-center z-[50] bg-black/40 pointer-events-none">
               <div className="bg-white rounded-2xl shadow-2xl p-8 mx-4 max-w-sm w-full pointer-events-auto text-center flex flex-col items-center gap-4">
-                <Image src="/logo.png" alt="イエスコア" width={1396} height={684} className="h-14 w-auto" priority style={{ width: 'auto' }} />
+                <div className="flex items-center gap-2 text-blue-500 text-sm animate-bounce">
+                  <span>⬆️</span><span>上のフォームに住所を入力しよう</span>
+                </div>
                 <div className="flex flex-col gap-1.5 w-full">
                   {['🌊 水害・地盤・災害リスクがわかる', '🚉 駅・スーパー・病院までの距離がわかる', '📊 そのエリアの物件の相場がわかる', '📈 そのエリアの物件の将来価値がわかる'].map(t => (
                     <div key={t} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600 text-left">{t}</div>
                   ))}
                 </div>
-                <div className="flex items-center gap-2 text-blue-500 text-sm animate-bounce">
-                  <span>⬆️</span><span>上のフォームに住所を入力しよう</span>
-                </div>
+                <Image src="/logo.png" alt="イエスコア" width={1396} height={684} className="h-14 w-auto" style={{ width: 'auto' }} />
               </div>
             </div>
           )}
