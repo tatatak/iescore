@@ -59,11 +59,6 @@ export default async function HomePage() {
               <p className="text-blue-600 font-semibold text-sm leading-snug -mt-1">
                 その不安、イエスコアが答えます。
               </p>
-              <div className="flex flex-col gap-1 w-full">
-                {['🌊 水害・地盤・災害リスクがわかる', '🚉 駅・スーパー・病院までの距離がわかる', '📊 そのエリアの物件の相場がわかる', '📈 そのエリアの物件の将来価値がわかる'].map(t => (
-                  <div key={t} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 text-sm text-gray-600 text-left">{t}</div>
-                ))}
-              </div>
               <p className="text-sm text-gray-600 font-medium">🏢 マンション・🏡 戸建て</p>
               <div className="flex items-center gap-2 text-blue-500 text-sm animate-bounce">
                 <span>👇</span><span>タップしてエリアを調べる</span>
