@@ -56,7 +56,7 @@ export default async function HomePage() {
               <p className="text-gray-800 font-bold leading-snug" style={{ fontSize: 'clamp(0.9rem, 5vw, 1.1rem)' }}>
                 「ここに住んで、本当に大丈夫？」
               </p>
-              <p className="text-blue-600 font-semibold text-sm leading-snug -mt-1">
+              <p className="text-blue-600 font-semibold text-base leading-snug -mt-1">
                 その不安、イエスコアが答えます。
               </p>
               <p className="text-sm text-gray-600 font-medium">🏢 マンション・🏡 戸建て</p>
