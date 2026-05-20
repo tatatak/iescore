@@ -190,6 +190,12 @@ export default function Home() {
             >
               🗺️ 広域
             </Link>
+            <Link
+              href="/blog"
+              className="px-3 py-1 text-xs rounded-lg font-medium whitespace-nowrap bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+            >
+              📝 記事
+            </Link>
           </div>
           <SearchBar onSelect={handleSelect} externalQuery={searchBarQuery} proximity={areaFlyTo} />
           {propertyType === 'condo' && (
@@ -220,15 +226,15 @@ export default function Home() {
                   その不安、イエスコアが答えます。
                 </p>
                 <div className="flex flex-col gap-1.5 w-full">
-                  <p className="text-sm text-gray-600 font-medium text-center mb-0.5">🏢 マンション・🏡 戸建て対応</p>
-                  {['📊 成約価格（実際に売れた値段）', '🌊 ハザード・地盤リスク', '🚉 駅・スーパー・病院の利便性', '📈 地価トレンド・用途地域'].map(t => (
+                  {['🌊 水害・地盤・災害リスクがわかる', '🚉 駅・スーパー・病院までの距離がわかる', '📊 そのエリアの物件の相場がわかる', '📈 そのエリアの物件の将来価値がわかる'].map(t => (
                     <div key={t} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600 text-left">{t}</div>
                   ))}
                 </div>
-                <p className="text-sm text-gray-600 font-medium">完全無料・登録不要</p>
+                <p className="text-sm text-gray-600 font-medium text-center mb-0.5">🏢 マンション・🏡 戸建て</p>
                 <div className="flex items-center gap-2 text-blue-500 text-sm animate-bounce">
                   <span>⬆️</span><span>上のフォームに住所を入力しよう</span>
                 </div>
+                <p className="text-sm text-gray-600 font-medium">完全無料・登録不要</p>
               </div>
             </div>
           )}
@@ -278,6 +284,13 @@ export default function Home() {
           <span className="text-base leading-none">📊</span>
           カルテ
         </button>
+        <Link
+          href="/blog"
+          className="flex-1 py-1.5 flex flex-row items-center justify-center gap-1.5 text-xs font-medium transition-colors text-gray-400 hover:text-gray-600"
+        >
+          <span className="text-base leading-none">📝</span>
+          記事
+        </Link>
       </div>
 
       {/* 会社名フッター */}
