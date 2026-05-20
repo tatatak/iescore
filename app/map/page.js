@@ -217,7 +217,7 @@ export default function Home() {
           {/* ウェルカムオーバーレイ: 住所未選択時のみ表示 */}
           {!flyTo && (
             <div className="absolute inset-0 flex items-center justify-center z-[50] bg-black/40 pointer-events-none">
-              <div className="bg-white rounded-2xl shadow-2xl p-8 mx-4 max-w-sm w-full pointer-events-auto text-center flex flex-col items-center gap-4">
+              <div className="bg-white rounded-2xl shadow-2xl p-5 mx-3 max-w-sm w-full pointer-events-auto text-center flex flex-col items-center gap-4">
                 <div className="flex items-center gap-2 text-blue-500 text-sm animate-bounce">
                   <span>⬆️</span><span>上のフォームに住所を入力しよう</span>
                 </div>
