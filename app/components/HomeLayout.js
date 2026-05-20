@@ -74,27 +74,27 @@ export default function HomeLayout({ articles }) {
               <a
                 key={i}
                 href={a.link}
-                className="block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group"
+                className="flex gap-3 bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition-shadow group"
               >
-                {a.thumb && (
-                  <div className="w-full aspect-[2/1] bg-gray-100 overflow-hidden">
-                    <img
-                      src={a.thumb}
-                      alt=""
-                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                      loading={i < 2 ? 'eager' : 'lazy'}
-                    />
-                  </div>
-                )}
-                <div className="p-4">
-                  <p className="text-[11px] text-gray-400 mb-1">{a.date}</p>
-                  <h2 className="text-sm font-bold text-gray-800 leading-snug group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2">
+                <div className="flex flex-col flex-1 min-w-0 gap-1">
+                  <p className="text-[11px] text-gray-400">{a.date}</p>
+                  <h2 className="text-sm font-bold text-gray-800 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
                     {a.title}
                   </h2>
                   <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
                     {a.excerpt}…
                   </p>
                 </div>
+                {a.thumb && (
+                  <div className="shrink-0 w-20 h-16 rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      src={a.thumb}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading={i < 2 ? 'eager' : 'lazy'}
+                    />
+                  </div>
+                )}
               </a>
             ))
           )}
