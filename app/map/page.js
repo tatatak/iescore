@@ -167,6 +167,10 @@ export default function Home() {
       <header className="flex items-start gap-3 px-4 py-2 bg-white border-b border-gray-200 shrink-0 z-[60]">
         {/* 左: フォーム群 */}
         <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+          <SearchBar onSelect={handleSelect} externalQuery={searchBarQuery} proximity={areaFlyTo} />
+          {propertyType === 'condo' && (
+            <BuildingSearchBar currentLocation={areaFlyTo} onSelect={handleBuildingSelect} buildingList={buildingList} />
+          )}
           <div className="flex items-center gap-1">
             {[
               { id: 'condo', label: '🏢 マンション' },
@@ -197,10 +201,6 @@ export default function Home() {
               📝 記事
             </Link>
           </div>
-          <SearchBar onSelect={handleSelect} externalQuery={searchBarQuery} proximity={areaFlyTo} />
-          {propertyType === 'condo' && (
-            <BuildingSearchBar currentLocation={areaFlyTo} onSelect={handleBuildingSelect} buildingList={buildingList} />
-          )}
         </div>
         {/* 右: ロゴ + 総合スコア */}
         <h1 className="shrink-0 flex flex-col items-center gap-1">
