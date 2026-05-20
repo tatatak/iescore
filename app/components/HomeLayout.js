@@ -74,19 +74,10 @@ export default function HomeLayout({ articles }) {
               <a
                 key={i}
                 href={a.link}
-                className="flex gap-3 bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition-shadow group"
+                className="block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group"
               >
-                <div className="flex flex-col flex-1 min-w-0 gap-1">
-                  <p className="text-[11px] text-gray-400">{a.date}</p>
-                  <h2 className="text-sm font-bold text-gray-800 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
-                    {a.title}
-                  </h2>
-                  <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
-                    {a.excerpt}…
-                  </p>
-                </div>
                 {a.thumb && (
-                  <div className="shrink-0 w-20 h-16 rounded-lg overflow-hidden bg-gray-100">
+                  <div className="w-full aspect-[2/1] bg-gray-100 overflow-hidden">
                     <img
                       src={a.thumb}
                       alt=""
@@ -95,6 +86,12 @@ export default function HomeLayout({ articles }) {
                     />
                   </div>
                 )}
+                <div className="p-3">
+                  <p className="text-[11px] text-gray-400 mb-1">{a.date}</p>
+                  <h2 className="text-sm font-bold text-gray-800 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+                    {a.title}
+                  </h2>
+                </div>
               </a>
             ))
           )}
