@@ -87,8 +87,6 @@ export default async function HomePage() {
               <a
                 key={i}
                 href={a.link}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group"
               >
                 {a.thumb && (
@@ -116,8 +114,6 @@ export default async function HomePage() {
 
           <a
             href="https://note.com/iescore"
-            target="_blank"
-            rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 py-3 text-sm text-gray-500 hover:text-blue-600 border border-gray-200 rounded-xl bg-white transition-colors"
           >
             📝 noteで全記事を読む
