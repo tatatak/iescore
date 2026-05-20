@@ -60,8 +60,8 @@ export default async function HomePage() {
                 その不安、イエスコアが答えます。
               </p>
               <p className="text-sm text-gray-600 font-medium">🏢 マンション・🏡 戸建て</p>
-              <div className="flex items-center gap-2 text-blue-500 text-sm animate-bounce">
-                <span>👇</span><span>タップしてエリアを調べる</span>
+              <div className="w-full bg-blue-600 text-white text-sm font-bold rounded-xl px-4 py-2.5 text-center">
+                タップしてエリアを調べる →
               </div>
               <p className="text-xs text-gray-400">完全無料・登録不要</p>
             </div>
