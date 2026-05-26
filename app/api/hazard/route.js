@@ -49,15 +49,15 @@ function classifyWorstInGrid(palette, png, cx, cy) {
 }
 
 // ---- 洪水浸水 ----
-// disaportaldata.gsi.go.jp z=14 ピクセル実測値（ピンク系グラデーション）
-// 255,216,192 = 0〜0.5m / 255,183,183 = 0.5〜3m / 255,145,145 = 3〜5m
+// 国土地理院 公式凡例画像 shinsui_legend3.png から全色を実測（2026-05-27）
+// disaportaldata ラスタータイルのピクセル色と完全一致することを確認済み
 const FLOOD_PALETTE = [
-  { label: '0〜0.5m未満', score: 8, r: 255, g: 216, b: 192 },
-  { label: '0.5〜3m未満', score: 6, r: 255, g: 183, b: 183 },
-  { label: '3〜5m未満',   score: 4, r: 255, g: 145, b: 145 },
-  { label: '5〜10m未満',  score: 3, r: 230, g: 90,  b: 90  },
-  { label: '10〜20m未満', score: 2, r: 200, g: 40,  b: 40  },
-  { label: '20m以上',     score: 1, r: 150, g: 0,   b: 0   },
+  { label: '0〜0.5m未満', score: 8, r: 247, g: 245, b: 169 }, // 淡黄（公式凡例）
+  { label: '0.5〜3m未満', score: 6, r: 255, g: 216, b: 192 }, // ピーチ（公式凡例）
+  { label: '3〜5m未満',   score: 4, r: 255, g: 183, b: 183 }, // ライトピンク（公式凡例）
+  { label: '5〜10m未満',  score: 3, r: 255, g: 145, b: 145 }, // コーラル（公式凡例）
+  { label: '10〜20m未満', score: 2, r: 242, g: 133, b: 201 }, // ピンクパープル（公式凡例）
+  { label: '20m以上',     score: 1, r: 220, g: 122, b: 220 }, // パープル（公式凡例）
 ];
 
 async function fetchFloodData(lon, lat, z) {
