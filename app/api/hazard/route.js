@@ -31,13 +31,15 @@ async function getPixel(url, px, py) {
 }
 
 // ---- 洪水浸水 ----
+// 色は disaportaldata.gsi.go.jp のラスタータイルを実測して定義（ピンク系グラデーション）
+// z=14タイルをピクセル読み取りして確認済み: 255,216,192 / 255,183,183 / 255,145,145
 const FLOOD_PALETTE = [
-  { label: '0〜0.5m未満', score: 8, r: 249, g: 240, b: 149 },
-  { label: '0.5〜3m未満', score: 6, r: 249, g: 198, b: 0   },
-  { label: '3〜5m未満',   score: 4, r: 242, g: 151, b: 0   },
-  { label: '5〜10m未満',  score: 3, r: 229, g: 60,  b: 0   },
-  { label: '10〜20m未満', score: 2, r: 195, g: 20,  b: 0   },
-  { label: '20m以上',     score: 1, r: 130, g: 0,   b: 0   },
+  { label: '0〜0.5m未満', score: 8, r: 255, g: 216, b: 192 },
+  { label: '0.5〜3m未満', score: 6, r: 255, g: 183, b: 183 },
+  { label: '3〜5m未満',   score: 4, r: 255, g: 145, b: 145 },
+  { label: '5〜10m未満',  score: 3, r: 230, g: 90,  b: 90  },
+  { label: '10〜20m未満', score: 2, r: 200, g: 40,  b: 40  },
+  { label: '20m以上',     score: 1, r: 150, g: 0,   b: 0   },
 ];
 
 function classifyFlood(r, g, b, a) {
