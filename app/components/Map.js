@@ -853,8 +853,8 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
 
       if (cfg.filter) elements = elements.filter(cfg.filter);
 
-      // マップレイヤー表示時に件数も更新（スーパー・コンビニ・バス停）
-      if ((type === 'supermarket' || type === 'konbini' || type === 'busstop') && flyToRef.current) {
+      // マップレイヤー表示時に件数も更新（スーパー・コンビニ・バス停・小中学校）
+      if ((type === 'supermarket' || type === 'konbini' || type === 'busstop' || type === 'school') && flyToRef.current) {
         const { lat: cLat, lng: cLng } = flyToRef.current;
         const list = [];
         let cnt500 = 0, cnt200 = 0;
@@ -863,10 +863,18 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
           const eLng = el.lon ?? el.center?.lon;
           if (!eLat || !eLng) return;
           const d = Math.round(haversineM(cLat, cLng, eLat, eLng));
-          const maxR = type === 'busstop' ? 500 : 1000;
-          if (d <= maxR) list.push({ name: el.tags?.name || '', distanceM: d, lat: eLat, lng: eLng });
-          if (d <= 500) cnt500++;
-          if (d <= 200) cnt200++;
+          const name = el.tags?.name || '';
+          if (type === 'school') {
+            // 小学校・中学校・義務教育学校のみカウント（高校除外）
+            const isTarget = (name.includes('小学校') || name.includes('中学校') || name.includes('義務教育学校')) &&
+              !name.includes('高校') && !name.includes('大学') && !name.includes('専門');
+            if (isTarget && d <= 1500) list.push({ name, distanceM: d, lat: eLat, lng: eLng });
+          } else {
+            const maxR = type === 'busstop' ? 500 : 1000;
+            if (d <= maxR) list.push({ name, distanceM: d, lat: eLat, lng: eLng });
+            if (d <= 500) cnt500++;
+            if (d <= 200) cnt200++;
+          }
         });
         list.sort((a, b) => a.distanceM - b.distanceM);
         if (type === 'supermarket') {
@@ -875,6 +883,8 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
           onConvenienceDataRef.current?.({ konbinis: list.length, konbinis500: cnt500, konbiniList: list });
         } else if (type === 'busstop') {
           onConvenienceDataRef.current?.({ busStops: cnt500, busStops200: cnt200, busStopList: list });
+        } else if (type === 'school') {
+          onConvenienceDataRef.current?.({ schools: list.length, schoolList: list });
         }
       }
 
