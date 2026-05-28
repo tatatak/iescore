@@ -7,25 +7,21 @@ const ENDPOINTS = [
 ];
 
 async function queryOverpass(q) {
-  let lastErr;
-  for (const endpoint of ENDPOINTS) {
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'data=' + encodeURIComponent(q),
-        signal: AbortSignal.timeout(7000),
-      });
-      if (!res.ok) throw new Error('overpass ' + res.status);
-      const data = await res.json();
-      // remark が含まれる場合はサーバー側のタイムアウト・エラーなので次のエンドポイントへ
-      if (data.remark) throw new Error('overpass remark: ' + data.remark);
-      return data;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr;
+  const body = 'data=' + encodeURIComponent(q);
+  const tryEndpoint = async (endpoint) => {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error('overpass ' + res.status);
+    const data = await res.json();
+    if (data.remark) throw new Error('overpass remark: ' + data.remark);
+    return data;
+  };
+  // 3エンドポイントを同時に試し、最初に成功したものを使う（直列だとVercel 10s制限を超える）
+  return Promise.any(ENDPOINTS.map(tryEndpoint));
 }
 
 function haversineM(lat1, lng1, lat2, lng2) {
