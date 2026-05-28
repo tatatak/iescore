@@ -853,21 +853,29 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
 
       if (cfg.filter) elements = elements.filter(cfg.filter);
 
-      // スーパーの Overpass 結果で件数も更新（地図表示と同じデータを使い回す）
-      if (type === 'supermarket' && flyToRef.current) {
+      // マップレイヤー表示時に件数も更新（スーパー・コンビニ・バス停）
+      if ((type === 'supermarket' || type === 'konbini' || type === 'busstop') && flyToRef.current) {
         const { lat: cLat, lng: cLng } = flyToRef.current;
         const list = [];
-        let cnt500 = 0;
+        let cnt500 = 0, cnt200 = 0;
         elements.forEach(el => {
           const eLat = el.lat ?? el.center?.lat;
           const eLng = el.lon ?? el.center?.lon;
           if (!eLat || !eLng) return;
           const d = Math.round(haversineM(cLat, cLng, eLat, eLng));
-          if (d <= 1000) list.push({ name: el.tags?.name || '', distanceM: d, lat: eLat, lng: eLng });
+          const maxR = type === 'busstop' ? 500 : 1000;
+          if (d <= maxR) list.push({ name: el.tags?.name || '', distanceM: d, lat: eLat, lng: eLng });
           if (d <= 500) cnt500++;
+          if (d <= 200) cnt200++;
         });
         list.sort((a, b) => a.distanceM - b.distanceM);
-        onConvenienceDataRef.current?.({ supermarkets: list.length, supermarkets500: cnt500, supermarketList: list });
+        if (type === 'supermarket') {
+          onConvenienceDataRef.current?.({ supermarkets: list.length, supermarkets500: cnt500, supermarketList: list });
+        } else if (type === 'konbini') {
+          onConvenienceDataRef.current?.({ konbinis: list.length, konbinis500: cnt500, konbiniList: list });
+        } else if (type === 'busstop') {
+          onConvenienceDataRef.current?.({ busStops: cnt500, busStops200: cnt200, busStopList: list });
+        }
       }
 
       clearPOIMarkers(type);

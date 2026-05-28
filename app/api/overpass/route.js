@@ -14,7 +14,7 @@ async function queryOverpass(q) {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'data=' + encodeURIComponent(q),
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(7000),
       });
       if (!res.ok) throw new Error('overpass ' + res.status);
       const data = await res.json();
@@ -44,7 +44,7 @@ export async function GET(request) {
   if (!lat || !lng) return NextResponse.json({ error: 'lat and lng required' }, { status: 400 });
 
   const q = [
-    '[out:json][timeout:20];(',
+    '[out:json][timeout:7];(',
     `node["shop"~"^(supermarket|convenience)$"](around:1000,${lat},${lng});`,
     `way["shop"~"^(supermarket|convenience)$"](around:1000,${lat},${lng});`,
     `node["highway"="bus_stop"](around:500,${lat},${lng});`,
