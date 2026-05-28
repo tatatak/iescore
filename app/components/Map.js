@@ -755,104 +755,27 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     }
   };
 
-  // Overpass + 国土数値情報KSJで全POIカウントを一括取得
+  // サーバーサイドプロキシ（/api/overpass）+ KSJで全POIカウントを一括取得
   const fetchAllCountsFromOverpass = async (centerLng, centerLat) => {
-    const KONBINI_KEYWORDS = ['セブン', 'ローソン', 'ファミリ', 'ミニストップ', 'デイリー', 'セイコーマート', 'ポプラ', 'ニューデイズ', 'キオスク', 'コンビニ'];
-
-    // Overpass（医療・幼稚園はKSJで取得）と KSJ を並列実行
     const [overpassRes, ksjRes] = await Promise.allSettled([
-      (async () => {
-        const q = [
-          '[out:json][timeout:25];(',
-          `node["shop"~"^(supermarket|convenience)$"](around:1000,${centerLat},${centerLng});`,
-          `way["shop"~"^(supermarket|convenience)$"](around:1000,${centerLat},${centerLng});`,
-          `node["highway"="bus_stop"](around:500,${centerLat},${centerLng});`,
-          `node["amenity"="school"](around:1500,${centerLat},${centerLng});`,
-          `way["amenity"="school"](around:1500,${centerLat},${centerLng});`,
-          ');out center;',
-        ].join('');
-        const ENDPOINTS = [
-          'https://overpass-api.de/api/interpreter',
-          'https://overpass.kumi.systems/api/interpreter',
-          'https://overpass.private.coffee/api/interpreter',
-        ];
-        const doFetch = async (endpoint) => {
-          const ctrl = new AbortController();
-          const tid = setTimeout(() => ctrl.abort(), 30000);
-          try {
-            const res = await fetch(endpoint, { method: 'POST', body: q, signal: ctrl.signal });
-            if (!res.ok) throw new Error('overpass ' + res.status);
-            return await res.json();
-          } finally {
-            clearTimeout(tid);
-          }
-        };
-        const delays = [0, 2500, 5000];
-        let lastErr;
-        for (let i = 0; i < ENDPOINTS.length; i++) {
-          if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
-          try { return await doFetch(ENDPOINTS[i]); } catch (e) { lastErr = e; }
-        }
-        throw lastErr;
-      })(),
+      fetch(`/api/overpass?lat=${centerLat}&lng=${centerLng}`).then(r => {
+        if (!r.ok) throw new Error('overpass proxy ' + r.status);
+        return r.json();
+      }),
       fetch(`/api/ksj-poi?lat=${centerLat}&lng=${centerLng}&radius=1000`).then(r => r.json()),
     ]);
-
-    let supermarkets = 0, supermarkets500 = 0, konbinis = 0, konbinis500 = 0,
-        busStops = 0, busStops200 = 0, schools = 0;
-    const supermarketList = [], konbiniList = [], busStopList = [], schoolList = [];
-
-    if (overpassRes.status === 'fulfilled') {
-      const data = overpassRes.value;
-      const seen = new Set();
-      for (const el of data.elements || []) {
-        const eLat = el.lat ?? el.center?.lat;
-        const eLng = el.lon ?? el.center?.lon;
-        if (!eLat || !eLng) continue;
-        const key = `${eLat.toFixed(5)},${eLng.toFixed(5)}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const d = haversineM(centerLat, centerLng, eLat, eLng);
-        const tags = el.tags || {};
-        const name = tags.name || '';
-        if (tags.shop === 'supermarket' || tags.shop === 'convenience') {
-          const isKonbini = tags.shop === 'convenience' || KONBINI_KEYWORDS.some(k => name.includes(k));
-          if (isKonbini) {
-            if (d <= 1000) { konbinis++; if (name) konbiniList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
-            if (d <= 500) konbinis500++;
-          } else {
-            if (d <= 1000) { supermarkets++; if (name) supermarketList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
-            if (d <= 500) supermarkets500++;
-          }
-        } else if (tags.highway === 'bus_stop') {
-          if (d <= 500) { busStops++; if (name) busStopList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
-          if (d <= 200) busStops200++;
-        } else if (tags.amenity === 'school') {
-          const ok = name.includes('小学校') || name.includes('中学校') || name.includes('義務教育学校') ||
-            /[^\x00-\x7F]小$/.test(name) || /[^\x00-\x7F]中$/.test(name);
-          if (ok && !name.includes('専門') && !name.includes('大学') && !name.includes('高校') && d <= 1500) {
-            schools++;
-            if (name) schoolList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng });
-          }
-        }
-      }
-      [supermarketList, konbiniList, busStopList, schoolList]
-        .forEach(l => l.sort((a, b) => a.distanceM - b.distanceM));
-    }
 
     // 国土数値情報から医療機関・幼稚園カウント
     let hospitals = 0, hospitals500 = 0, hospitalList = [];
     let kindergartens = 0, kindergartens500 = 0, kindergartenList = [];
     if (ksjRes.status === 'fulfilled') {
       const ksj = ksjRes.value;
-      // 医療: 病院+診療所+歯科を合算
       hospitals = (ksj.hospitals || 0) + (ksj.clinics || 0) + (ksj.dentals || 0);
       hospitals500 = (ksj.hospitals500 || 0) + (ksj.clinics500 || 0) + (ksj.dentals500 || 0);
       hospitalList = [...(ksj.hospitalList || []), ...(ksj.clinicList || []), ...(ksj.dentalList || [])]
         .map(f => ({ name: f.name, distanceM: f.distM, lat: f.lat, lng: f.lng }))
         .sort((a, b) => a.distanceM - b.distanceM)
         .slice(0, 20);
-      // 幼稚園+こども園を合算
       kindergartens = (ksj.kindergartens || 0) + (ksj.kodomoen || 0);
       kindergartens500 = (ksj.kindergartens500 || 0) + (ksj.kodomoen500 || 0);
       kindergartenList = [...(ksj.kindergartenList || []), ...(ksj.kodomoenList || [])]
@@ -866,10 +789,7 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
       overpassDone: true,
       ...(overpassRes.status === 'fulfilled' ? {
         overpassOk: true,
-        supermarkets, supermarkets500, supermarketList,
-        konbinis, konbinis500, konbiniList,
-        busStops, busStops200, busStopList,
-        schools, schoolList,
+        ...overpassRes.value,
       } : {}),
       ...(ksjRes.status === 'fulfilled' ? {
         hospitals, hospitals500, hospitalList,

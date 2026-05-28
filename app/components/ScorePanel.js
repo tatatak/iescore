@@ -4968,7 +4968,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
               </ConvSubCard>
 
               <ConvSubCard icon="🏫" label="小中学校" layerId="school"
-                score={calcSchoolScore(convData?.schools)} loading={convLoading}
+                score={calcSchoolScore(convData?.schools)} loading={poiLoading}
                 activeLayers={activeLayers} onToggleLayer={onToggleLayer}
                 list={convData?.schoolList} onHighlightItem={onHighlightPOI}
               >
