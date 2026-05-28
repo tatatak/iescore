@@ -755,15 +755,83 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
     }
   };
 
-  // サーバーサイドプロキシ（/api/overpass）+ KSJで全POIカウントを一括取得
+  // Overpass（ブラウザ直呼び出し）+ KSJ で全POIカウントを一括取得
+  // ※ Vercel関数の10秒制限を回避するためブラウザから直接呼ぶ
   const fetchAllCountsFromOverpass = async (centerLng, centerLat) => {
+    const OVERPASS_ENDPOINTS = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://overpass.private.coffee/api/interpreter',
+    ];
+    const KONBINI_KEYWORDS = ['セブン', 'ローソン', 'ファミリ', 'ミニストップ', 'デイリー', 'セイコーマート', 'ポプラ', 'ニューデイズ', 'キオスク', 'コンビニ'];
+
+    const q = [
+      '[out:json][timeout:25];(',
+      `node["shop"~"^(supermarket|convenience)$"](around:1000,${centerLat},${centerLng});`,
+      `way["shop"~"^(supermarket|convenience)$"](around:1000,${centerLat},${centerLng});`,
+      `node["highway"="bus_stop"](around:500,${centerLat},${centerLng});`,
+      `node["amenity"="school"](around:1500,${centerLat},${centerLng});`,
+      `way["amenity"="school"](around:1500,${centerLat},${centerLng});`,
+      ');out center;',
+    ].join('');
+
+    const tryEndpoint = async (url) => {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'data=' + encodeURIComponent(q),
+        signal: AbortSignal.timeout(25000),
+      });
+      if (!res.ok) throw new Error('overpass ' + res.status);
+      const data = await res.json();
+      if (data.remark) throw new Error('overpass remark: ' + data.remark);
+      return data;
+    };
+
     const [overpassRes, ksjRes] = await Promise.allSettled([
-      fetch(`/api/overpass?lat=${centerLat}&lng=${centerLng}`).then(r => {
-        if (!r.ok) throw new Error('overpass proxy ' + r.status);
-        return r.json();
-      }),
+      Promise.any(OVERPASS_ENDPOINTS.map(tryEndpoint)),
       fetch(`/api/ksj-poi?lat=${centerLat}&lng=${centerLng}&radius=1000`).then(r => r.json()),
     ]);
+
+    // Overpass結果を集計
+    let supermarkets = 0, supermarkets500 = 0, konbinis = 0, konbinis500 = 0;
+    let busStops = 0, busStops200 = 0, schools = 0;
+    const supermarketList = [], konbiniList = [], busStopList = [], schoolList = [];
+
+    if (overpassRes.status === 'fulfilled') {
+      const seen = new Set();
+      for (const el of overpassRes.value.elements || []) {
+        const eLat = el.lat ?? el.center?.lat;
+        const eLng = el.lon ?? el.center?.lon;
+        if (!eLat || !eLng) continue;
+        const key = `${eLat.toFixed(5)},${eLng.toFixed(5)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const d = haversineM(centerLat, centerLng, eLat, eLng);
+        const tags = el.tags || {};
+        const name = tags.name || '';
+        if (tags.shop === 'supermarket' || tags.shop === 'convenience') {
+          const isKonbini = tags.shop === 'convenience' || KONBINI_KEYWORDS.some(k => name.includes(k));
+          if (isKonbini) {
+            if (d <= 1000) { konbinis++; if (name) konbiniList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
+            if (d <= 500) konbinis500++;
+          } else {
+            if (d <= 1000) { supermarkets++; if (name) supermarketList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
+            if (d <= 500) supermarkets500++;
+          }
+        } else if (tags.highway === 'bus_stop') {
+          if (d <= 500) { busStops++; if (name) busStopList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng }); }
+          if (d <= 200) busStops200++;
+        } else if (tags.amenity === 'school') {
+          const ok = name.includes('小学校') || name.includes('中学校') || name.includes('義務教育学校');
+          if (ok && !name.includes('専門') && !name.includes('大学') && !name.includes('高校') && d <= 1500) {
+            schools++;
+            if (name) schoolList.push({ name, distanceM: Math.round(d), lat: eLat, lng: eLng });
+          }
+        }
+      }
+      [supermarketList, konbiniList, busStopList, schoolList].forEach(l => l.sort((a, b) => a.distanceM - b.distanceM));
+    }
 
     // 国土数値情報から医療機関・幼稚園カウント
     let hospitals = 0, hospitals500 = 0, hospitalList = [];
@@ -784,12 +852,14 @@ export default function Map({ flyTo, activeLayers, onToggleLayer, onMapClick, on
         .slice(0, 20);
     }
 
-    // 各ソースが成功したフィールドのみ渡す。失敗時は既存データを上書きしない
     onConvenienceDataRef.current?.({
       overpassDone: true,
       ...(overpassRes.status === 'fulfilled' ? {
         overpassOk: true,
-        ...overpassRes.value,
+        supermarkets, supermarkets500, supermarketList,
+        konbinis, konbinis500, konbiniList,
+        busStops, busStops200, busStopList,
+        schools, schoolList,
       } : {}),
       ...(ksjRes.status === 'fulfilled' ? {
         hospitals, hospitals500, hospitalList,
