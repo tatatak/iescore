@@ -2558,6 +2558,15 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
 
   // ---- 絞り込みモード ----
   if (useFiltered) {
+    const prices = filteredRecords.map(r => r.price).filter(p => p > 0);
+    const minP = prices.length ? Math.min(...prices) : null;
+    const maxP = prices.length ? Math.max(...prices) : null;
+    const unitPrices = filteredRecords
+      .filter(r => r.price > 0 && r.area > 0)
+      .map(r => Math.round(r.price / r.area));
+    const minU = unitPrices.length ? Math.min(...unitPrices) : null;
+    const maxU = unitPrices.length ? Math.max(...unitPrices) : null;
+
     return (
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <div className="flex items-center gap-2 mb-1">
@@ -2565,6 +2574,22 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
           <span className="text-sm font-semibold text-gray-700">この物件に近い成約事例（参考）</span>
         </div>
         <p className="text-xs text-gray-500 mb-3">{filterDesc}</p>
+
+        {/* 価格レンジ */}
+        {minP !== null && (
+          <div className="bg-blue-50 rounded-lg px-3 py-2 mb-3">
+            <p className="text-xs text-blue-600 font-medium mb-1">成約価格レンジ（絞り込み結果）</p>
+            <p className="text-base font-bold text-blue-800">
+              約{minP.toLocaleString()}万円〜{maxP.toLocaleString()}万円
+            </p>
+            {minU !== null && (
+              <p className="text-xs text-blue-600 mt-0.5">
+                ㎡単価: {minU}万円〜{maxU}万円/㎡
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col gap-1.5 mb-3">
           {filteredRecords.map((r, i) => (
             <CondoRecordItem
