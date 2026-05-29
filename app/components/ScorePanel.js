@@ -2493,14 +2493,69 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
   const [expandedIdx, setExpandedIdx] = useState(null);
   const [areaStatsOpen, setAreaStatsOpen] = useState(false);
   const [eraForList, setEraForList] = useState(syncEra || 'era2011');
+  const [nearbyDistricts, setNearbyDistricts] = useState(null); // null=検索中, string[]=完了
+  const nearbyKeyRef = useRef('');
 
   useEffect(() => { setCollapsed(defaultCollapsed); }, [defaultCollapsed]);
   useEffect(() => { if (syncEra) setEraForList(syncEra); }, [syncEra]);
 
+  // 近隣町名をOverpassで取得
+  useEffect(() => {
+    const lat = selectedBuilding?.lat;
+    const lng = selectedBuilding?.lng;
+    const key = (lat && lng) ? `${lat.toFixed(4)},${lng.toFixed(4)}` : '';
+    if (!key || key === nearbyKeyRef.current) return;
+    nearbyKeyRef.current = key;
+    setNearbyDistricts(null);
+
+    const q = [
+      '[out:json][timeout:10];(',
+      `node["place"~"^(neighbourhood|quarter|suburb)$"](around:600,${lat},${lng});`,
+      `way["place"~"^(neighbourhood|quarter|suburb)$"](around:600,${lat},${lng});`,
+      `relation["place"~"^(neighbourhood|quarter|suburb)$"](around:600,${lat},${lng});`,
+      `relation["boundary"="administrative"]["admin_level"~"^(8|9|10)$"](around:600,${lat},${lng});`,
+      ');out tags center;',
+    ].join('');
+
+    const ENDPOINTS = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://overpass.private.coffee/api/interpreter',
+    ];
+    const body = 'data=' + encodeURIComponent(q);
+    const tryOne = async (url) => {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(12000) });
+      if (!res.ok) throw new Error(res.status);
+      const d = await res.json();
+      if (d.remark) throw new Error('remark');
+      return d;
+    };
+    Promise.any(ENDPOINTS.map(tryOne)).then(data => {
+      const names = new Set();
+      for (const el of data.elements || []) {
+        const name = el.tags?.name;
+        // 日本語を含む・都道府県市区は除外・長すぎない
+        if (name && /[぀-鿿゠-ヿ]/.test(name) && !/(都|道|府|県|市|郡)/.test(name) && name.length <= 15) {
+          names.add(name);
+        }
+      }
+      setNearbyDistricts([...names]);
+    }).catch(() => setNearbyDistricts([]));
+  }, [selectedBuilding?.lat, selectedBuilding?.lng]);
+
   // 絞り込みロジック
   const allRecords = txData?.records || [];
 
-  const eraRecords = allRecords.filter(r => {
+  const isDistrictMatch = (r) => {
+    if (!nearbyDistricts || nearbyDistricts.length === 0) return true;
+    if (!r.district) return false;
+    return nearbyDistricts.some(d => r.district === d || r.district.startsWith(d) || d.startsWith(r.district));
+  };
+
+  const districtRecords = allRecords.filter(isDistrictMatch);
+  const isNearbyFiltered = nearbyDistricts !== null && nearbyDistricts.length > 0 && districtRecords.length < allRecords.length;
+
+  const eraRecords = districtRecords.filter(r => {
     if (eraForList === 'all') return true;
     const yr = parseInt(r.buildingYear);
     if (!yr) return true;
@@ -2510,6 +2565,17 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
     if (eraForList === 'pre1982') return yr <= 1982;
     return true;
   });
+
+  // 近隣エリアの価格レンジ計算
+  const calcPct = (arr, p) => {
+    if (arr.length < 3) return null;
+    const sorted = [...arr].sort((a, b) => a - b);
+    return Math.round(sorted[Math.floor((sorted.length - 1) * p / 100)]);
+  };
+  const unitPrices = eraRecords.filter(r => r.area > 0 && r.price > 0).map(r => r.price / r.area);
+  const localP25 = calcPct(unitPrices, 25);
+  const localP50 = calcPct(unitPrices, 50);
+  const localP75 = calcPct(unitPrices, 75);
   const filteredRecords = selectedBuilding?.builtYear
     ? allRecords.filter(r => {
         const yr = parseInt(r.buildingYear);
@@ -2607,6 +2673,42 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
         <>
           <CondoPriceSimulator condos={txData.condos} syncEra={syncEra} syncArea={syncArea} selectedEra={eraForList} onEraChange={setEraForList} />
 
+          {/* 近隣エリア絞り込み結果 */}
+          {selectedBuilding?.lat && nearbyDistricts === null && (
+            <p className="text-xs text-gray-400 mt-2">📍 近隣エリア検索中…</p>
+          )}
+          {isNearbyFiltered && (() => {
+            const eraLabel = ERA_TABS.find(t => t.key === eraForList)?.label ?? '全年代';
+            const areaNum = syncArea > 0 ? syncArea : null;
+            const rangeMin = localP25 && areaNum ? Math.round(localP25 * areaNum) : null;
+            const rangeMax = localP75 && areaNum ? Math.round(localP75 * areaNum) : null;
+            return (
+              <div className="mt-3 border-t border-gray-100 pt-3">
+                <p className="text-xs font-bold text-gray-700 mb-1">
+                  📍 近隣エリア絞り込み（半径600m）
+                </p>
+                <p className="text-xs text-gray-500 mb-2">
+                  {nearbyDistricts.slice(0, 6).join('・')}{nearbyDistricts.length > 6 ? `ほか${nearbyDistricts.length - 6}町` : ''}
+                </p>
+                {rangeMin && rangeMax ? (
+                  <div className="bg-green-50 rounded-lg px-3 py-2 mb-2">
+                    <p className="text-xs text-green-700 font-medium mb-0.5">成約レンジ（{eraLabel}・{eraRecords.length}件）</p>
+                    <p className="text-lg font-bold text-green-800">
+                      約{rangeMin.toLocaleString()}万〜{rangeMax.toLocaleString()}万円
+                    </p>
+                    <p className="text-xs text-green-600">中央値 {localP50}万円/㎡ × {areaNum}㎡</p>
+                  </div>
+                ) : eraRecords.length > 0 ? (
+                  <p className="text-xs text-gray-500 mb-2">
+                    {eraRecords.length}件（面積を入力するとレンジ表示）
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-400 mb-2">この年代・近隣の成約事例なし</p>
+                )}
+              </div>
+            );
+          })()}
+
           {allRecords.length > 0 && (
             <>
               <button
@@ -2614,9 +2716,9 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
                 className="flex items-center gap-1 text-sm text-blue-500 font-medium mt-3 mb-2"
               >
                 最近の成約事例{expanded ? '▲' : '▼'}
-                {eraForList !== 'all' && eraRecords.length > 0 && (
-                  <span className="text-xs text-gray-400 font-normal ml-1">（同年代 {eraRecords.length}件）</span>
-                )}
+                <span className="text-xs text-gray-400 font-normal ml-1">
+                  （{isNearbyFiltered ? '近隣' : ''}{eraForList !== 'all' ? '同年代' : ''} {eraRecords.length}件）
+                </span>
               </button>
               {expanded && (
                 <div className="flex flex-col gap-1.5 mb-2">
@@ -2627,7 +2729,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
                       onToggle={() => setExpandedIdx(expandedIdx === i ? null : i)}
                     />
                   )) : (
-                    <p className="text-xs text-gray-400 text-center py-2">この年代の成約事例なし</p>
+                    <p className="text-xs text-gray-400 text-center py-2">成約事例なし</p>
                   )}
                 </div>
               )}
@@ -5116,7 +5218,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <CondoCard txData={txData} loading={txLoading}
                   syncEra={loanData?.builtYear ? yearToEra(loanData.builtYear) : null}
                   syncArea={loanData?.area ?? null}
-                  selectedBuilding={buildingBuiltYear ? { name: buildingName, builtYear: buildingBuiltYear } : null}
+                  selectedBuilding={location ? { name: buildingName, builtYear: buildingBuiltYear ?? null, lat: location.lat, lng: location.lng } : null}
                 />
               )}
               {propertyType === 'house' && (
