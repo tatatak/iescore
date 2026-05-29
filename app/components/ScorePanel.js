@@ -1261,17 +1261,23 @@ const ERA_TABS = [
   { key: 'all',     label: '全年代' },
 ];
 
-function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
-  const [selectedEra, setSelectedEra] = useState('era2011');
+function CondoPriceSimulator({ condos, syncEra = null, syncArea = null, selectedEra: selectedEraProp = null, onEraChange = null }) {
+  const [selectedEraInternal, setSelectedEraInternal] = useState('era2011');
   const [area, setArea] = useState('70');
 
   useEffect(() => {
-    if (syncEra) setSelectedEra(syncEra);
-  }, [syncEra]);
+    if (syncEra && !onEraChange) setSelectedEraInternal(syncEra);
+  }, [syncEra, onEraChange]);
 
   useEffect(() => {
     if (syncArea != null && syncArea > 0) setArea(String(syncArea));
   }, [syncArea]);
+
+  const selectedEra = onEraChange ? selectedEraProp : selectedEraInternal;
+  const handleEraChange = (key) => {
+    if (onEraChange) onEraChange(key);
+    else setSelectedEraInternal(key);
+  };
 
   if (!condos?.avgUnitPrice) return null;
 
@@ -1298,7 +1304,7 @@ function CondoPriceSimulator({ condos, syncEra = null, syncArea = null }) {
           return (
             <button
               key={key}
-              onClick={() => hasData && setSelectedEra(key)}
+              onClick={() => hasData && handleEraChange(key)}
               className={`text-xs px-2 py-1 rounded-lg font-medium transition-colors ${
                 selectedEra === key
                   ? 'bg-blue-600 text-white'
@@ -2486,11 +2492,24 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
   const [collapsed, setCollapsed] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState(null);
   const [areaStatsOpen, setAreaStatsOpen] = useState(false);
+  const [eraForList, setEraForList] = useState(syncEra || 'era2011');
 
   useEffect(() => { setCollapsed(defaultCollapsed); }, [defaultCollapsed]);
+  useEffect(() => { if (syncEra) setEraForList(syncEra); }, [syncEra]);
 
   // 絞り込みロジック
   const allRecords = txData?.records || [];
+
+  const eraRecords = allRecords.filter(r => {
+    if (eraForList === 'all') return true;
+    const yr = parseInt(r.buildingYear);
+    if (!yr) return true;
+    if (eraForList === 'era2011') return yr >= 2011;
+    if (eraForList === 'era2000') return yr >= 2000 && yr <= 2010;
+    if (eraForList === 'era1983') return yr >= 1983 && yr <= 1999;
+    if (eraForList === 'pre1982') return yr <= 1982;
+    return true;
+  });
   const filteredRecords = selectedBuilding?.builtYear
     ? allRecords.filter(r => {
         const yr = parseInt(r.buildingYear);
@@ -2586,7 +2605,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
         <p className="text-xs text-gray-700 font-medium text-center py-1">データなし</p>
       ) : (
         <>
-          <CondoPriceSimulator condos={txData.condos} syncEra={syncEra} syncArea={syncArea} />
+          <CondoPriceSimulator condos={txData.condos} syncEra={syncEra} syncArea={syncArea} selectedEra={eraForList} onEraChange={setEraForList} />
 
           {allRecords.length > 0 && (
             <>
@@ -2595,16 +2614,21 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
                 className="flex items-center gap-1 text-sm text-blue-500 font-medium mt-3 mb-2"
               >
                 最近の成約事例{expanded ? '▲' : '▼'}
+                {eraForList !== 'all' && eraRecords.length > 0 && (
+                  <span className="text-xs text-gray-400 font-normal ml-1">（同年代 {eraRecords.length}件）</span>
+                )}
               </button>
               {expanded && (
                 <div className="flex flex-col gap-1.5 mb-2">
-                  {allRecords.map((r, i) => (
+                  {eraRecords.length > 0 ? eraRecords.map((r, i) => (
                     <CondoRecordItem
                       key={i} r={r}
                       isOpen={expandedIdx === i}
                       onToggle={() => setExpandedIdx(expandedIdx === i ? null : i)}
                     />
-                  ))}
+                  )) : (
+                    <p className="text-xs text-gray-400 text-center py-2">この年代の成約事例なし</p>
+                  )}
                 </div>
               )}
             </>
