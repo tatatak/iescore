@@ -2490,39 +2490,13 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
   useEffect(() => { setCollapsed(defaultCollapsed); }, [defaultCollapsed]);
 
   // 絞り込みロジック
-  // REINFOLIB 成約価格データには NearestStation・CityPlanning などが存在しない。
-  // 使えるフィールド: DistrictName / BuildingYear / Area / FloorPlan
-  // 優先順位: 地区+築年+面積 > 地区+築年 > 地区 > 築年+面積 > 築年 > 面積 > 全体
   const allRecords = txData?.records || [];
-  const addressStr = selectedBuilding?.address || '';
-  const builtYear  = selectedBuilding?.builtYear ?? null;
-
-  const matchDistrict = r => r.district && addressStr.includes(r.district);
-  const matchYear     = r => { const yr = parseInt(r.buildingYear); return builtYear && yr && Math.abs(yr - builtYear) <= 7; };
-  const matchArea     = r => syncArea && r.area > 0 && Math.abs(r.area - syncArea) <= 15;
-
-  const candidates = [
-    { records: allRecords.filter(r => matchDistrict(r) && matchYear(r) && matchArea(r)),
-      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}・築±7年・面積±15㎡` },
-    { records: allRecords.filter(r => matchDistrict(r) && matchYear(r)),
-      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}・築${builtYear}年±7年` },
-    { records: allRecords.filter(r => matchDistrict(r) && matchArea(r)),
-      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}・面積±15㎡` },
-    { records: allRecords.filter(r => matchDistrict(r)),
-      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}周辺` },
-    { records: allRecords.filter(r => matchYear(r) && matchArea(r)),
-      desc: () => `築${builtYear}年±7年・${syncArea}㎡前後` },
-    { records: allRecords.filter(r => matchYear(r)),
-      desc: () => `築${builtYear}年±7年` },
-    { records: allRecords.filter(r => matchArea(r)),
-      desc: () => `${syncArea}㎡前後` },
-  ];
-
-  const matched = candidates.find(c => c.records.length >= 2);
-  const filteredRecords = matched ? matched.records : [];
-  const filterDesc = matched
-    ? `${matched.desc()}（${filteredRecords.length}件一致）`
-    : '';
+  const filteredRecords = selectedBuilding?.builtYear
+    ? allRecords.filter(r => {
+        const yr = parseInt(r.buildingYear);
+        return yr && Math.abs(yr - selectedBuilding.builtYear) <= 7;
+      })
+    : [];
   const useFiltered = filteredRecords.length >= 2;
 
   if (collapsed) {
@@ -2558,38 +2532,15 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
 
   // ---- 絞り込みモード ----
   if (useFiltered) {
-    const prices = filteredRecords.map(r => r.price).filter(p => p > 0);
-    const minP = prices.length ? Math.min(...prices) : null;
-    const maxP = prices.length ? Math.max(...prices) : null;
-    const unitPrices = filteredRecords
-      .filter(r => r.price > 0 && r.area > 0)
-      .map(r => Math.round(r.price / r.area));
-    const minU = unitPrices.length ? Math.min(...unitPrices) : null;
-    const maxU = unitPrices.length ? Math.max(...unitPrices) : null;
-
     return (
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xl">🏢</span>
           <span className="text-sm font-semibold text-gray-700">この物件に近い成約事例（参考）</span>
         </div>
-        <p className="text-xs text-gray-500 mb-3">{filterDesc}</p>
-
-        {/* 価格レンジ */}
-        {minP !== null && (
-          <div className="bg-blue-50 rounded-lg px-3 py-2 mb-3">
-            <p className="text-xs text-blue-600 font-medium mb-1">成約価格レンジ（絞り込み結果）</p>
-            <p className="text-base font-bold text-blue-800">
-              約{minP.toLocaleString()}万円〜{maxP.toLocaleString()}万円
-            </p>
-            {minU !== null && (
-              <p className="text-xs text-blue-600 mt-0.5">
-                ㎡単価: {minU}万円〜{maxU}万円/㎡
-              </p>
-            )}
-          </div>
-        )}
-
+        <p className="text-xs text-gray-500 mb-3">
+          {selectedBuilding.name ? `${selectedBuilding.name}周辺` : 'このエリア'}の築{selectedBuilding.builtYear}年±7年 ·{filteredRecords.length}件一致
+        </p>
         <div className="flex flex-col gap-1.5 mb-3">
           {filteredRecords.map((r, i) => (
             <CondoRecordItem
@@ -5141,11 +5092,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <CondoCard txData={txData} loading={txLoading}
                   syncEra={loanData?.builtYear ? yearToEra(loanData.builtYear) : null}
                   syncArea={loanData?.area ?? null}
-                  selectedBuilding={location ? {
-                    name: buildingName,
-                    builtYear: buildingBuiltYear ?? null,
-                    address: buildingAddress || location.name || '',
-                  } : null}
+                  selectedBuilding={buildingBuiltYear ? { name: buildingName, builtYear: buildingBuiltYear } : null}
                 />
               )}
               {propertyType === 'house' && (
