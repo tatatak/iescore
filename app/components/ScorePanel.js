@@ -2489,34 +2489,40 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
 
   useEffect(() => { setCollapsed(defaultCollapsed); }, [defaultCollapsed]);
 
-  // 絞り込みロジック（優先順位: 同地区+築年 > 同地区 > 築年 > 全体）
+  // 絞り込みロジック
+  // REINFOLIB 成約価格データには NearestStation・CityPlanning などが存在しない。
+  // 使えるフィールド: DistrictName / BuildingYear / Area / FloorPlan
+  // 優先順位: 地区+築年+面積 > 地区+築年 > 地区 > 築年+面積 > 築年 > 面積 > 全体
   const allRecords = txData?.records || [];
   const addressStr = selectedBuilding?.address || '';
-  const builtYear = selectedBuilding?.builtYear ?? null;
+  const builtYear  = selectedBuilding?.builtYear ?? null;
 
   const matchDistrict = r => r.district && addressStr.includes(r.district);
-  const matchYear    = r => { const yr = parseInt(r.buildingYear); return builtYear && yr && Math.abs(yr - builtYear) <= 7; };
+  const matchYear     = r => { const yr = parseInt(r.buildingYear); return builtYear && yr && Math.abs(yr - builtYear) <= 7; };
+  const matchArea     = r => syncArea && r.area > 0 && Math.abs(r.area - syncArea) <= 15;
 
-  const districtYearRecords = allRecords.filter(r => matchDistrict(r) && matchYear(r));
-  const districtRecords     = allRecords.filter(r => matchDistrict(r));
-  const yearRecords         = allRecords.filter(r => matchYear(r));
+  const candidates = [
+    { records: allRecords.filter(r => matchDistrict(r) && matchYear(r) && matchArea(r)),
+      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}・築±7年・面積±15㎡` },
+    { records: allRecords.filter(r => matchDistrict(r) && matchYear(r)),
+      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}・築${builtYear}年±7年` },
+    { records: allRecords.filter(r => matchDistrict(r) && matchArea(r)),
+      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}・面積±15㎡` },
+    { records: allRecords.filter(r => matchDistrict(r)),
+      desc: () => `${allRecords.find(matchDistrict)?.district || '同地区'}周辺` },
+    { records: allRecords.filter(r => matchYear(r) && matchArea(r)),
+      desc: () => `築${builtYear}年±7年・${syncArea}㎡前後` },
+    { records: allRecords.filter(r => matchYear(r)),
+      desc: () => `築${builtYear}年±7年` },
+    { records: allRecords.filter(r => matchArea(r)),
+      desc: () => `${syncArea}㎡前後` },
+  ];
 
-  let filteredRecords, filterDesc;
-  if (districtYearRecords.length >= 2) {
-    filteredRecords = districtYearRecords;
-    const d = districtYearRecords[0]?.district || '';
-    filterDesc = `${d}・築${builtYear}年±7年（${filteredRecords.length}件一致）`;
-  } else if (districtRecords.length >= 2) {
-    filteredRecords = districtRecords;
-    const d = districtRecords[0]?.district || '';
-    filterDesc = `${d}周辺（${filteredRecords.length}件一致）`;
-  } else if (yearRecords.length >= 2) {
-    filteredRecords = yearRecords;
-    filterDesc = `築${builtYear}年±7年・エリア内（${filteredRecords.length}件一致）`;
-  } else {
-    filteredRecords = [];
-    filterDesc = '';
-  }
+  const matched = candidates.find(c => c.records.length >= 2);
+  const filteredRecords = matched ? matched.records : [];
+  const filterDesc = matched
+    ? `${matched.desc()}（${filteredRecords.length}件一致）`
+    : '';
   const useFiltered = filteredRecords.length >= 2;
 
   if (collapsed) {
