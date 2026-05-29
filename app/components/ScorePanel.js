@@ -1874,13 +1874,13 @@ function LoanSimulator({ showMgmt = true, showBuiltYear = true, propertyType = '
                 placeholder="例: 2005"
                 className={`w-1/2 px-2 py-1.5 text-base border rounded-lg focus:outline-none focus:border-blue-400 ${isNewConstruction ? 'border-blue-300 bg-blue-50 text-blue-700 font-medium' : 'border-gray-200'}`} />
               {homesUrl && (
-                <a href={homesUrl} target="_blank" rel="noopener noreferrer"
+                <a href={homesUrl}
                   className="text-center text-xs px-2 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg font-medium hover:bg-orange-100 transition-colors whitespace-nowrap">
                   🏠 HOMESで確認
                 </a>
               )}
               {googleUrl && (
-                <a href={googleUrl} target="_blank" rel="noopener noreferrer"
+                <a href={googleUrl}
                   className="text-center text-xs px-2 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg font-medium hover:bg-blue-100 transition-colors whitespace-nowrap">
                   🔍 Webで検索
                 </a>
