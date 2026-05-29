@@ -2439,12 +2439,65 @@ function HouseRecordList({ records }) {
   );
 }
 
-function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, syncArea = null }) {
+function CondoRecordItem({ r, isOpen, onToggle }) {
+  const details = [
+    { label: '構造',     value: r.structure },
+    { label: '改装',     value: r.renovation },
+    { label: '最寄り駅', value: r.nearestStation },
+    { label: '駅徒歩',   value: r.timeToStation ? `${r.timeToStation}分` : null },
+    { label: '都市計画', value: r.cityPlanning },
+    { label: '建ぺい率', value: r.coverageRatio ? `${r.coverageRatio}%` : null },
+    { label: '容積率',   value: r.floorAreaRatio ? `${r.floorAreaRatio}%` : null },
+  ].filter(d => d.value);
+  return (
+    <div className="border border-gray-100 rounded-lg text-xs overflow-hidden">
+      <button onClick={onToggle} className="w-full p-2 text-left hover:bg-blue-50 transition-colors">
+        <div className="flex items-center justify-between">
+          <span className="text-gray-600 font-medium">{r.district}</span>
+          <span className="text-blue-400">{isOpen ? '▲' : '詳細 ▼'}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="font-bold text-gray-800">{r.price.toLocaleString()}万円</span>
+          <span className="text-gray-700 font-medium">{r.area}㎡</span>
+          <span className="text-blue-600 font-semibold">{r.unitPrice}万/㎡</span>
+        </div>
+        <p className="text-gray-700 font-medium mt-0.5">{r.buildingYear}年築 {r.floorPlan} {formatPeriod(r.period)}</p>
+      </button>
+      {isOpen && (
+        <div className="px-2 pb-2 pt-1.5 border-t border-gray-100 bg-gray-50 flex flex-col gap-0.5">
+          {details.map(({ label, value }) => (
+            <div key={label} className="flex justify-between">
+              <span className="text-gray-700 font-medium shrink-0 w-16">{label}</span>
+              <span className="text-gray-600 text-right">{value}</span>
+            </div>
+          ))}
+          {r.remarks && (
+            <p className="text-gray-700 font-medium bg-white rounded p-1.5 mt-1 leading-relaxed border border-gray-100">{r.remarks}</p>
+          )}
+          <p className="text-gray-700 font-medium text-right mt-0.5">出典: 国交省 REINFOLIB</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, syncArea = null, selectedBuilding = null }) {
   const [expanded, setExpanded] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState(null);
+  const [areaStatsOpen, setAreaStatsOpen] = useState(false);
 
   useEffect(() => { setCollapsed(defaultCollapsed); }, [defaultCollapsed]);
+
+  // 絞り込みロジック
+  const allRecords = txData?.records || [];
+  const filteredRecords = selectedBuilding?.builtYear
+    ? allRecords.filter(r => {
+        const yr = parseInt(r.buildingYear);
+        return yr && Math.abs(yr - selectedBuilding.builtYear) <= 7;
+      })
+    : [];
+  const useFiltered = filteredRecords.length >= 2;
 
   if (collapsed) {
     return (
@@ -2454,7 +2507,9 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
       >
         <div className="flex items-center gap-2">
           <span className="text-lg">🏢</span>
-          <span className="text-sm font-medium text-gray-700 font-medium">この地域のマンション成約価格（参考）</span>
+          <span className="text-sm font-medium text-gray-700 font-medium">
+            {useFiltered ? 'この物件に近い成約事例（参考）' : 'この地域のマンション成約価格（参考）'}
+          </span>
         </div>
         <span className="text-xs text-blue-400 font-medium">表示する ▼</span>
       </button>
@@ -2475,12 +2530,56 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
 
   const hasCondo = txData?.condos?.count > 0;
 
+  // ---- 絞り込みモード ----
+  if (useFiltered) {
+    return (
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">🏢</span>
+          <span className="text-sm font-semibold text-gray-700">この物件に近い成約事例（参考）</span>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          {selectedBuilding.name ? `${selectedBuilding.name}周辺` : 'このエリア'}の築{selectedBuilding.builtYear}年±7年 ·{filteredRecords.length}件一致
+        </p>
+        <div className="flex flex-col gap-1.5 mb-3">
+          {filteredRecords.map((r, i) => (
+            <CondoRecordItem
+              key={i} r={r}
+              isOpen={expandedIdx === i}
+              onToggle={() => setExpandedIdx(expandedIdx === i ? null : i)}
+            />
+          ))}
+        </div>
+
+        {/* エリア全体の統計（折りたたみ） */}
+        {hasCondo && (
+          <>
+            <button
+              onClick={() => setAreaStatsOpen(v => !v)}
+              className="flex items-center gap-1 text-xs text-gray-400 font-medium mb-2"
+            >
+              エリア全体の統計{areaStatsOpen ? ' ▲' : ' ▼'}
+            </button>
+            {areaStatsOpen && (
+              <CondoPriceSimulator condos={txData.condos} syncEra={syncEra} syncArea={syncArea} />
+            )}
+          </>
+        )}
+        <p className="text-xs text-gray-700 font-medium mt-2">出典: 国交省REINFOLIB 成約価格情報</p>
+      </div>
+    );
+  }
+
+  // ---- 通常モード（フォールバック） ----
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-xl">🏢</span>
         <span className="text-sm font-semibold text-gray-700">この地域のマンション成約価格（参考）</span>
       </div>
+      {selectedBuilding?.builtYear === undefined && selectedBuilding !== null && (
+        <p className="text-xs text-amber-600 mb-1">※ 築年データなし（エリア全体を表示）</p>
+      )}
       <p className="text-sm text-gray-600 leading-relaxed mb-3">このエリアでは、これぐらいの価格で取引されています。</p>
 
       {!hasCondo ? (
@@ -2489,7 +2588,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
         <>
           <CondoPriceSimulator condos={txData.condos} syncEra={syncEra} syncArea={syncArea} />
 
-          {txData?.records?.length > 0 && (
+          {allRecords.length > 0 && (
             <>
               <button
                 onClick={() => setExpanded(v => !v)}
@@ -2499,51 +2598,13 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
               </button>
               {expanded && (
                 <div className="flex flex-col gap-1.5 mb-2">
-                  {txData.records.map((r, i) => {
-                    const isOpen = expandedIdx === i;
-                    const details = [
-                      { label: '構造',     value: r.structure },
-                      { label: '改装',     value: r.renovation },
-                      { label: '最寄り駅', value: r.nearestStation },
-                      { label: '駅徒歩',   value: r.timeToStation ? `${r.timeToStation}分` : null },
-                      { label: '都市計画', value: r.cityPlanning },
-                      { label: '建ぺい率', value: r.coverageRatio ? `${r.coverageRatio}%` : null },
-                      { label: '容積率',   value: r.floorAreaRatio ? `${r.floorAreaRatio}%` : null },
-                    ].filter(d => d.value);
-                    return (
-                      <div key={i} className="border border-gray-100 rounded-lg text-xs overflow-hidden">
-                        <button
-                          onClick={() => setExpandedIdx(isOpen ? null : i)}
-                          className="w-full p-2 text-left hover:bg-blue-50 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-600 font-medium">{r.district}</span>
-                            <span className="text-blue-400">{isOpen ? '▲' : '詳細 ▼'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="font-bold text-gray-800">{r.price.toLocaleString()}万円</span>
-                            <span className="text-gray-700 font-medium">{r.area}㎡</span>
-                            <span className="text-blue-600 font-semibold">{r.unitPrice}万/㎡</span>
-                          </div>
-                          <p className="text-gray-700 font-medium mt-0.5">{r.buildingYear}年築 {r.floorPlan} {formatPeriod(r.period)}</p>
-                        </button>
-                        {isOpen && (
-                          <div className="px-2 pb-2 pt-1.5 border-t border-gray-100 bg-gray-50 flex flex-col gap-0.5">
-                            {details.map(({ label, value }) => (
-                              <div key={label} className="flex justify-between">
-                                <span className="text-gray-700 font-medium shrink-0 w-16">{label}</span>
-                                <span className="text-gray-600 text-right">{value}</span>
-                              </div>
-                            ))}
-                            {r.remarks && (
-                              <p className="text-gray-700 font-medium bg-white rounded p-1.5 mt-1 leading-relaxed border border-gray-100">{r.remarks}</p>
-                            )}
-                            <p className="text-gray-700 font-medium text-right mt-0.5">出典: 国交省 REINFOLIB</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {allRecords.map((r, i) => (
+                    <CondoRecordItem
+                      key={i} r={r}
+                      isOpen={expandedIdx === i}
+                      onToggle={() => setExpandedIdx(expandedIdx === i ? null : i)}
+                    />
+                  ))}
                 </div>
               )}
             </>
@@ -4131,6 +4192,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [landPriceData, setLandPriceData] = useState(null);
   const [landPriceLoading, setLandPriceLoading] = useState(false);
   const [buildingName, setBuildingName] = useState(null);
+  const [buildingBuiltYear, setBuildingBuiltYear] = useState(null);
   const [zoningData, setZoningData] = useState(null);
   const [zoningLoading, setZoningLoading] = useState(false);
   const [urbanData, setUrbanData] = useState(null);
@@ -4319,6 +4381,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     setLandPriceData(null);
     setLandPriceLoading(true);
     setBuildingName(null);
+    setBuildingBuiltYear(null);
     setZoningData(null);
     setZoningLoading(true);
     setUrbanData(null);
@@ -4357,6 +4420,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
     if (!location || location.featureType !== 'address') return;
     if (location.skipBuildingSearch) {
       setBuildingName(location.name);
+      setBuildingBuiltYear(location.builtYear ?? null);
       return;
     }
     fetch(`/api/buildings?lng=${location.lng}&lat=${location.lat}`)
@@ -4364,6 +4428,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .then(d => {
         const hit = d.name && (d.distanceM ?? 999) <= 20;
         setBuildingName(hit ? d.name : null);
+        setBuildingBuiltYear(hit && d.builtYear ? d.builtYear : null);
       })
       .catch(() => {});
   }, [location]);
@@ -5027,6 +5092,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <CondoCard txData={txData} loading={txLoading}
                   syncEra={loanData?.builtYear ? yearToEra(loanData.builtYear) : null}
                   syncArea={loanData?.area ?? null}
+                  selectedBuilding={buildingBuiltYear ? { name: buildingName, builtYear: buildingBuiltYear } : null}
                 />
               )}
               {propertyType === 'house' && (

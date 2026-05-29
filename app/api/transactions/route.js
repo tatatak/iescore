@@ -314,10 +314,10 @@ export async function GET(request) {
       remarks: d.Remarks || '',
     });
 
-    // 最新10件の中古マンション
+    // 最新30件の中古マンション（絞り込み用に多めに返す）
     const records = [...condos]
       .sort((a, b) => periodToNum(b.Period) - periodToNum(a.Period))
-      .slice(0, 10)
+      .slice(0, 30)
       .map(d => ({
         type: 'condo',
         district: d.DistrictName,
