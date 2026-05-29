@@ -2489,14 +2489,34 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
 
   useEffect(() => { setCollapsed(defaultCollapsed); }, [defaultCollapsed]);
 
-  // 絞り込みロジック
+  // 絞り込みロジック（優先順位: 同地区+築年 > 同地区 > 築年 > 全体）
   const allRecords = txData?.records || [];
-  const filteredRecords = selectedBuilding?.builtYear
-    ? allRecords.filter(r => {
-        const yr = parseInt(r.buildingYear);
-        return yr && Math.abs(yr - selectedBuilding.builtYear) <= 7;
-      })
-    : [];
+  const addressStr = selectedBuilding?.address || '';
+  const builtYear = selectedBuilding?.builtYear ?? null;
+
+  const matchDistrict = r => r.district && addressStr.includes(r.district);
+  const matchYear    = r => { const yr = parseInt(r.buildingYear); return builtYear && yr && Math.abs(yr - builtYear) <= 7; };
+
+  const districtYearRecords = allRecords.filter(r => matchDistrict(r) && matchYear(r));
+  const districtRecords     = allRecords.filter(r => matchDistrict(r));
+  const yearRecords         = allRecords.filter(r => matchYear(r));
+
+  let filteredRecords, filterDesc;
+  if (districtYearRecords.length >= 2) {
+    filteredRecords = districtYearRecords;
+    const d = districtYearRecords[0]?.district || '';
+    filterDesc = `${d}・築${builtYear}年±7年（${filteredRecords.length}件一致）`;
+  } else if (districtRecords.length >= 2) {
+    filteredRecords = districtRecords;
+    const d = districtRecords[0]?.district || '';
+    filterDesc = `${d}周辺（${filteredRecords.length}件一致）`;
+  } else if (yearRecords.length >= 2) {
+    filteredRecords = yearRecords;
+    filterDesc = `築${builtYear}年±7年・エリア内（${filteredRecords.length}件一致）`;
+  } else {
+    filteredRecords = [];
+    filterDesc = '';
+  }
   const useFiltered = filteredRecords.length >= 2;
 
   if (collapsed) {
@@ -2538,9 +2558,7 @@ function CondoCard({ txData, loading, defaultCollapsed = false, syncEra = null, 
           <span className="text-xl">🏢</span>
           <span className="text-sm font-semibold text-gray-700">この物件に近い成約事例（参考）</span>
         </div>
-        <p className="text-xs text-gray-500 mb-3">
-          {selectedBuilding.name ? `${selectedBuilding.name}周辺` : 'このエリア'}の築{selectedBuilding.builtYear}年±7年 ·{filteredRecords.length}件一致
-        </p>
+        <p className="text-xs text-gray-500 mb-3">{filterDesc}</p>
         <div className="flex flex-col gap-1.5 mb-3">
           {filteredRecords.map((r, i) => (
             <CondoRecordItem
@@ -5092,7 +5110,11 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 <CondoCard txData={txData} loading={txLoading}
                   syncEra={loanData?.builtYear ? yearToEra(loanData.builtYear) : null}
                   syncArea={loanData?.area ?? null}
-                  selectedBuilding={buildingBuiltYear ? { name: buildingName, builtYear: buildingBuiltYear } : null}
+                  selectedBuilding={location ? {
+                    name: buildingName,
+                    builtYear: buildingBuiltYear ?? null,
+                    address: buildingAddress || location.name || '',
+                  } : null}
                 />
               )}
               {propertyType === 'house' && (
