@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "img": "node scripts/gen-image-prompt.js",
+    "tweet": "node scripts/gen-x-post.js"
   },
   "dependencies": {
     "@next/third-parties": "^16.2.4",
