@@ -3561,7 +3561,8 @@ function calcLocationZoneScore(locationZone) {
   if (!locationZone.hasPlan) return 5;
   if (locationZone.inChosei) return 2;
   if (locationZone.inKyoju)  return 9;
-  return 4; // 区域外
+  if (locationZone.inToshi)  return 8;
+  return 4; // 区域外（計画あり）
 }
 
 function LocationZoneCard({ locationZone, urbanData, loading }) {
