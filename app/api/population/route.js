@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import muniCodes from '../../data/muniCodes.json';
+import futurePopData from '../../area/futurePopData.json';
 
 const ESTAT_APP_ID = process.env.ESTAT_APP_ID;
 
@@ -121,7 +122,8 @@ export async function GET(request) {
       .map(r => r.value)
       .sort((a, b) => a.year - b.year);
 
-    return NextResponse.json({ muniCode, muniName, data });
+    const futurePopChange = futurePopData[muniCode] ?? null;
+    return NextResponse.json({ muniCode, muniName, data, futurePopChange });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

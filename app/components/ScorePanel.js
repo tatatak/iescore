@@ -3568,6 +3568,19 @@ function PopulationScoreCard({ popData, loading }) {
               )}
             </div>
             <PopulationChart data={d} />
+            {popData.futurePopChange != null && (() => {
+              const fp = popData.futurePopChange;
+              const isUp = fp >= 0;
+              const color = fp >= 5 ? 'text-blue-600' : fp >= 0 ? 'text-green-600' : fp >= -10 ? 'text-orange-600' : 'text-red-600';
+              return (
+                <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-gray-100">
+                  <span className="text-xs text-gray-500">2025→2040 将来推計</span>
+                  <span className={`text-xs font-bold ${color}`}>
+                    {isUp ? '▲' : '▼'} {Math.abs(fp)}%
+                  </span>
+                </div>
+              );
+            })()}
           </>
         );
       })() : (
