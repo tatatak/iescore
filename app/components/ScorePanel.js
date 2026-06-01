@@ -1014,12 +1014,6 @@ function FutureScoreCard({ zoningData, urbanData, passengerData, zoningLoading, 
                 <span className="text-green-700 font-medium bg-green-50 px-1.5 py-0.5 rounded">🏗️ 高度利用地区</span>
               </div>
             )}
-            {urbanData?.isToshi && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-700 font-medium w-20 shrink-0">立地適正化</span>
-                <span className="text-blue-700 font-medium bg-blue-50 px-1.5 py-0.5 rounded">📍 都市機能誘導区域</span>
-              </div>
-            )}
           </div>
           {comment && (
             <div className={`rounded-lg px-3 py-2 border text-xs ${comment.bg}`}>
