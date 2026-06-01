@@ -3563,21 +3563,8 @@ function getFuturePopDiagnosis(fp) {
 }
 
 function FuturePopCard({ popData, loading }) {
-  // containerRef は常に同じ div に接続し続ける（early return で切り替えると計測できない）
-  const containerRef = useRef(null);
-  const [W, setW] = useState(0);
-  useLayoutEffect(() => {
-    const measure = () => {
-      if (containerRef.current) {
-        const w = containerRef.current.offsetWidth;
-        if (w > 0) setW(w);
-      }
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
+  // PopulationChart と完全に同じ方式
+  const [containerRef, W] = useContainerWidth();
 
   const fp     = loading ? null : (popData?.futurePopChange ?? null);
   const actuals = popData?.data ?? [];
@@ -3637,10 +3624,8 @@ function FuturePopCard({ popData, loading }) {
       ) : (
         <p className="text-xs text-gray-600 mb-2">{subtitle}</p>
       )}
-      {/* containerRef は常にここに接続 */}
-      <div ref={containerRef} style={{width: '100%'}}>
-        {W > 0 && hasData && (
-          <svg width={W} height={H}>
+      <div ref={containerRef}>
+        {hasData && <svg width={W} height={H}>
             <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
             <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
               strokeDasharray="6,4" strokeLinejoin="round" strokeLinecap="round" />
@@ -3663,8 +3648,7 @@ function FuturePopCard({ popData, loading }) {
                 </g>
               );
             })}
-          </svg>
-        )}
+          </svg>}
       </div>
       {diag && (
         <div className={`mt-3 rounded-lg px-3 py-2.5 border text-xs ${diag.bg}`}>
