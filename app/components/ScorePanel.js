@@ -3868,7 +3868,6 @@ function getChecklistUrl(linkType, name, buildingAddress) {
 
   if (linkType === 'mogecheck')   return 'https://mogecheck.jp/';
   if (linkType === 'sakura')      return 'https://www.sakurajimusyo.com/inspect/';
-  if (linkType === 'kazukuri')    return 'https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YRHE';
   if (linkType === 'kufuieta')      return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+S2+5NVG+5YJRM';
   if (linkType === 'solarpartners') return 'https://px.a8.net/svt/ejp?a8mat=4B3NYV+5SZ642+3LME+656YP';
   if (linkType === 'nurikae')     return 'https://px.a8.net/svt/ejp?a8mat=4B3IIL+LGDU+410U+5YJRM';
@@ -3925,7 +3924,6 @@ const CHECKLIST = [
     icon: '🏗',
     tag: '戸建て向け',
     items: [
-      { id: 'kazukuri', label: '家づくり相談所でハウスメーカー・工務店を相談した', note: '全国1,000社以上から無料でコーディネート。注文住宅・建売・土地探しに', linkType: 'kazukuri', linkLabel: '家づくり相談所', linkCls: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
       { id: 'kufuieta', label: 'くふうイエタテカウンターで家づくりを無料相談した', note: '注文住宅・リフォーム・リノベを一括相談。専任アドバイザーが無料サポート', linkType: 'kufuieta', linkLabel: 'くふうイエタテ', linkCls: 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100' },
       { id: 'solarpartners', label: 'ソーラーパートナーズで太陽光発電の見積もりをした', note: '地元の評判の良い業者に無料一括見積もり。太陽光・蓄電池の見積サイトNo.1', linkType: 'solarpartners', linkLabel: 'ソーラーパートナーズ', linkCls: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100', houseOnly: true },
     ],
@@ -5568,17 +5566,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                             <p className="text-xs text-gray-700 font-medium mt-0.5 leading-snug">{item.note}</p>
                             <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${item.linkCls}`}>{item.linkLabel} →</span>
                           </a>
-                        );
-                        if (item.id === 'kazukuri') return (
-                          <div key={item.id} className="flex flex-col gap-2">
-                            {linkCard}
-                            <div className="flex items-center justify-center gap-1">
-                                                            <a href="https://px.a8.net/svt/ejp?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" rel="nofollow noopener noreferrer" target="_blank">
-                                <img width={300} height={250} alt="家づくり相談所" src="https://www24.a8.net/svt/bgt?aid=260504444934&wid=001&eno=01&mid=s00000026497001003000&mc=1" style={{ maxWidth: '100%', height: 'auto' }} />
-                              </a>
-                              <img width={1} height={1} src="https://www12.a8.net/0.gif?a8mat=4B3IIK+FG2VSI+5OGA+5YZ75" alt="" style={{ display: 'none' }} /><span className="text-[10px] text-gray-400 self-stretch flex items-center" style={{ writingMode: 'vertical-rl' }}>PR</span>
-                            </div>
-                          </div>
                         );
                         if (item.id === 'kufuieta') return (
                           <div key={item.id} className="flex flex-col gap-2">
