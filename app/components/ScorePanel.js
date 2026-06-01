@@ -3519,6 +3519,49 @@ function PopulationChart({ data }) {
   );
 }
 
+function calcFuturePopScore(fp) {
+  if (fp == null) return 5;
+  if (fp > 10)  return 10;
+  if (fp > 5)   return 9;
+  if (fp > 2)   return 8;
+  if (fp > 0)   return 7;
+  if (fp > -5)  return 6;
+  if (fp > -10) return 5;
+  if (fp > -15) return 4;
+  if (fp > -20) return 3;
+  if (fp > -30) return 2;
+  return 1;
+}
+
+function getFuturePopDiagnosis(fp) {
+  if (fp == null) return null;
+  if (fp > 10) return {
+    icon: '📈', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100',
+    title: `2040年に向けて人口が大きく増加予測（+${fp}%）`,
+    text: '人口流入が続くと予測されるエリアです。住宅需要が維持され、インフラの継続整備が見込めます。長期的な資産価値の安定が期待できます。',
+  };
+  if (fp > 3) return {
+    icon: '📈', color: 'text-green-700', bg: 'bg-green-50 border-green-100',
+    title: `2040年に向けて人口は増加傾向（+${fp}%）`,
+    text: '緩やかな人口増加が見込まれます。住宅需要は安定しており、長期的な資産価値の維持が期待できます。',
+  };
+  if (fp > -5) return {
+    icon: '➡️', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200',
+    title: `2040年まで人口はほぼ横ばい（${fp >= 0 ? '+' : ''}${fp}%）`,
+    text: '大きな人口減少は見込まれていません。ただし高齢化の進行により、公共サービスの質への影響は今後注視が必要です。',
+  };
+  if (fp > -15) return {
+    icon: '⚠️', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200',
+    title: `2040年に向けて人口が減少予測（${fp}%）`,
+    text: '人口減少が進むと予測されるエリアです。住宅需要の低下・空き家増加・インフラ維持コスト上昇が懸念されます。購入価格の妥当性を慎重に検討してください。',
+  };
+  return {
+    icon: '🚨', color: 'text-red-700', bg: 'bg-red-50 border-red-100',
+    title: `2040年に向けて人口が大幅減少予測（${fp}%）`,
+    text: '急速な人口減少が予測されるエリアです。将来的にインフラの縮退・公共サービスの撤退リスクが高く、資産価値の大幅下落も懸念されます。長期的な居住計画を十分に検討した上で購入判断してください。',
+  };
+}
+
 function FuturePopCard({ popData, loading }) {
   const [containerRef, W] = useContainerWidth();
 
@@ -3536,8 +3579,10 @@ function FuturePopCard({ popData, loading }) {
   const actuals = popData?.data ?? [];
   if (fp == null || actuals.length < 2) return null;
 
+  const diag = getFuturePopDiagnosis(fp);
+  const score = calcFuturePopScore(fp);
+
   const p2020 = actuals[actuals.length - 1].population;
-  // 2025→2040（15年）の変化率を2020→2040（20年）に線形延長
   const p2040 = Math.round(p2020 * (1 + fp / 100));
   const projected = [
     { year: 2020, population: p2020 },
@@ -3547,28 +3592,27 @@ function FuturePopCard({ popData, loading }) {
     { year: 2040, population: p2040 },
   ];
 
-  // 実績＋推計を合わせてスケール計算
   const allPop = [...actuals.map(d => d.population), ...projected.map(d => d.population)];
-  const allYears = [...actuals.map(d => d.year), ...projected.slice(1).map(d => d.year)];
-  const minYear = Math.min(...allYears), maxYear = Math.max(...allYears);
+  const minYear = actuals[0].year, maxYear = 2040;
   const minP = Math.min(...allPop), maxP = Math.max(...allPop);
   const range = maxP - minP || maxP;
 
-  const H = 80, PAD = { top: 8, bottom: 18, left: 28, right: 28 };
+  const H = 80, PAD = { top: 8, bottom: 18, left: 0, right: 0 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
-  const xOf  = yr => PAD.left + ((yr - minYear) / (maxYear - minYear)) * chartW;
-  const yOf  = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
-  const fmt  = v => v >= 10000 ? `${(v / 10000).toFixed(1)}万` : v.toLocaleString();
+  const xOf = yr => PAD.left + ((yr - minYear) / (maxYear - minYear)) * chartW;
+  const yOf = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
+  const fmt = v => v >= 10000 ? `${(v / 10000).toFixed(1)}万` : v.toLocaleString();
 
-  const actualPts   = actuals.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
-  const projPts     = projected.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
-  const actualPath  = actualPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-  const projPath    = projPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const actualPts = actuals.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
+  const projPts   = projected.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
+  const actualPath = actualPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const projPath   = projPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
-  const isUp = fp >= 0;
   const lineColor = fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
-  const badgeColor = fp >= 5 ? 'text-blue-600' : fp >= 0 ? 'text-green-600' : fp >= -10 ? 'text-orange-600' : 'text-red-600';
+  // 年ラベルは10年刻みのみ（混雑防止）
+  const LABEL_YEARS = new Set([minYear, 2020, 2030, 2040]);
+  const allPts = [...actualPts, ...projPts.slice(1)];
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -3577,47 +3621,40 @@ function FuturePopCard({ popData, loading }) {
           <span className="text-xl">📉</span>
           <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
         </div>
-        <span className={`text-sm font-bold ${badgeColor}`}>
-          2025→2040: {isUp ? '▲' : '▼'}{Math.abs(fp)}%
-        </span>
+        <Stars score={score} />
       </div>
-      <p className="text-xs text-gray-600 mb-2">実績（━）と社人研推計（- -）を合わせて表示。人口減少が速いエリアでは、将来的にインフラや公共サービスの縮退リスクがあります。</p>
+      <p className="text-xs text-gray-600 mb-2">実績（━）と社人研推計（- -）を合わせて表示。</p>
       <div ref={containerRef}>
-        {W > 0 && (
-          <svg width={W} height={H}>
-            <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
-            {/* 実績ライン（実線） */}
-            <path d={actualPath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-            {/* 推計ライン（点線）*/}
-            <path d={projPath} fill="none" stroke={lineColor} strokeWidth="2" strokeDasharray="5,4" strokeLinejoin="round" strokeLinecap="round" opacity="0.8" />
-            {/* 実績ドット */}
-            {actualPts.map((p, i) => (
-              <circle key={`a${i}`} cx={p.x} cy={p.y} r="3" fill={lineColor} />
-            ))}
-            {/* 推計ドット（塗りなし）*/}
-            {projPts.slice(1).map((p, i) => (
-              <circle key={`p${i}`} cx={p.x} cy={p.y} r="3" fill="white" stroke={lineColor} strokeWidth="1.5" />
-            ))}
-            {/* 年ラベル */}
-            {[...actualPts, ...projPts.slice(1)].map((p, i) => (
-              <text key={`y${i}`} x={p.x} y={H - 2} textAnchor="middle" fontSize="10" fill="#9ca3af">{p.year}</text>
-            ))}
-            {/* 人口ラベル（始点・終点のみ）*/}
-            {[actualPts[0], projPts[projPts.length - 1]].map((p, i) => {
-              const anchor = i === 0 ? 'start' : 'end';
-              const ly = Math.max(12, p.y - 10);
-              return (
-                <g key={`lbl${i}`}>
-                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700"
-                    stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmt(p.pop)}</text>
-                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700" fill={lineColor}>{fmt(p.pop)}</text>
-                </g>
-              );
-            })}
-          </svg>
-        )}
+        <svg width={W} height={H}>
+          <line x1={0} y1={PAD.top + chartH / 2} x2={W} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
+          <path d={actualPath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          <path d={projPath}   fill="none" stroke={lineColor} strokeWidth="2" strokeDasharray="5,4" strokeLinejoin="round" strokeLinecap="round" opacity="0.8" />
+          {actualPts.map((p, i) => <circle key={`a${i}`} cx={p.x} cy={p.y} r="3" fill={lineColor} />)}
+          {projPts.slice(1).map((p, i) => <circle key={`p${i}`} cx={p.x} cy={p.y} r="3" fill="white" stroke={lineColor} strokeWidth="1.5" />)}
+          {allPts.map((p, i) => LABEL_YEARS.has(p.year) && (
+            <text key={`y${i}`} x={p.x} y={H - 2} textAnchor="middle" fontSize="10" fill="#9ca3af">{p.year}</text>
+          ))}
+          {[actualPts[0], projPts[projPts.length - 1]].map((p, i) => {
+            const anchor = i === 0 ? 'start' : 'end';
+            const lx = i === 0 ? p.x + 2 : p.x - 2;
+            const ly = Math.max(12, p.y - 8);
+            return (
+              <g key={`lbl${i}`}>
+                <text x={lx} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700"
+                  stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmt(p.pop)}</text>
+                <text x={lx} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700" fill={lineColor}>{fmt(p.pop)}</text>
+              </g>
+            );
+          })}
+        </svg>
       </div>
-      <p className="text-xs text-gray-400 mt-1">出典: 国立社会保障・人口問題研究所（社人研）2023年推計</p>
+      {diag && (
+        <div className={`mt-3 rounded-lg px-3 py-2.5 border text-xs ${diag.bg}`}>
+          <p className={`font-bold mb-1 ${diag.color}`}>{diag.icon} {diag.title}</p>
+          <p className={`leading-relaxed ${diag.color} opacity-90`}>{diag.text}</p>
+        </div>
+      )}
+      <p className="text-xs text-gray-400 mt-2">出典: 国立社会保障・人口問題研究所（社人研）2023年推計</p>
     </div>
   );
 }
