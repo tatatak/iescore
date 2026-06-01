@@ -3592,27 +3592,39 @@ function FuturePopCard({ popData, loading }) {
     { year: 2040, population: p2040 },
   ];
 
-  const allPop = [...actuals.map(d => d.population), ...projected.map(d => d.population)];
-  const minYear = actuals[0].year, maxYear = 2040;
+  // 実績＋推計を1本の等間隔配列にまとめる（2020は実績側に含む）
+  const allPoints = [
+    ...actuals,
+    ...projected.slice(1), // 2020は実績に含まれるのでスキップ
+  ].sort((a, b) => a.year - b.year);
+
+  const allPop = allPoints.map(d => d.population);
   const minP = Math.min(...allPop), maxP = Math.max(...allPop);
   const range = maxP - minP || maxP;
 
-  const H = 80, PAD = { top: 8, bottom: 18, left: 0, right: 0 };
+  const H = 80, PAD = { top: 8, bottom: 18, left: 16, right: 16 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
-  const xOf = yr => PAD.left + ((yr - minYear) / (maxYear - minYear)) * chartW;
+  const n = allPoints.length - 1;
   const yOf = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
   const fmt = v => v >= 10000 ? `${(v / 10000).toFixed(1)}万` : v.toLocaleString();
 
-  const actualPts = actuals.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
-  const projPts   = projected.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
+  // 全点を等間隔に配置
+  const pts = allPoints.map((d, i) => ({
+    x: PAD.left + (n === 0 ? chartW / 2 : (i / n) * chartW),
+    y: yOf(d.population),
+    year: d.year,
+    pop: d.population,
+    isProj: d.year > actuals[actuals.length - 1].year,
+  }));
+
+  const actualPts = pts.filter(p => !p.isProj);
+  const projPts   = [pts[actualPts.length - 1], ...pts.filter(p => p.isProj)]; // 2020を接続点として含む
   const actualPath = actualPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const projPath   = projPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
   const lineColor = fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
-  // 年ラベルは10年刻みのみ（混雑防止）
-  const LABEL_YEARS = new Set([minYear, 2020, 2030, 2040]);
-  const allPts = [...actualPts, ...projPts.slice(1)];
+  const LABEL_YEARS = new Set([allPoints[0].year, 2020, 2030, 2040]);
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -3626,23 +3638,24 @@ function FuturePopCard({ popData, loading }) {
       <p className="text-xs text-gray-600 mb-2">実績（━）と社人研推計（- -）を合わせて表示。</p>
       <div ref={containerRef}>
         <svg width={W} height={H}>
-          <line x1={0} y1={PAD.top + chartH / 2} x2={W} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
           <path d={actualPath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
           <path d={projPath}   fill="none" stroke={lineColor} strokeWidth="2" strokeDasharray="5,4" strokeLinejoin="round" strokeLinecap="round" opacity="0.8" />
           {actualPts.map((p, i) => <circle key={`a${i}`} cx={p.x} cy={p.y} r="3" fill={lineColor} />)}
-          {projPts.slice(1).map((p, i) => <circle key={`p${i}`} cx={p.x} cy={p.y} r="3" fill="white" stroke={lineColor} strokeWidth="1.5" />)}
-          {allPts.map((p, i) => LABEL_YEARS.has(p.year) && (
-            <text key={`y${i}`} x={p.x} y={H - 2} textAnchor="middle" fontSize="10" fill="#9ca3af">{p.year}</text>
-          ))}
-          {[actualPts[0], projPts[projPts.length - 1]].map((p, i) => {
+          {pts.filter(p => p.isProj).map((p, i) => <circle key={`p${i}`} cx={p.x} cy={p.y} r="3" fill="white" stroke={lineColor} strokeWidth="1.5" />)}
+          {pts.map((p, i) => {
+            if (!LABEL_YEARS.has(p.year)) return null;
+            const anchor = i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle';
+            return <text key={`y${i}`} x={p.x} y={H - 2} textAnchor={anchor} fontSize="10" fill="#9ca3af">{p.year}</text>;
+          })}
+          {[pts[0], pts[pts.length - 1]].map((p, i) => {
             const anchor = i === 0 ? 'start' : 'end';
-            const lx = i === 0 ? p.x + 2 : p.x - 2;
             const ly = Math.max(12, p.y - 8);
             return (
               <g key={`lbl${i}`}>
-                <text x={lx} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700"
+                <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700"
                   stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmt(p.pop)}</text>
-                <text x={lx} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700" fill={lineColor}>{fmt(p.pop)}</text>
+                <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700" fill={lineColor}>{fmt(p.pop)}</text>
               </g>
             );
           })}
