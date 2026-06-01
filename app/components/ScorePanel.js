@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 
 // 鉄道事業者名 → 短縮表記
@@ -3563,8 +3563,21 @@ function getFuturePopDiagnosis(fp) {
 }
 
 function FuturePopCard({ popData, loading }) {
-  // フックは必ず最初に（早期returnより前）
-  const [containerRef, W] = useContainerWidth();
+  // useLayoutEffect で DOM マウント直後に同期計測（フォールバック値のズレを防ぐ）
+  const containerRef = useRef(null);
+  const [W, setW] = useState(0);
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.offsetWidth;
+        if (w > 0) setW(w);
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // フック呼び出し後に早期return
   if (loading) return (
@@ -3634,8 +3647,8 @@ function FuturePopCard({ popData, loading }) {
         <Stars score={score} />
       </div>
       <p className="text-xs text-gray-600 mb-2">{subtitle}</p>
-      <div ref={containerRef}>
-        <svg width={W} height={H}>
+      <div ref={containerRef} style={{width: '100%'}}>
+        {W > 0 && <svg width={W} height={H}>
           <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
           <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
             strokeDasharray="6,4" strokeLinejoin="round" strokeLinecap="round" />
@@ -3658,7 +3671,7 @@ function FuturePopCard({ popData, loading }) {
               </g>
             );
           })}
-        </svg>
+        </svg>}
       </div>
       {diag && (
         <div className={`mt-3 rounded-lg px-3 py-2.5 border text-xs ${diag.bg}`}>
