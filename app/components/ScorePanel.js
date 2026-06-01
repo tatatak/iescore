@@ -3563,13 +3563,23 @@ function getFuturePopDiagnosis(fp) {
 }
 
 function FuturePopCard({ popData, loading }) {
-  // PopulationChart と同じ：フックは最初に・早期returnは後
+  // フックは必ず最初に（早期returnより前）
   const [containerRef, W] = useContainerWidth();
 
-  const fp = loading ? null : (popData?.futurePopChange ?? null);
-  const actuals = popData?.data ?? [];
+  // フック呼び出し後に早期return
+  if (loading) return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xl">📉</span>
+        <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
+      </div>
+      <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
+    </div>
+  );
 
-  if (!loading && (fp == null || actuals.length < 2)) return null;
+  const fp = popData?.futurePopChange ?? null;
+  const actuals = popData?.data ?? [];
+  if (fp == null || actuals.length < 2) return null;
 
   const diag = getFuturePopDiagnosis(fp);
   const score = calcFuturePopScore(fp);
@@ -3613,16 +3623,6 @@ function FuturePopCard({ popData, loading }) {
     : fp > -15
     ? '人口減少が予測されるエリアでは、将来的に空き家増加や公共サービスの縮退リスクがあります。'
     : '急速な人口減少が予測されるエリアです。インフラ維持困難・地価下落リスクが高く、長期的な居住計画を慎重に検討してください。';
-
-  if (loading) return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">📉</span>
-        <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
-      </div>
-      <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
-    </div>
-  );
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
