@@ -3563,21 +3563,13 @@ function getFuturePopDiagnosis(fp) {
 }
 
 function FuturePopCard({ popData, loading }) {
-  const VBW = 300; // viewBox の固定幅（width="100%"でコンテナに合わせて拡縮）
+  // PopulationChart と同じ：フックは最初に・早期returnは後
+  const [containerRef, W] = useContainerWidth();
 
-  if (loading) return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">📉</span>
-        <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
-      </div>
-      <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
-    </div>
-  );
-
-  const fp = popData?.futurePopChange;
+  const fp = loading ? null : (popData?.futurePopChange ?? null);
   const actuals = popData?.data ?? [];
-  if (fp == null || actuals.length < 2) return null;
+
+  if (!loading && (fp == null || actuals.length < 2)) return null;
 
   const diag = getFuturePopDiagnosis(fp);
   const score = calcFuturePopScore(fp);
@@ -3599,7 +3591,7 @@ function FuturePopCard({ popData, loading }) {
 
   const H = 72;
   const PAD = { top: 8, bottom: 18, left: 24, right: 24 };
-  const chartW = VBW - PAD.left - PAD.right;
+  const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
   const yOf = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
   const fmtPop = v => v >= 10000 ? `${Math.round(v / 10000)}万` : v.toLocaleString();
@@ -3622,6 +3614,16 @@ function FuturePopCard({ popData, loading }) {
     ? '人口減少が予測されるエリアでは、将来的に空き家増加や公共サービスの縮退リスクがあります。'
     : '急速な人口減少が予測されるエリアです。インフラ維持困難・地価下落リスクが高く、長期的な居住計画を慎重に検討してください。';
 
+  if (loading) return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xl">📉</span>
+        <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
+      </div>
+      <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
+    </div>
+  );
+
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-1">
@@ -3632,9 +3634,9 @@ function FuturePopCard({ popData, loading }) {
         <Stars score={score} />
       </div>
       <p className="text-xs text-gray-600 mb-2">{subtitle}</p>
-      <div>
-        <svg viewBox={`0 0 ${VBW} ${H}`} width="100%" height={H} style={{display:'block'}}>
-          <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={VBW - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
+      <div ref={containerRef}>
+        <svg width={W} height={H}>
+          <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
           <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
             strokeDasharray="6,4" strokeLinejoin="round" strokeLinecap="round" />
           {pts.map((p, i) => (
