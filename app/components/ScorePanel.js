@@ -3595,11 +3595,7 @@ function FuturePopCard({ popData, loading }) {
   const lineColor = !hasData ? '#9ca3af' : fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
   const diag      = hasData ? getFuturePopDiagnosis(fp) : null;
   const score     = hasData ? calcFuturePopScore(fp) : 5;
-  const subtitle  = !hasData ? '' :
-    fp > 5  ? '人口増加が予測されるエリアは、住宅需要が続き資産価値の安定が期待できます。' :
-    fp > -5 ? '大きな人口変動は見込まれていません。ただし高齢化の進行で、インフラ維持コストが増す可能性があります。' :
-    fp > -15 ? '人口減少が予測されるエリアでは、将来的に空き家増加や公共サービスの縮退リスクがあります。' :
-    '急速な人口減少が予測されるエリアです。インフラ維持困難・地価下落リスクが高く、長期的な居住計画を慎重に検討してください。';
+  const subtitle = '将来の人口が減るエリアでは、インフラ維持が難しくなり、公共サービスの縮退や地価下落につながる可能性があります。';
 
   // hasData でも fp == null でもない場合（データ不足）は非表示
   if (!loading && !hasData) return null;
