@@ -3519,6 +3519,109 @@ function PopulationChart({ data }) {
   );
 }
 
+function FuturePopCard({ popData, loading }) {
+  const [containerRef, W] = useContainerWidth();
+
+  if (loading) return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xl">📉</span>
+        <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
+      </div>
+      <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
+    </div>
+  );
+
+  const fp = popData?.futurePopChange;
+  const actuals = popData?.data ?? [];
+  if (fp == null || actuals.length < 2) return null;
+
+  const p2020 = actuals[actuals.length - 1].population;
+  // 2025→2040（15年）の変化率を2020→2040（20年）に線形延長
+  const p2040 = Math.round(p2020 * (1 + fp / 100));
+  const projected = [
+    { year: 2020, population: p2020 },
+    { year: 2025, population: Math.round(p2020 + (p2040 - p2020) * 5 / 20) },
+    { year: 2030, population: Math.round(p2020 + (p2040 - p2020) * 10 / 20) },
+    { year: 2035, population: Math.round(p2020 + (p2040 - p2020) * 15 / 20) },
+    { year: 2040, population: p2040 },
+  ];
+
+  // 実績＋推計を合わせてスケール計算
+  const allPop = [...actuals.map(d => d.population), ...projected.map(d => d.population)];
+  const allYears = [...actuals.map(d => d.year), ...projected.slice(1).map(d => d.year)];
+  const minYear = Math.min(...allYears), maxYear = Math.max(...allYears);
+  const minP = Math.min(...allPop), maxP = Math.max(...allPop);
+  const range = maxP - minP || maxP;
+
+  const H = 80, PAD = { top: 8, bottom: 18, left: 28, right: 28 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+  const xOf  = yr => PAD.left + ((yr - minYear) / (maxYear - minYear)) * chartW;
+  const yOf  = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
+  const fmt  = v => v >= 10000 ? `${(v / 10000).toFixed(1)}万` : v.toLocaleString();
+
+  const actualPts   = actuals.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
+  const projPts     = projected.map(d => ({ x: xOf(d.year), y: yOf(d.population), year: d.year, pop: d.population }));
+  const actualPath  = actualPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const projPath    = projPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+
+  const isUp = fp >= 0;
+  const lineColor = fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
+  const badgeColor = fp >= 5 ? 'text-blue-600' : fp >= 0 ? 'text-green-600' : fp >= -10 ? 'text-orange-600' : 'text-red-600';
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">📉</span>
+          <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
+        </div>
+        <span className={`text-sm font-bold ${badgeColor}`}>
+          2025→2040: {isUp ? '▲' : '▼'}{Math.abs(fp)}%
+        </span>
+      </div>
+      <p className="text-xs text-gray-600 mb-2">実績（━）と社人研推計（- -）を合わせて表示。人口減少が速いエリアでは、将来的にインフラや公共サービスの縮退リスクがあります。</p>
+      <div ref={containerRef}>
+        {W > 0 && (
+          <svg width={W} height={H}>
+            <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
+            {/* 実績ライン（実線） */}
+            <path d={actualPath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            {/* 推計ライン（点線）*/}
+            <path d={projPath} fill="none" stroke={lineColor} strokeWidth="2" strokeDasharray="5,4" strokeLinejoin="round" strokeLinecap="round" opacity="0.8" />
+            {/* 実績ドット */}
+            {actualPts.map((p, i) => (
+              <circle key={`a${i}`} cx={p.x} cy={p.y} r="3" fill={lineColor} />
+            ))}
+            {/* 推計ドット（塗りなし）*/}
+            {projPts.slice(1).map((p, i) => (
+              <circle key={`p${i}`} cx={p.x} cy={p.y} r="3" fill="white" stroke={lineColor} strokeWidth="1.5" />
+            ))}
+            {/* 年ラベル */}
+            {[...actualPts, ...projPts.slice(1)].map((p, i) => (
+              <text key={`y${i}`} x={p.x} y={H - 2} textAnchor="middle" fontSize="10" fill="#9ca3af">{p.year}</text>
+            ))}
+            {/* 人口ラベル（始点・終点のみ）*/}
+            {[actualPts[0], projPts[projPts.length - 1]].map((p, i) => {
+              const anchor = i === 0 ? 'start' : 'end';
+              const ly = Math.max(12, p.y - 10);
+              return (
+                <g key={`lbl${i}`}>
+                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700"
+                    stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmt(p.pop)}</text>
+                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700" fill={lineColor}>{fmt(p.pop)}</text>
+                </g>
+              );
+            })}
+          </svg>
+        )}
+      </div>
+      <p className="text-xs text-gray-400 mt-1">出典: 国立社会保障・人口問題研究所（社人研）2023年推計</p>
+    </div>
+  );
+}
+
 function getPopDiagnosis(popData) {
   if (!popData?.data || popData.data.length < 2) return null;
   const first = popData.data[0];
@@ -3583,19 +3686,6 @@ function PopulationScoreCard({ popData, loading, locationZone }) {
               )}
             </div>
             <PopulationChart data={d} />
-            {popData.futurePopChange != null && (() => {
-              const fp = popData.futurePopChange;
-              const isUp = fp >= 0;
-              const color = fp >= 5 ? 'text-blue-600' : fp >= 0 ? 'text-green-600' : fp >= -10 ? 'text-orange-600' : 'text-red-600';
-              return (
-                <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-gray-100">
-                  <span className="text-xs text-gray-500">2025→2040 将来推計</span>
-                  <span className={`text-xs font-bold ${color}`}>
-                    {isUp ? '▲' : '▼'} {Math.abs(fp)}%
-                  </span>
-                </div>
-              );
-            })()}
           </>
         );
       })() : (
@@ -5334,6 +5424,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                   />
                 )}
                 <PopulationScoreCard popData={popData} loading={popLoading} locationZone={locationZone} />
+                <FuturePopCard popData={popData} loading={popLoading} />
                 <FutureScoreCard zoningData={zoningData} urbanData={urbanData} passengerData={passengerData} zoningLoading={zoningLoading} urbanLoading={urbanLoading} />
                 <StationPassengerCard passengerData={passengerData} passengerLoading={passengerLoading} convStations={convData?.stations ?? []} />
               </div>
