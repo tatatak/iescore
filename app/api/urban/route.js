@@ -69,17 +69,26 @@ export async function GET(request) {
     const k = f?.properties?.kubun_name_ja ?? '';
     return k.includes('都市機能誘導') && pointInFeature(lng, lat, f);
   });
-  // 居住誘導区域（都市機能誘導より弱いシグナル）
+  // 居住誘導区域
   const kyojuFeature = !toshiFeature && tile003?.features?.find(f => {
     const k = f?.properties?.kubun_name_ja ?? '';
-    return k.includes('居住誘導') && pointInFeature(lng, lat, f);
+    return k.includes('居住誘導') && !k.includes('調整') && pointInFeature(lng, lat, f);
   });
+  // 居住調整地域（新規住宅抑制エリア）
+  const choseiFeature = tile003?.features?.find(f => {
+    const k = f?.properties?.kubun_name_ja ?? '';
+    return k.includes('居住調整') && pointInFeature(lng, lat, f);
+  });
+  // タイルにフィーチャーが1件でもあれば計画策定済み
+  const hasPlan = (tile003?.features?.length ?? 0) > 0;
 
   return NextResponse.json({
     isKoudo,                                           // 高度利用地区に該当
-    isToshi: !!toshiFeature,                           // 都市機能誘導区域に該当
-    isKyoju: !!kyojuFeature,                           // 居住誘導区域に該当（弱シグナル）
+    isToshi:  !!toshiFeature,                          // 都市機能誘導区域
+    isKyoju:  !!kyojuFeature,                          // 居住誘導区域
+    isChosei: !!choseiFeature,                         // 居住調整地域
+    hasPlan,                                           // 立地適正化計画策定済み自治体か
     kouDoName: kouDoFeature?.properties?.advanced_name ?? null,
-    toshiName: toshiFeature?.properties?.kubun_name_ja ?? kyojuFeature?.properties?.kubun_name_ja ?? null,
+    toshiName: toshiFeature?.properties?.kubun_name_ja ?? kyojuFeature?.properties?.kubun_name_ja ?? choseiFeature?.properties?.kubun_name_ja ?? null,
   });
 }

@@ -3556,54 +3556,45 @@ function getFuturePopDiagnosis(fp) {
   };
 }
 
-function calcLocationZoneScore(locationZone) {
-  if (!locationZone) return 5;
-  if (!locationZone.hasPlan) return 5;
-  if (locationZone.inChosei) return 2;
-  if (locationZone.inKyoju)  return 9;
-  if (locationZone.inToshi)  return 8;
-  return 4; // 区域外（計画あり）
+function calcLocationZoneScore(urbanData) {
+  if (!urbanData) return 5;
+  if (urbanData.isChosei) return 2;
+  if (urbanData.isKyoju)  return 9;
+  if (urbanData.isToshi)  return 8;
+  if (urbanData.hasPlan)  return 4; // 計画あり・区域外
+  return 5; // 情報なし（未策定または区域外）
 }
 
-function LocationZoneCard({ locationZone, urbanData, loading }) {
-  if (!loading && !locationZone && !urbanData) return null;
+function LocationZoneCard({ urbanData, loading }) {
+  if (!loading && !urbanData) return null;
 
-  // urbanData（/api/urban XKT003タイル）を主ソース、locationZoneをhasPlan判定に使用
-  const inToshi  = !!(urbanData?.isToshi);
-  const inKyoju  = !!(urbanData?.isKyoju);
-  const inChosei = !!(locationZone?.inChosei);
-  const hasPlan  = inToshi || inKyoju || inChosei || (locationZone?.hasPlan === true);
-
-  const effectiveZone = (loading || (!urbanData && !locationZone)) ? null
-    : { hasPlan, inKyoju: inKyoju || locationZone?.inKyoju, inToshi, inChosei };
-
-  const score = calcLocationZoneScore(effectiveZone);
+  const score = calcLocationZoneScore(urbanData);
 
   let diag = null;
-  if (effectiveZone) {
-    if (!effectiveZone.hasPlan) {
-      diag = {
-        icon: 'ℹ️', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200',
-        title: 'この自治体は立地適正化計画を未策定',
-        text: '計画が策定されていない自治体では、将来のインフラ整備方針が明確でない場合があります。今後の策定状況を確認するとよいでしょう。',
-      };
-    } else if (effectiveZone.inChosei) {
+  if (urbanData) {
+    if (urbanData.isChosei) {
       diag = {
         icon: '🚫', color: 'text-red-700', bg: 'bg-red-50 border-red-200',
         title: '居住調整地域',
         text: '新規住宅の立地が抑制されるエリアです。将来的なインフラ縮退リスクが高く、生活利便性の低下も懸念されます。購入には慎重な検討が必要です。',
       };
-    } else if (effectiveZone.inKyoju || effectiveZone.inToshi) {
+    } else if (urbanData.isKyoju || urbanData.isToshi) {
       diag = {
         icon: '✅', color: 'text-green-700', bg: 'bg-green-50 border-green-200',
-        title: effectiveZone.inToshi ? '都市機能誘導区域内' : '居住誘導区域内',
+        title: urbanData.isToshi ? '都市機能誘導区域内' : '居住誘導区域内',
         text: '自治体が将来もインフラを維持・整備する方針のエリアです。道路・上下水道・公共施設などのサービスが継続される可能性が高く、長期的な生活利便性が期待できます。',
       };
-    } else {
+    } else if (urbanData.hasPlan) {
       diag = {
         icon: '⚠️', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200',
         title: '居住誘導区域外',
         text: '計画は策定済みですが、このエリアは居住誘導区域の外です。将来のインフラ縮退・公共サービス撤退リスクを考慮した上で、長期的な居住計画を立てることをお勧めします。',
+      };
+    } else {
+      diag = {
+        icon: 'ℹ️', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200',
+        title: '計画情報なし',
+        text: 'このエリアの立地適正化計画データが見つかりません。自治体が未策定、または計画区域外の可能性があります。詳細は自治体にお問い合わせください。',
       };
     }
   }
@@ -4561,7 +4552,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [showReport, setShowReport] = useState(false);
   const [trendData, setTrendData] = useState(null);
   const [trendLoading, setTrendLoading] = useState(false);
-  const [locationZone, setLocationZone] = useState(null); // null=未取得 | {hasPlan,inKyoju,inToshi,inChosei}
   const [aiPromptOpen, setAiPromptOpen] = useState(false);
   const [aiPromptText, setAiPromptText] = useState('');
   const [aiUserNote, setAiUserNote] = useState('');
@@ -4723,7 +4713,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   // location が変わったら全データをリセット
   useEffect(() => {
     if (!location) return;
-    setLocationZone(null);
     setTxData(null);
     setTxLoading(true);
 
@@ -4891,30 +4880,6 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .finally(() => setUrbanLoading(false));
 
   }, [popData?.muniCode]);
-
-  // 立地適正化計画区域チェック（muniCode 確定後）
-  useEffect(() => {
-    const muniCode = popData?.muniCode;
-    if (!muniCode || !location) return;
-    fetch(`/data/a50/${muniCode}.json`)
-      .then(r => {
-        if (!r.ok) { setLocationZone({ hasPlan: false }); return null; }
-        return r.json();
-      })
-      .then(data => {
-        if (!data) return;
-        const { lat, lng } = location;
-        let inKyoju = false, inToshi = false, inChosei = false;
-        for (const zone of data.zones) {
-          if (!pointInZoneGeom(lng, lat, zone.geometry)) continue;
-          if (zone.type === '1') inKyoju  = true;
-          if (zone.type === '2') inToshi  = true;
-          if (zone.type === '3') inChosei = true;
-        }
-        setLocationZone({ hasPlan: true, inKyoju, inToshi, inChosei });
-      })
-      .catch(() => setLocationZone(null));
-  }, [popData?.muniCode, location?.lat, location?.lng]);
 
   const toggleCheck = (id) => setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -5508,7 +5473,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 )}
                 <PopulationScoreCard popData={popData} loading={popLoading} />
                 <FuturePopCard popData={popData} loading={popLoading} />
-                <LocationZoneCard locationZone={locationZone} urbanData={urbanData} loading={popLoading || urbanLoading} />
+                <LocationZoneCard urbanData={urbanData} loading={urbanLoading} />
                 <FutureScoreCard zoningData={zoningData} urbanData={urbanData} passengerData={passengerData} zoningLoading={zoningLoading} urbanLoading={urbanLoading} />
                 <StationPassengerCard passengerData={passengerData} passengerLoading={passengerLoading} convStations={convData?.stations ?? []} />
               </div>
