@@ -3563,7 +3563,7 @@ function getFuturePopDiagnosis(fp) {
 }
 
 function FuturePopCard({ popData, loading }) {
-  // useLayoutEffect で DOM マウント直後に同期計測（フォールバック値のズレを防ぐ）
+  // containerRef は常に同じ div に接続し続ける（early return で切り替えると計測できない）
   const containerRef = useRef(null);
   const [W, setW] = useState(0);
   useLayoutEffect(() => {
@@ -3579,63 +3579,49 @@ function FuturePopCard({ popData, loading }) {
     return () => ro.disconnect();
   }, []);
 
-  // フック呼び出し後に早期return
-  if (loading) return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">📉</span>
-        <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
-      </div>
-      <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
-    </div>
-  );
-
-  const fp = popData?.futurePopChange ?? null;
+  const fp     = loading ? null : (popData?.futurePopChange ?? null);
   const actuals = popData?.data ?? [];
-  if (fp == null || actuals.length < 2) return null;
+  const hasData = !loading && fp != null && actuals.length >= 2;
 
-  const diag = getFuturePopDiagnosis(fp);
-  const score = calcFuturePopScore(fp);
-
-  const p2020 = actuals[actuals.length - 1].population;
-  const p2040 = Math.round(p2020 * (1 + fp / 100));
-
-  // PopulationChart と同じ3点構成で間隔を揃える（2020・2030・2040）
-  const forecastPts_data = [
+  // グラフ計算（hasData のときのみ意味を持つ）
+  const p2020 = hasData ? actuals[actuals.length - 1].population : 0;
+  const p2040 = hasData ? Math.round(p2020 * (1 + fp / 100)) : 0;
+  const forecastPts_data = hasData ? [
     { year: 2020, population: p2020 },
     { year: 2030, population: Math.round(p2020 + (p2040 - p2020) * 10 / 20) },
     { year: 2040, population: p2040 },
-  ];
+  ] : [];
 
   const popValues = forecastPts_data.map(d => d.population);
-  const maxP = Math.max(...popValues);
-  const minP = Math.min(...popValues);
+  const maxP  = popValues.length ? Math.max(...popValues) : 1;
+  const minP  = popValues.length ? Math.min(...popValues) : 0;
   const range = maxP - minP || maxP;
 
-  const H = 72;
+  const H   = 72;
   const PAD = { top: 8, bottom: 18, left: 24, right: 24 };
-  const chartW = W - PAD.left - PAD.right;
+  const chartW = Math.max(0, W - PAD.left - PAD.right);
   const chartH = H - PAD.top - PAD.bottom;
-  const yOf = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
+  const yOf    = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
   const fmtPop = v => v >= 10000 ? `${Math.round(v / 10000)}万` : v.toLocaleString();
 
   const pts = forecastPts_data.map((d, i) => ({
-    x: PAD.left + (i / (forecastPts_data.length - 1)) * chartW,
+    x: PAD.left + (forecastPts_data.length > 1 ? (i / (forecastPts_data.length - 1)) * chartW : chartW / 2),
     y: yOf(d.population),
     year: d.year,
     pop: d.population,
   }));
+  const pathD     = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const lineColor = !hasData ? '#9ca3af' : fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
+  const diag      = hasData ? getFuturePopDiagnosis(fp) : null;
+  const score     = hasData ? calcFuturePopScore(fp) : 5;
+  const subtitle  = !hasData ? '' :
+    fp > 5  ? '人口増加が予測されるエリアは、住宅需要が続き資産価値の安定が期待できます。' :
+    fp > -5 ? '大きな人口変動は見込まれていません。ただし高齢化の進行で、インフラ維持コストが増す可能性があります。' :
+    fp > -15 ? '人口減少が予測されるエリアでは、将来的に空き家増加や公共サービスの縮退リスクがあります。' :
+    '急速な人口減少が予測されるエリアです。インフラ維持困難・地価下落リスクが高く、長期的な居住計画を慎重に検討してください。';
 
-  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-  const lineColor = fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
-
-  const subtitle = fp > 5
-    ? '人口増加が予測されるエリアは、住宅需要が続き資産価値の安定が期待できます。'
-    : fp > -5
-    ? '大きな人口変動は見込まれていません。ただし高齢化の進行で、インフラ維持コストが増す可能性があります。'
-    : fp > -15
-    ? '人口減少が予測されるエリアでは、将来的に空き家増加や公共サービスの縮退リスクがあります。'
-    : '急速な人口減少が予測されるエリアです。インフラ維持困難・地価下落リスクが高く、長期的な居住計画を慎重に検討してください。';
+  // hasData でも fp == null でもない場合（データ不足）は非表示
+  if (!loading && !hasData) return null;
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -3644,34 +3630,41 @@ function FuturePopCard({ popData, loading }) {
           <span className="text-xl">📉</span>
           <span className="text-sm font-semibold text-gray-700">将来人口推計</span>
         </div>
-        <Stars score={score} />
+        {hasData && <Stars score={score} />}
       </div>
-      <p className="text-xs text-gray-600 mb-2">{subtitle}</p>
+      {loading ? (
+        <p className="text-xs text-gray-400 text-center py-3">読み込み中…</p>
+      ) : (
+        <p className="text-xs text-gray-600 mb-2">{subtitle}</p>
+      )}
+      {/* containerRef は常にここに接続 */}
       <div ref={containerRef} style={{width: '100%'}}>
-        {W > 0 && <svg width={W} height={H}>
-          <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
-          <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
-            strokeDasharray="6,4" strokeLinejoin="round" strokeLinecap="round" />
-          {pts.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="3.5"
-              fill={i === 0 ? lineColor : 'white'} stroke={lineColor} strokeWidth="2" />
-          ))}
-          {pts.map((p, i) => {
-            const anchor = i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle';
-            return <text key={i} x={p.x} y={H - 2} textAnchor={anchor} fontSize="11" fill="#9ca3af">{p.year}</text>;
-          })}
-          {[pts[0], pts[pts.length - 1]].map((p, i) => {
-            const anchor = i === 0 ? 'start' : 'end';
-            const ly = Math.max(14, p.y - 10);
-            return (
-              <g key={i}>
-                <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700"
-                  stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmtPop(p.pop)}</text>
-                <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700" fill={lineColor}>{fmtPop(p.pop)}</text>
-              </g>
-            );
-          })}
-        </svg>}
+        {W > 0 && hasData && (
+          <svg width={W} height={H}>
+            <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
+            <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
+              strokeDasharray="6,4" strokeLinejoin="round" strokeLinecap="round" />
+            {pts.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r="3.5"
+                fill={i === 0 ? lineColor : 'white'} stroke={lineColor} strokeWidth="2" />
+            ))}
+            {pts.map((p, i) => {
+              const anchor = i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle';
+              return <text key={i} x={p.x} y={H - 2} textAnchor={anchor} fontSize="11" fill="#9ca3af">{p.year}</text>;
+            })}
+            {[pts[0], pts[pts.length - 1]].map((p, i) => {
+              const anchor = i === 0 ? 'start' : 'end';
+              const ly = Math.max(14, p.y - 10);
+              return (
+                <g key={i}>
+                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700"
+                    stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmtPop(p.pop)}</text>
+                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700" fill={lineColor}>{fmtPop(p.pop)}</text>
+                </g>
+              );
+            })}
+          </svg>
+        )}
       </div>
       {diag && (
         <div className={`mt-3 rounded-lg px-3 py-2.5 border text-xs ${diag.bg}`}>
@@ -3679,7 +3672,7 @@ function FuturePopCard({ popData, loading }) {
           <p className={`leading-relaxed ${diag.color} opacity-90`}>{diag.text}</p>
         </div>
       )}
-      <p className="text-xs text-gray-400 mt-2">出典: 国立社会保障・人口問題研究所（社人研）2023年推計</p>
+      {hasData && <p className="text-xs text-gray-400 mt-2">出典: 国立社会保障・人口問題研究所（社人研）2023年推計</p>}
     </div>
   );
 }
