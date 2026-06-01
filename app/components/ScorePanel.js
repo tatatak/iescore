@@ -1128,6 +1128,21 @@ function calcTrendScore(trendData, propertyType) {
     : 2;
 }
 
+// 立地適正化計画 point-in-polygon (Ray Casting)
+function pipRing(lng, lat, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > lat) !== (yj > lat)) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function pointInZoneGeom(lng, lat, geom) {
+  if (geom.type === 'Polygon')      return pipRing(lng, lat, geom.coordinates[0]);
+  if (geom.type === 'MultiPolygon') return geom.coordinates.some(p => pipRing(lng, lat, p[0]));
+  return false;
+}
+
 // 人口スコア 1-10
 function calcPopScore(popData) {
   if (!popData?.data || popData.data.length < 2) return 5;
@@ -3536,7 +3551,7 @@ function getPopDiagnosis(popData) {
   };
 }
 
-function PopulationScoreCard({ popData, loading }) {
+function PopulationScoreCard({ popData, loading, locationZone }) {
   const diag = !loading ? getPopDiagnosis(popData) : null;
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -3592,6 +3607,31 @@ function PopulationScoreCard({ popData, loading }) {
           <p className={`leading-relaxed ${diag.color} opacity-90`}>{diag.text}</p>
         </div>
       )}
+      {locationZone && (() => {
+        if (!locationZone.hasPlan) return (
+          <div className="mt-3 rounded-lg px-3 py-2 border border-gray-100 bg-gray-50 text-xs text-gray-500">
+            🏙️ <span className="font-medium">立地適正化計画</span>：この自治体は未策定
+          </div>
+        );
+        if (locationZone.inChosei) return (
+          <div className="mt-3 rounded-lg px-3 py-2 border border-red-200 bg-red-50 text-xs">
+            <p className="font-bold text-red-700 mb-0.5">🚫 居住調整地域</p>
+            <p className="text-red-600">新規住宅の立地が抑制されるエリアです。将来的なインフラ縮退リスクが高いため、購入には慎重な検討が必要です。</p>
+          </div>
+        );
+        if (locationZone.inKyoju) return (
+          <div className="mt-3 rounded-lg px-3 py-2 border border-green-200 bg-green-50 text-xs">
+            <p className="font-bold text-green-700 mb-0.5">✅ 居住誘導区域内</p>
+            <p className="text-green-600">自治体が将来もインフラを維持・整備するエリアです。長期的な生活利便性が期待できます。</p>
+          </div>
+        );
+        return (
+          <div className="mt-3 rounded-lg px-3 py-2 border border-orange-200 bg-orange-50 text-xs">
+            <p className="font-bold text-orange-700 mb-0.5">⚠️ 居住誘導区域外</p>
+            <p className="text-orange-600">計画は策定済みですが、このエリアは居住誘導区域外です。将来のインフラ縮退・公共サービス撤退リスクを考慮してください。</p>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -4348,6 +4388,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   const [showReport, setShowReport] = useState(false);
   const [trendData, setTrendData] = useState(null);
   const [trendLoading, setTrendLoading] = useState(false);
+  const [locationZone, setLocationZone] = useState(null); // null=未取得 | {hasPlan,inKyoju,inToshi,inChosei}
   const [aiPromptOpen, setAiPromptOpen] = useState(false);
   const [aiPromptText, setAiPromptText] = useState('');
   const [aiUserNote, setAiUserNote] = useState('');
@@ -4509,6 +4550,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
   // location が変わったら全データをリセット
   useEffect(() => {
     if (!location) return;
+    setLocationZone(null);
     setTxData(null);
     setTxLoading(true);
 
@@ -4676,6 +4718,30 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
       .finally(() => setUrbanLoading(false));
 
   }, [popData?.muniCode]);
+
+  // 立地適正化計画区域チェック（muniCode 確定後）
+  useEffect(() => {
+    const muniCode = popData?.muniCode;
+    if (!muniCode || !location) return;
+    fetch(`/data/a50/${muniCode}.json`)
+      .then(r => {
+        if (!r.ok) { setLocationZone({ hasPlan: false }); return null; }
+        return r.json();
+      })
+      .then(data => {
+        if (!data) return;
+        const { lat, lng } = location;
+        let inKyoju = false, inToshi = false, inChosei = false;
+        for (const zone of data.zones) {
+          if (!pointInZoneGeom(lng, lat, zone.geometry)) continue;
+          if (zone.type === '1') inKyoju  = true;
+          if (zone.type === '2') inToshi  = true;
+          if (zone.type === '3') inChosei = true;
+        }
+        setLocationZone({ hasPlan: true, inKyoju, inToshi, inChosei });
+      })
+      .catch(() => setLocationZone(null));
+  }, [popData?.muniCode, location?.lat, location?.lng]);
 
   const toggleCheck = (id) => setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -5267,7 +5333,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                     area={loanData?.area ?? null}
                   />
                 )}
-                <PopulationScoreCard popData={popData} loading={popLoading} />
+                <PopulationScoreCard popData={popData} loading={popLoading} locationZone={locationZone} />
                 <FutureScoreCard zoningData={zoningData} urbanData={urbanData} passengerData={passengerData} zoningLoading={zoningLoading} urbanLoading={urbanLoading} />
                 <StationPassengerCard passengerData={passengerData} passengerLoading={passengerLoading} convStations={convData?.stations ?? []} />
               </div>
