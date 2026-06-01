@@ -3562,6 +3562,73 @@ function getFuturePopDiagnosis(fp) {
   };
 }
 
+function calcLocationZoneScore(locationZone) {
+  if (!locationZone) return 5;
+  if (!locationZone.hasPlan) return 5;
+  if (locationZone.inChosei) return 2;
+  if (locationZone.inKyoju)  return 9;
+  return 4; // 区域外
+}
+
+function LocationZoneCard({ locationZone, loading }) {
+  if (!loading && !locationZone) return null;
+
+  const score = calcLocationZoneScore(locationZone);
+
+  let diag = null;
+  if (locationZone) {
+    if (!locationZone.hasPlan) {
+      diag = {
+        icon: 'ℹ️', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200',
+        title: 'この自治体は立地適正化計画を未策定',
+        text: '計画が策定されていない自治体では、将来のインフラ整備方針が明確でない場合があります。今後の策定状況を確認するとよいでしょう。',
+      };
+    } else if (locationZone.inChosei) {
+      diag = {
+        icon: '🚫', color: 'text-red-700', bg: 'bg-red-50 border-red-200',
+        title: '居住調整地域',
+        text: '新規住宅の立地が抑制されるエリアです。将来的なインフラ縮退リスクが高く、生活利便性の低下も懸念されます。購入には慎重な検討が必要です。',
+      };
+    } else if (locationZone.inKyoju) {
+      diag = {
+        icon: '✅', color: 'text-green-700', bg: 'bg-green-50 border-green-200',
+        title: '居住誘導区域内',
+        text: '自治体が将来もインフラを維持・整備する方針のエリアです。道路・上下水道・公共施設などのサービスが継続される可能性が高く、長期的な生活利便性が期待できます。',
+      };
+    } else {
+      diag = {
+        icon: '⚠️', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200',
+        title: '居住誘導区域外',
+        text: '計画は策定済みですが、このエリアは居住誘導区域の外です。将来のインフラ縮退・公共サービス撤退リスクを考慮した上で、長期的な居住計画を立てることをお勧めします。',
+      };
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🏙️</span>
+          <span className="text-sm font-semibold text-gray-700">立地適正化計画</span>
+        </div>
+        <Stars score={score} />
+      </div>
+      <p className="text-xs text-gray-600 mb-3">
+        自治体が将来にわたってインフラを維持するエリアを定めた都市計画です。区域外は将来のサービス縮退リスクがあります。
+      </p>
+      {loading ? (
+        <p className="text-xs text-gray-400 text-center py-2">読み込み中…</p>
+      ) : diag ? (
+        <div className={`rounded-lg px-3 py-2.5 border text-xs ${diag.bg}`}>
+          <p className={`font-bold mb-1 ${diag.color}`}>{diag.icon} {diag.title}</p>
+          <p className={`leading-relaxed ${diag.color} opacity-90`}>{diag.text}</p>
+        </div>
+      ) : null}
+      <p className="text-xs text-gray-400 mt-2">出典: 国土数値情報（国交省）A50 立地適正化計画区域（2020年度）</p>
+    </div>
+  );
+}
+
 function FuturePopCard({ popData, loading }) {
   // SVG パーセント座標で描画 → JS幅計測不要・確実にフル幅になる
 
@@ -3691,7 +3758,7 @@ function getPopDiagnosis(popData) {
   };
 }
 
-function PopulationScoreCard({ popData, loading, locationZone }) {
+function PopulationScoreCard({ popData, loading }) {
   const diag = !loading ? getPopDiagnosis(popData) : null;
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -3734,31 +3801,6 @@ function PopulationScoreCard({ popData, loading, locationZone }) {
           <p className={`leading-relaxed ${diag.color} opacity-90`}>{diag.text}</p>
         </div>
       )}
-      {locationZone && (() => {
-        if (!locationZone.hasPlan) return (
-          <div className="mt-3 rounded-lg px-3 py-2 border border-gray-100 bg-gray-50 text-xs text-gray-500">
-            🏙️ <span className="font-medium">立地適正化計画</span>：この自治体は未策定
-          </div>
-        );
-        if (locationZone.inChosei) return (
-          <div className="mt-3 rounded-lg px-3 py-2 border border-red-200 bg-red-50 text-xs">
-            <p className="font-bold text-red-700 mb-0.5">🚫 居住調整地域</p>
-            <p className="text-red-600">新規住宅の立地が抑制されるエリアです。将来的なインフラ縮退リスクが高いため、購入には慎重な検討が必要です。</p>
-          </div>
-        );
-        if (locationZone.inKyoju) return (
-          <div className="mt-3 rounded-lg px-3 py-2 border border-green-200 bg-green-50 text-xs">
-            <p className="font-bold text-green-700 mb-0.5">✅ 居住誘導区域内</p>
-            <p className="text-green-600">自治体が将来もインフラを維持・整備するエリアです。長期的な生活利便性が期待できます。</p>
-          </div>
-        );
-        return (
-          <div className="mt-3 rounded-lg px-3 py-2 border border-orange-200 bg-orange-50 text-xs">
-            <p className="font-bold text-orange-700 mb-0.5">⚠️ 居住誘導区域外</p>
-            <p className="text-orange-600">計画は策定済みですが、このエリアは居住誘導区域外です。将来のインフラ縮退・公共サービス撤退リスクを考慮してください。</p>
-          </div>
-        );
-      })()}
     </div>
   );
 }
@@ -5460,8 +5502,9 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                     area={loanData?.area ?? null}
                   />
                 )}
-                <PopulationScoreCard popData={popData} loading={popLoading} locationZone={locationZone} />
+                <PopulationScoreCard popData={popData} loading={popLoading} />
                 <FuturePopCard popData={popData} loading={popLoading} />
+                <LocationZoneCard locationZone={locationZone} loading={popLoading} />
                 <FutureScoreCard zoningData={zoningData} urbanData={urbanData} passengerData={passengerData} zoningLoading={zoningLoading} urbanLoading={urbanLoading} />
                 <StationPassengerCard passengerData={passengerData} passengerLoading={passengerLoading} convStations={convData?.stations ?? []} />
               </div>
