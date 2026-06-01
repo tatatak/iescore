@@ -3563,8 +3563,7 @@ function getFuturePopDiagnosis(fp) {
 }
 
 function FuturePopCard({ popData, loading }) {
-  // PopulationChart と完全に同じ方式
-  const [containerRef, W] = useContainerWidth();
+  // SVG パーセント座標で描画 → JS幅計測不要・確実にフル幅になる
 
   const fp     = loading ? null : (popData?.futurePopChange ?? null);
   const actuals = popData?.data ?? [];
@@ -3584,20 +3583,15 @@ function FuturePopCard({ popData, loading }) {
   const minP  = popValues.length ? Math.min(...popValues) : 0;
   const range = maxP - minP || maxP;
 
-  const H   = 72;
-  const PAD = { top: 8, bottom: 18, left: 24, right: 24 };
-  const chartW = Math.max(0, W - PAD.left - PAD.right);
-  const chartH = H - PAD.top - PAD.bottom;
-  const yOf    = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
+  const H     = 72;
+  const PTOP  = 8, PBOT = 18;
+  const chartH = H - PTOP - PBOT;
+  const yOf    = pop => PTOP + chartH - ((pop - minP) / range) * chartH;
   const fmtPop = v => v >= 10000 ? `${Math.round(v / 10000)}万` : v.toLocaleString();
 
-  const pts = forecastPts_data.map((d, i) => ({
-    x: PAD.left + (forecastPts_data.length > 1 ? (i / (forecastPts_data.length - 1)) * chartW : chartW / 2),
-    y: yOf(d.population),
-    year: d.year,
-    pop: d.population,
-  }));
-  const pathD     = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  // x はパーセント文字列（JS幅計測なし）
+  const XS = ['8%', '50%', '92%']; // 左・中・右
+  const ys  = forecastPts_data.map(d => yOf(d.population));
   const lineColor = !hasData ? '#9ca3af' : fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
   const diag      = hasData ? getFuturePopDiagnosis(fp) : null;
   const score     = hasData ? calcFuturePopScore(fp) : 5;
@@ -3624,31 +3618,39 @@ function FuturePopCard({ popData, loading }) {
       ) : (
         <p className="text-xs text-gray-600 mb-2">{subtitle}</p>
       )}
-      <div ref={containerRef}>
-        {hasData && <svg width={W} height={H}>
-            <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
-            <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
-              strokeDasharray="6,4" strokeLinejoin="round" strokeLinecap="round" />
-            {pts.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r="3.5"
-                fill={i === 0 ? lineColor : 'white'} stroke={lineColor} strokeWidth="2" />
+      <div>
+        {hasData && (
+          <svg width="100%" height={H} style={{display:'block', overflow:'visible'}}>
+            {/* 中央線 */}
+            <line x1="8%" y1={PTOP + chartH / 2} x2="92%" y2={PTOP + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
+            {/* 折れ線（パーセントx・ピクセルy）*/}
+            <line x1={XS[0]} y1={ys[0]} x2={XS[1]} y2={ys[1]} stroke={lineColor} strokeWidth="2" strokeDasharray="6,4" strokeLinecap="round" />
+            <line x1={XS[1]} y1={ys[1]} x2={XS[2]} y2={ys[2]} stroke={lineColor} strokeWidth="2" strokeDasharray="6,4" strokeLinecap="round" />
+            {/* ドット */}
+            <circle cx={XS[0]} cy={ys[0]} r="3.5" fill={lineColor} />
+            <circle cx={XS[1]} cy={ys[1]} r="3.5" fill="white" stroke={lineColor} strokeWidth="2" />
+            <circle cx={XS[2]} cy={ys[2]} r="3.5" fill="white" stroke={lineColor} strokeWidth="2" />
+            {/* 年ラベル */}
+            {['2020','2030','2040'].map((yr, i) => (
+              <text key={yr} x={XS[i]} y={H - 2}
+                textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}
+                fontSize="11" fill="#9ca3af">{yr}</text>
             ))}
-            {pts.map((p, i) => {
-              const anchor = i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle';
-              return <text key={i} x={p.x} y={H - 2} textAnchor={anchor} fontSize="11" fill="#9ca3af">{p.year}</text>;
-            })}
-            {[pts[0], pts[pts.length - 1]].map((p, i) => {
+            {/* 人口ラベル（始点・終点）*/}
+            {[0, 2].map(i => {
+              const ly = Math.max(14, ys[i] - 10);
               const anchor = i === 0 ? 'start' : 'end';
-              const ly = Math.max(14, p.y - 10);
+              const label = fmtPop(forecastPts_data[i].population);
               return (
                 <g key={i}>
-                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700"
-                    stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmtPop(p.pop)}</text>
-                  <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700" fill={lineColor}>{fmtPop(p.pop)}</text>
+                  <text x={XS[i]} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700"
+                    stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{label}</text>
+                  <text x={XS[i]} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700" fill={lineColor}>{label}</text>
                 </g>
               );
             })}
-          </svg>}
+          </svg>
+        )}
       </div>
       {diag && (
         <div className={`mt-3 rounded-lg px-3 py-2.5 border text-xs ${diag.bg}`}>
