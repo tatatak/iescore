@@ -3585,34 +3585,33 @@ function FuturePopCard({ popData, loading }) {
   const p2020 = actuals[actuals.length - 1].population;
   const p2040 = Math.round(p2020 * (1 + fp / 100));
 
-  // 推計期間（2020→2040）の5点のみ表示 → カード全幅を活用
+  // PopulationChart と同じ3点構成で間隔を揃える（2020・2030・2040）
   const forecastPts_data = [
     { year: 2020, population: p2020 },
-    { year: 2025, population: Math.round(p2020 + (p2040 - p2020) * 5 / 20) },
     { year: 2030, population: Math.round(p2020 + (p2040 - p2020) * 10 / 20) },
-    { year: 2035, population: Math.round(p2020 + (p2040 - p2020) * 15 / 20) },
     { year: 2040, population: p2040 },
   ];
 
   const popValues = forecastPts_data.map(d => d.population);
-  const minP = Math.min(...popValues), maxP = Math.max(...popValues);
-  const range = maxP - minP || maxP * 0.1;
+  const maxP = Math.max(...popValues);
+  const minP = Math.min(...popValues);
+  const range = maxP - minP || maxP;
 
-  const H = 80, PAD = { top: 8, bottom: 18, left: 16, right: 16 };
+  const H = 72;
+  const PAD = { top: 8, bottom: 18, left: 24, right: 24 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
-  const n = forecastPts_data.length - 1;
   const yOf = pop => PAD.top + chartH - ((pop - minP) / range) * chartH;
-  const fmt = v => v >= 10000 ? `${(v / 10000).toFixed(1)}万` : v.toLocaleString();
+  const fmtPop = v => v >= 10000 ? `${Math.round(v / 10000)}万` : v.toLocaleString();
 
   const pts = forecastPts_data.map((d, i) => ({
-    x: PAD.left + (i / n) * chartW,
+    x: PAD.left + (i / (forecastPts_data.length - 1)) * chartW,
     y: yOf(d.population),
     year: d.year,
     pop: d.population,
   }));
 
-  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
   const lineColor = fp >= 5 ? '#3b82f6' : fp >= 0 ? '#22c55e' : fp >= -10 ? '#f97316' : '#ef4444';
 
   const subtitle = fp > 5
@@ -3636,24 +3635,24 @@ function FuturePopCard({ popData, loading }) {
       <div ref={containerRef}>
         <svg width={W} height={H}>
           <line x1={PAD.left} y1={PAD.top + chartH / 2} x2={W - PAD.right} y2={PAD.top + chartH / 2} stroke="#f3f4f6" strokeWidth="1" />
-          <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2" strokeDasharray="5,4"
-            strokeLinejoin="round" strokeLinecap="round" />
+          <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2"
+            strokeDasharray="6,4" strokeLinejoin="round" strokeLinecap="round" />
           {pts.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="3"
-              fill={i === 0 ? lineColor : 'white'} stroke={lineColor} strokeWidth="1.5" />
+            <circle key={i} cx={p.x} cy={p.y} r="3.5"
+              fill={i === 0 ? lineColor : 'white'} stroke={lineColor} strokeWidth="2" />
           ))}
           {pts.map((p, i) => {
-            const anchor = i === 0 ? 'start' : i === n ? 'end' : 'middle';
-            return <text key={i} x={p.x} y={H - 2} textAnchor={anchor} fontSize="10" fill="#9ca3af">{p.year}</text>;
+            const anchor = i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle';
+            return <text key={i} x={p.x} y={H - 2} textAnchor={anchor} fontSize="11" fill="#9ca3af">{p.year}</text>;
           })}
-          {[pts[0], pts[n]].map((p, i) => {
+          {[pts[0], pts[pts.length - 1]].map((p, i) => {
             const anchor = i === 0 ? 'start' : 'end';
-            const ly = Math.max(12, p.y - 8);
+            const ly = Math.max(14, p.y - 10);
             return (
               <g key={i}>
-                <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700"
-                  stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmt(p.pop)}</text>
-                <text x={p.x} y={ly} textAnchor={anchor} fontSize="11" fontWeight="700" fill={lineColor}>{fmt(p.pop)}</text>
+                <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700"
+                  stroke="white" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">{fmtPop(p.pop)}</text>
+                <text x={p.x} y={ly} textAnchor={anchor} fontSize="12" fontWeight="700" fill={lineColor}>{fmtPop(p.pop)}</text>
               </g>
             );
           })}
