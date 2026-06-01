@@ -3570,29 +3570,38 @@ function calcLocationZoneScore(locationZone) {
   return 4; // 区域外
 }
 
-function LocationZoneCard({ locationZone, loading }) {
-  if (!loading && !locationZone) return null;
+function LocationZoneCard({ locationZone, urbanData, loading }) {
+  if (!loading && !locationZone && !urbanData) return null;
 
-  const score = calcLocationZoneScore(locationZone);
+  // urbanData（/api/urban XKT003タイル）を主ソース、locationZoneをhasPlan判定に使用
+  const inToshi  = !!(urbanData?.isToshi);
+  const inKyoju  = !!(urbanData?.isKyoju);
+  const inChosei = !!(locationZone?.inChosei);
+  const hasPlan  = inToshi || inKyoju || inChosei || (locationZone?.hasPlan === true);
+
+  const effectiveZone = (loading || (!urbanData && !locationZone)) ? null
+    : { hasPlan, inKyoju: inKyoju || locationZone?.inKyoju, inToshi, inChosei };
+
+  const score = calcLocationZoneScore(effectiveZone);
 
   let diag = null;
-  if (locationZone) {
-    if (!locationZone.hasPlan) {
+  if (effectiveZone) {
+    if (!effectiveZone.hasPlan) {
       diag = {
         icon: 'ℹ️', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200',
         title: 'この自治体は立地適正化計画を未策定',
         text: '計画が策定されていない自治体では、将来のインフラ整備方針が明確でない場合があります。今後の策定状況を確認するとよいでしょう。',
       };
-    } else if (locationZone.inChosei) {
+    } else if (effectiveZone.inChosei) {
       diag = {
         icon: '🚫', color: 'text-red-700', bg: 'bg-red-50 border-red-200',
         title: '居住調整地域',
         text: '新規住宅の立地が抑制されるエリアです。将来的なインフラ縮退リスクが高く、生活利便性の低下も懸念されます。購入には慎重な検討が必要です。',
       };
-    } else if (locationZone.inKyoju) {
+    } else if (effectiveZone.inKyoju || effectiveZone.inToshi) {
       diag = {
         icon: '✅', color: 'text-green-700', bg: 'bg-green-50 border-green-200',
-        title: '居住誘導区域内',
+        title: effectiveZone.inToshi ? '都市機能誘導区域内' : '居住誘導区域内',
         text: '自治体が将来もインフラを維持・整備する方針のエリアです。道路・上下水道・公共施設などのサービスが継続される可能性が高く、長期的な生活利便性が期待できます。',
       };
     } else {
@@ -5504,7 +5513,7 @@ export default function ScorePanel({ location, activeLayers, onToggleLayer, onFl
                 )}
                 <PopulationScoreCard popData={popData} loading={popLoading} />
                 <FuturePopCard popData={popData} loading={popLoading} />
-                <LocationZoneCard locationZone={locationZone} loading={popLoading} />
+                <LocationZoneCard locationZone={locationZone} urbanData={urbanData} loading={popLoading || urbanLoading} />
                 <FutureScoreCard zoningData={zoningData} urbanData={urbanData} passengerData={passengerData} zoningLoading={zoningLoading} urbanLoading={urbanLoading} />
                 <StationPassengerCard passengerData={passengerData} passengerLoading={passengerLoading} convStations={convData?.stations ?? []} />
               </div>
