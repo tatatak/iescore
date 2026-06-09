@@ -92,6 +92,6 @@ https://www.iescore.com
 ---
 🏠 **イエスコアで無料エリア診断**
 住所や駅名を入力するだけで、地盤・ハザード・成約価格・利便性をまとめてスコア表示します。
-👉 https://www.iescore.com
+https://www.iescore.com
 
 #マイホーム #不動産購入 #住宅ローン #金利 #補正予算
