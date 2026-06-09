@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 export const alt = 'イエスコア｜その価格、適正ですか？ - マイホーム購入前の無料エリア診断';
 export const size = { width: 1200, height: 630 };
@@ -18,11 +20,13 @@ async function loadGoogleFont(font, weight, text) {
 
 export default async function Image() {
   const text =
-    'その価格、適正ですか？イエスコア地盤・ハザード成約価格利便性をまとめて無料スコア診断公的データのみ登録不要｜iescore.com';
-  const [bold, regular] = await Promise.all([
+    'その価格、適正ですか？地盤・ハザード成約価格利便性をまとめて無料スコア診断公的データのみ登録不要｜iescore.com';
+  const [bold, regular, logoData] = await Promise.all([
     loadGoogleFont('Noto+Sans+JP', 700, text),
     loadGoogleFont('Noto+Sans+JP', 400, text),
+    readFile(join(process.cwd(), 'public', 'logo.png')),
   ]);
+  const logoSrc = `data:image/png;base64,${logoData.toString('base64')}`;
 
   return new ImageResponse(
     (
@@ -36,31 +40,29 @@ export default async function Image() {
           justifyContent: 'center',
           background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 55%, #f0fdf4 100%)',
           fontFamily: 'NotoSansJP',
-          padding: '60px',
+          padding: '56px 60px',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 46, fontWeight: 700, color: '#1f2937', marginBottom: 20 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoSrc} width={460} height={225} alt="イエスコア" style={{ marginBottom: 28 }} />
+        <div style={{ display: 'flex', fontSize: 52, fontWeight: 700, color: '#1f2937', marginBottom: 26 }}>
           その価格、適正ですか？
         </div>
-        <div style={{ display: 'flex', fontSize: 110, fontWeight: 700, color: '#2563eb', letterSpacing: '2px', marginBottom: 28 }}>
-          イエスコア
-        </div>
-        <div style={{ display: 'flex', fontSize: 38, fontWeight: 400, color: '#374151', marginBottom: 12 }}>
+        <div style={{ display: 'flex', fontSize: 36, fontWeight: 400, color: '#374151', marginBottom: 8 }}>
           地盤・ハザード・成約価格・利便性を
         </div>
-        <div style={{ display: 'flex', fontSize: 38, fontWeight: 700, color: '#374151', marginBottom: 44 }}>
+        <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, color: '#374151', marginBottom: 40 }}>
           まとめて無料スコア診断
         </div>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 16,
-            fontSize: 28,
+            fontSize: 27,
             fontWeight: 400,
             color: '#6b7280',
             borderTop: '2px solid #d1d5db',
-            paddingTop: 24,
+            paddingTop: 22,
           }}
         >
           公的データのみ・登録不要　｜　iescore.com
