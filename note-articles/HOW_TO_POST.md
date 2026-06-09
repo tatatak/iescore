@@ -57,7 +57,7 @@ npm run tweet 42  # → Xで投稿
 
 `note-articles/TOPICS.md` の「執筆済み」テーブルを参照。
 
-ファイル名の先頭の数字が記事番号です（例: `42_hoseiyosan-kinri.md` → `42`）。
+ファイル名の先頭の数字が記事番号です（例: `11_hoseiyosan-kinri.md` → `11`）。
 
 ---
 
