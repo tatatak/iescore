@@ -38,20 +38,13 @@ export const metadata = {
     description: DESCRIPTION,
     siteName: SITE_NAME,
     locale: 'ja_JP',
-    images: [
-      {
-        url: '/logo.png',
-        width: 1396,
-        height: 684,
-        alt: 'イエスコア - マイホーム購入前の無料エリア診断サービス',
-      },
-    ],
+    // og:image は app/opengraph-image.js が自動生成（ロゴ＋キャッチコピー入り）
   },
   twitter: {
     card: 'summary_large_image',
     title: TITLE,
     description: DESCRIPTION,
-    images: ['/logo.png'],
+    // twitter:image も app/opengraph-image.js から自動適用される
   },
   alternates: {
     canonical: SITE_URL,
